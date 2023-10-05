@@ -1,0 +1,281 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.6"
+        integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.stlFileLoader.js"></script>
+    <script src=" https://cdn.jsdelivr.net/npm/ace-builds@1.28.0/src-min-noconflict/ace.min.js "></script>
+    <link href=" https://cdn.jsdelivr.net/npm/ace-builds@1.28.0/css/ace.min.css " rel="stylesheet">
+    <script src="./openscad.js" type="module"></script>
+    <script src="./openscad.fonts.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="./openscad.mcad.js" type="module"></script>
+    <script type="module">
+        import OpenSCAD from "./openscad.js";
+
+        // OPTIONAL: add fonts to the FS
+        import { addFonts } from "./openscad.fonts.js";
+        // OPTIONAL: add MCAD liibrary to the FS
+        import { addMCAD } from "./openscad.mcad.js";
+        const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+        const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
+        var editor = null;
+
+        function _arrayBufferToBase64(buffer) {
+            var binary = '';
+            var bytes = new Uint8Array(buffer);
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            // return window.btoa(binary);
+            return "data:;base64," + window.btoa(binary);
+
+        }
+
+        const createScene = async () => {
+            // Instantiate the application
+            const scene = new BABYLON.Scene(engine);
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 100, new BABYLON.Vector3(0, 0, 0));
+            scene.clearColor = new BABYLON.Color3(0.95, 0.95, 0.8);
+            var loadingScreenDiv = window.document.getElementById("loadingScreen");
+
+            function customLoadingScreen() {
+            }
+            customLoadingScreen.prototype.displayLoadingUI = function () {
+                loadingScreenDiv.innerHTML = "loading";
+            };
+            customLoadingScreen.prototype.hideLoadingUI = function () {
+                loadingScreenDiv.style.display = "none";
+            };
+            var loadingScreen = new customLoadingScreen();
+            engine.loadingScreen = loadingScreen;
+
+            engine.displayLoadingUI();
+            const light1 = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0));
+            const light2 = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 0, 0));
+            light1.intensity = 0.9;
+            light2.intensity = 0.4;
+
+            return scene;
+        }
+
+        const scene = await createScene(); //Call the createScene function
+        // Register a render loop to repeatedly render the scene
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+        // Watch for browser/canvas resize events
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+        function splitScreen() {
+            const bar = document.querySelector('.split__bar');
+            const left = document.querySelector('.split__left');
+            let mouse_is_down = false;
+
+            bar.addEventListener('mousedown', (e) => {
+                mouse_is_down = true;
+            })
+
+            document.addEventListener('mousemove', (e) => {
+                if (!mouse_is_down) return;
+
+                left.style.width = `${e.clientX}px`;
+                engine.resize();
+            })
+
+            document.addEventListener('mouseup', () => {
+                mouse_is_down = false;
+            })
+        }
+        async function renderOpenSCAD(openscad) {
+            const instance = await OpenSCAD();
+
+            instance.FS.writeFile("/input.scad", openscad);
+            // Run OpenSCAD with the arguments "/input.scad -o cube.stl"
+            instance.callMain(["/input.scad", "-o", "cube.stl"]);
+
+            // Read the data from cube.stl
+            const output = instance.FS.readFile("/cube.stl");
+            let buffer = _arrayBufferToBase64(output);
+
+            for (let i = 0; i < scene.meshes.length; i++) {
+                scene.meshes[i].dispose();
+            }
+            scene.meshes = [];
+            BABYLON.SceneLoader.Append("", buffer, scene, function (scene) {
+                // // do something with the scene
+                var material = new BABYLON.StandardMaterial(scene);
+                material.alpha = 1;
+                material.diffuseColor = new BABYLON.Color3(1.0, 1.0, 0);
+                material.alpha = 1;
+                scene.meshes.forEach(mesh => {
+                    mesh.material = material;
+
+                })
+                // const mesh = scene.getMeshByName("stlmesh");
+                scene.activeCamera.attachControl(canvas, false);
+                const axis = new BABYLON.AxesViewer(scene, 10);
+
+            }, null, null, ".stl");
+        }
+        function initEditor() {
+            ace.define("ace/mode/openscad", ["require", "exports", "module", "ace/lib/oop", "ace/mode/text", "ace/mode/text_highlight_rules"], function (require, exports, module) {
+                "use strict";
+
+                var oop = require("../lib/oop");
+                var TextMode = require("./text").Mode;
+                var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+
+                var OpenSCADHighlightRules = function () {
+                    var keywords = "module|function|if|else|for|include|use";
+                    var builtinFunctions = "cube|cylinder|sphere|translate|rotate|scale|union|difference|intersection";
+
+                    this.$rules = {
+                        "start": [
+                            {
+                                token: "keyword",
+                                regex: "\\b(" + keywords + ")\\b"
+                            },
+                            {
+                                token: "variable",
+                                regex: "\\b[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+                            },
+                            {
+                                token: "constant.numeric",
+                                regex: "\\b\\d+(\\.\\d+)?\\b"
+                            },
+                            {
+                                token: "support.function",
+                                regex: "\\b(" + builtinFunctions + ")\\b"
+                            },
+                            {
+                                token: "comment",
+                                regex: "//.*$"
+                            }
+                        ]
+                    };
+                };
+
+                oop.inherits(OpenSCADHighlightRules, TextHighlightRules);
+
+                var Mode = function () {
+                    this.HighlightRules = OpenSCADHighlightRules;
+                };
+                oop.inherits(Mode, TextMode);
+
+                (function () {
+                    this.lineCommentStart = "//";
+                }).call(Mode.prototype);
+
+                exports.Mode = Mode;
+            });
+
+            editor = ace.edit("editor");
+            editor.setTheme("ace/theme/monokai");
+            editor.session.setMode("ace/mode/openscad");
+            editor.setOptions({
+                fontSize: "15pt"
+            });
+            editor.resize();
+            let isCtrl = false;
+            renderOpenSCAD(editor.getValue());
+
+            let editorcomponent = document.querySelector('#editor');
+            editorcomponent.addEventListener('keydown', async function (e) {
+                if (e.keyCode == 17) {
+                    e.preventDefault();
+                    isCtrl = true;
+                }
+
+
+                if (e.keyCode == 83 && isCtrl) {
+                    e.preventDefault();
+                    // your save logic goes here
+                    renderOpenSCAD(editor.getValue());
+                }
+            });
+            editorcomponent.addEventListener('keyup', async function (e) {
+                if (e.keyCode == 17) {
+                    e.preventDefault();
+                    isCtrl = false;
+                }
+
+            });
+
+        }
+        function initMenu() {
+            const mobileMenuButton = document.getElementById("mobile-menu");
+            const navList = document.querySelector(".nav-list");
+
+            mobileMenuButton.addEventListener("click", () => {
+                navList.classList.toggle("active");
+            });
+            window.newDesign = newDesign;
+            window.openDesign = openDesign;
+            window.saveDesign = saveDesign;
+            window.downloadSTL = downloadSTL;
+        }
+        export function newDesign(event) {
+            alert(JSON.stringify(event));
+        }
+        
+        function openDesign(event) {
+            alert('Clicked on open design');
+        }
+
+        function saveDesign(event) {
+            renderOpenSCAD(editor.getValue());
+        }
+        function downloadSTL(event) {
+            alert('Clicked on download');
+        }
+
+        initMenu();
+        splitScreen();
+        initEditor();
+    </script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="menu-toggle" id="mobile-menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="#">File</a>
+                <div class="dropdown">
+                    <a href="#" onclick="newDesign(event)"><i class="bi bi-plus"></i> New <span class="shortcut">Ctrl + N</span></a>
+
+                    <a href="#" onclick="openDesign(event)"><i class="bi bi-folder"></i> Open <span class="shortcut">Ctrl + O</span></a>
+                    <a href="#" onclick="saveDesign(event)"><i class="bi bi-save"></i> Save <span class="shortcut">Ctrl + S</span></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="#">Design</a>
+                <div class="dropdown">
+                    <a href="#" onclick="downloadSTL(event)"><i class="bi bi-download"></i> Downalod STL</a>
+                </div>
+            </li>            
+        </ul>
+    </nav>
+    <div class="container split">
+        <div class="split__left">
+            <div id="editor">cube(20, center=true);</div>
+        </div>
+        <div class="split__bar"></div>
+        <div class="split__right">
+            <div id="loadingScreen"></div>
+            <canvas id="renderCanvas"></canvas>
+        </div>
+    </div>
+</body>
+
+</html>
