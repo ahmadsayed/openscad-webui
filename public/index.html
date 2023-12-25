@@ -198,6 +198,12 @@
                     // your save logic goes here
                     renderOpenSCAD(editor.getValue());
                 }
+                if (e.keyCode == 79 && isCtrl) {
+                    e.preventDefault();
+                    openDesign(e);
+                    // your Opend logic goes here
+                } l
+
             });
             editorcomponent.addEventListener('keyup', async function (e) {
                 if (e.keyCode == 17) {
@@ -221,11 +227,27 @@
             window.downloadSTL = downloadSTL;
         }
         export function newDesign(event) {
-            alert(JSON.stringify(event));
+            editor.setValue("");
         }
-        
+
         function openDesign(event) {
-            alert('Clicked on open design');
+            const fileInput = document.getElementById('fileInput');
+            fileInput.click();
+            fileInput.addEventListener('change', function () {
+                const file = fileInput.files[0];
+                if (file) {
+                    console.log(`You chose the file: ${file.name}`);
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var contents = e.target.result;
+                        editor.setValue(contents);
+                        renderOpenSCAD(editor.getValue());
+                    };
+                    reader.readAsText(file);
+                } else {
+                    alert('No file selected.');
+                }
+            });
         }
 
         function saveDesign(event) {
@@ -252,10 +274,13 @@
             <li class="nav-item">
                 <a href="#">File</a>
                 <div class="dropdown">
-                    <a href="#" onclick="newDesign(event)"><i class="bi bi-plus"></i> New <span class="shortcut">Ctrl + N</span></a>
+                    <a href="#" onclick="newDesign(event)"><i class="bi bi-plus"></i> New </span></a>
+                    <input type="file" id="fileInput" style="display:none;"></input>
 
-                    <a href="#" onclick="openDesign(event)"><i class="bi bi-folder"></i> Open <span class="shortcut">Ctrl + O</span></a>
-                    <a href="#" onclick="saveDesign(event)"><i class="bi bi-save"></i> Save <span class="shortcut">Ctrl + S</span></a>
+                    <a href="#" onclick="openDesign(event)"><i class="bi bi-folder"></i> Open <span
+                            class="shortcut">Ctrl + O</span></a>
+                    <a href="#" onclick="saveDesign(event)"><i class="bi bi-save"></i> Save <span class="shortcut">Ctrl
+                            + S</span></a>
                 </div>
             </li>
             <li class="nav-item">
@@ -263,7 +288,7 @@
                 <div class="dropdown">
                     <a href="#" onclick="downloadSTL(event)"><i class="bi bi-download"></i> Downalod STL</a>
                 </div>
-            </li>            
+            </li>
         </ul>
     </nav>
     <div class="container split">
