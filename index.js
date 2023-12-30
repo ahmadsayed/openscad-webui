@@ -12,7 +12,6 @@ liveReloadServer.server.once("connection", () => {
   }, 100);
 });
 
-
 app.use(connectLiveReload());
 
 app.use(express.static('public'));
