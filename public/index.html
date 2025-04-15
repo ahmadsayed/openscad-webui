@@ -128,6 +128,67 @@
 
             }, null, null, ".stl");
         }
+        // Add this to your existing JavaScript
+        function initChatEditor() {
+            const chatEditor = ace.edit("chatEditor");
+            chatEditor.setTheme("ace/theme/monokai");
+            chatEditor.session.setMode("ace/mode/text");
+            chatEditor.setOptions({
+                fontSize: "15pt",
+                scrollPastEnd: 0.5
+            });
+
+            // Handle Enter/Shift+Enter
+            const chatEditorEl = document.getElementById('chatEditor');
+            chatEditorEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submitChat();
+                }
+            });
+
+            document.getElementById('chatSubmit').addEventListener('click', submitChat);
+        }
+
+        // Add this function to handle chat messages
+        function handleChatMessage(message) {
+            // This is where you can process the chat message
+            console.log('Processing chat message:', message);
+
+            // Example: Generate simple OpenSCAD code based on chat input
+            let generatedCode = '// Generated from chat input\n';
+
+            if (message.toLowerCase().includes('cube')) {
+                const size = message.match(/\d+/)?.[0] || 10;
+                generatedCode += `cube(${size}, center=true);`;
+            } else if (message.toLowerCase().includes('sphere')) {
+                const radius = message.match(/\d+/)?.[0] || 5;
+                generatedCode += `sphere(r=${radius});`;
+            } else {
+                generatedCode += `// Could not generate code from: "${message}"\n`
+                    + `// Try asking for a cube or sphere`;
+            }
+
+            // Update the OpenSCAD editor with generated code
+            const editor = ace.edit("editor");
+            editor.setValue(generatedCode);
+            renderOpenSCAD(generatedCode);
+
+            return generatedCode;
+        }
+
+        // Modify the submitChat function to use the handler
+        function submitChat() {
+            const chatEditor = ace.edit("chatEditor");
+            const message = chatEditor.getValue();
+            if (message.trim()) {
+                // Handle chat submission here
+                console.log('Chat message:', message);
+                const response = handleChatMessage(message);
+                chatEditor.setValue("");
+            }
+        }
+
         function initEditor() {
             ace.define("ace/mode/openscad", ["require", "exports", "module", "ace/lib/oop", "ace/mode/text", "ace/mode/text_highlight_rules"], function (require, exports, module) {
                 "use strict";
@@ -310,6 +371,7 @@
         initMenu();
         splitScreen();
         initEditor();
+        initChatEditor();        
     </script>
     <script>
         function onSignIn(googleUser) {
@@ -358,6 +420,9 @@
     <div class="container split">
         <div class="split__left">
             <div id="editor">cube(20, center=true);</div>
+            <div class="chat-container">
+                <div id="chatEditor"></div>
+            </div>
         </div>
         <div class="split__bar"></div>
         <div class="split__right">
