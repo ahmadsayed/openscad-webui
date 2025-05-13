@@ -100,7 +100,9 @@
         let instance = null;
         async function renderOpenSCAD(openscad) {
             instance = await OpenSCAD();
-
+            let response = await fetch('./modules/module.scad');
+            let module = await response.text();
+            instance.FS.writeFile("/module.scad", module);
             instance.FS.writeFile("/input.scad", openscad);
             // Run OpenSCAD with the arguments "/input.scad -o cube.stl"
             instance.callMain(["/input.scad", "-o", "cube.stl"]);
@@ -129,14 +131,52 @@
 
             }, null, null, ".stl");
         }
-        // Add this to your existing JavaScript
+
+
+        function initVerticalResize() {
+            const resizeBar = document.querySelector('.resize-bar-vertical');
+            const editorEl = document.getElementById('editor');
+            const chatContainer = document.querySelector('.chat-container');
+            let isDragging = false;
+
+            resizeBar.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                const container = editorEl.parentElement;
+                const containerRect = container.getBoundingClientRect();
+                const y = e.clientY - containerRect.top;
+
+                editorEl.style.height = `${y - 2}px`;
+                chatContainer.style.height = `calc(100% - ${y + 3}px)`;
+
+                ace.edit('editor').resize();
+                ace.edit('chatEditor').resize();
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        }
+        // Update chat editor initialization
         function initChatEditor() {
             const chatEditor = ace.edit("chatEditor");
-            chatEditor.setTheme("ace/theme/monokai");
+            chatEditor.setTheme("ace/theme/chrome");
             chatEditor.session.setMode("ace/mode/text");
+            chatEditor.renderer.setShowGutter(false);
             chatEditor.setOptions({
-                fontSize: "15pt",
-                scrollPastEnd: 0.5
+                fontSize: "14pt",
+                scrollPastEnd: 0.5,
+                highlightActiveLine: false,
+                showPrintMargin: false,
+                minLines: 3,
+                maxLines: 10
             });
 
             // Handle Enter/Shift+Enter
@@ -148,43 +188,7 @@
                 }
             });
 
-            // document.getElementById('chatSubmit').addEventListener('click', submitChat);
-        }
-
-
-        // Update the handleChatMessage function
-        async function handleChatMessage(message) {
-            try {
-                const response = await fetch('http://localhost:3000/generate-code', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message }),
-                });
-
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                const data = await response.json();
-
-                if (!data.success) {
-                    throw new Error(data.error || 'Unknown error');
-                }
-
-                const editor = ace.edit("editor");
-                editor.setValue(data.code);
-                renderOpenSCAD(data.code);
-
-            } catch (error) {
-                console.error('Generation error:', error);
-                alert(`Error: ${error.message}`);
-                // Fallback to simple generation
-                const fallbackCode = fallbackCodeGeneration(message);
-                editor.setValue(fallbackCode);
-                renderOpenSCAD(fallbackCode);
-            } finally {
-
-            }
+            document.getElementById('chatSubmit').addEventListener('click', submitChat);
         }
 
         // Keep the simple generator as fallback
@@ -201,16 +205,59 @@
                     + `// Try asking for a cube or sphere`;
             } return generatedCode;
         }
+        async function handleChatMessage(message) {
+            const editor = ace.edit("editor");
+            const chatEditor = ace.edit("chatEditor");
+            const chatContainer = document.querySelector('.chat-container');
+            try {
+                const response = await fetch('/generate-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: editor.getValue(),
+                        prompt: message
+                    }),
+                });
 
-        // Modify the submitChat function to use the handler
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                if (!data.success) throw new Error(data.error || 'Unknown error');
+
+                editor.setValue(data.code);
+                chatEditor.setValue("");
+                chatContainer.classList.remove('thinking');
+                chatEditor.setReadOnly(false);
+                renderOpenSCAD(data.code);
+
+            } catch (error) {
+                console.error('Generation error:', error);
+                // Fallback to simple generation
+                const fallbackCode = fallbackCodeGeneration(message);
+                editor.setValue(fallbackCode);
+                renderOpenSCAD(fallbackCode);
+                throw error; // Re-throw to catch in submitChat
+            }
+        }
         function submitChat() {
             const chatEditor = ace.edit("chatEditor");
-            const message = chatEditor.getValue();
-            if (message.trim()) {
-                // Handle chat submission here
-                console.log('Chat message:', message);
-                const response = handleChatMessage(message);
-                chatEditor.setValue("");
+            const message = chatEditor.getValue().trim();
+            const chatContainer = document.querySelector('.chat-container');
+
+            if (message) {
+                chatContainer.classList.add('thinking');
+                chatEditor.setReadOnly(true);
+
+                try {
+                    const response = handleChatMessage(message);
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    alert(`Error: ${error.message}`);
+                } finally {
+                    // chatEditor.setValue("");
+                    // chatContainer.classList.remove('thinking');
+                    // chatEditor.setReadOnly(false);
+                }
             }
         }
 
@@ -396,7 +443,8 @@
         initMenu();
         splitScreen();
         initEditor();
-        initChatEditor();        
+        initChatEditor();
+        initVerticalResize();            
     </script>
     <script>
         function onSignIn(googleUser) {
@@ -445,8 +493,15 @@
     <div class="container split">
         <div class="split__left">
             <div id="editor">cube(20, center=true);</div>
+            <div class="resize-bar-vertical"></div>
             <div class="chat-container">
                 <div id="chatEditor"></div>
+                <div class="chat-controls">
+                    <div class="spinner"></div>
+                    <button id="chatSubmit" class="chat-submit">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="split__bar"></div>
