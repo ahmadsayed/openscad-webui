@@ -20,7 +20,13 @@ spec:
       - image: ahmadsayed/promptscad:7
         name: promptscad
         ports:
-        - containerPort: 3000        
+        - containerPort: 3000
+        env:
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: deepseek-api-key
+              key: DEEPSEEK_API_KEY        
         resources: {}
 ---
 apiVersion: v1
@@ -44,8 +50,10 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
+  ingressClassName: traefik
   rules:
-  - http:
+  - host: promptscad.192.168.68.60.sslip.io
+    http:
       paths:
       - path: /
         pathType: Prefix
