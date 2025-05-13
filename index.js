@@ -42,9 +42,10 @@ const modules=`     [MODULES] Use these with include <module.scad>:
 app.use(express.urlencoded());
 app.use(express.json());
 
+
 const openai = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: 'sk-5026801cb6114f27b653508d50f21abd'
+    baseURL: process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com',
+    apiKey: process.env.DEEPSEEK_API_KEY
 });
 
 

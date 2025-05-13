@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: promptscad
+  name: promptscad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promptscad
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: promptscad
+    spec:
+      containers:
+      - image: ahmadsayed/promptscad:7
+        name: promptscad
+        ports:
+        - containerPort: 3000        
+        resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promptscad
+  labels:
+    app: promptscad
+spec:
+  selector:
+    app: promptscad
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: promptscad
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: promptscad
+            port:
+              number: 80
