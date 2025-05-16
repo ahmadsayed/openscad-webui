@@ -43,32 +43,6 @@ spec:
       port: 80
       targetPort: 3000
 ---
-# Middleware for redirect
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: ads-txt-redirect
-  namespace: default
-spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
-    port: 443
-    host: "srv.adstxtmanager.com"
-    path: "/19390/promptscad.com"
----
-# Dummy service (required placeholder)
-apiVersion: v1
-kind: Service
-metadata:
-  name: dummy-service
-  namespace: default
-spec:
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080      
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -80,14 +54,7 @@ spec:
   rules:
   - host: promptscad.com
     http:
-      paths:
-      - path: /ads.txt
-        pathType: Exact
-        backend:
-          service:
-            name: dummy-service
-            port:
-              number: 80      
+      paths:   
       - path: /
         pathType: Prefix
         backend:
