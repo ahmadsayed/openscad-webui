@@ -202,6 +202,11 @@ app.post('/save', (req, res) => {
     });
 });
 
+// Redirect middleware for /ads.txt
+app.get('/ads.txt', (req, res) => {
+  res.redirect(301, 'https://srv.adstxtmanager.com/19390/promptscad.com');
+});
+
 app.post('/generate', (req, res) => {
     console.log(req.body);
     res.json({
