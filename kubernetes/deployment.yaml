@@ -17,7 +17,7 @@ spec:
         app: promptscad
     spec:
       containers:
-      - image: ahmadsayed/promptscad:9
+      - image: ahmadsayed/promptscad:10
         name: promptscad
         ports:
         - containerPort: 3000
