@@ -10,17 +10,17 @@ const app = express();
 const PORT = 3000;
 
 const modules=`     [MODULES] Use these with include <module.scad>:
-                    1. rounded_cube([width,depth,height], radius)
-                    // Example: rounded_cube([30,20,10], 3);
+                    1. rounded_cube([width,depth,height], radius, facets)
+                    // Example: rounded_cube([30,20,10], 3, facets=16);
                     
-                    2. rounded_cylinder(height, radius, rounding_radius)
-                    // Example: rounded_cylinder(20, 5, 2);
+                    2. rounded_cylinder(height, radius, rounding_radius, facets)
+                    // Example: rounded_cylinder(20, 5, 2, facets=16);
                     
-                    3. rounded_pyramid(base=[x,y], height, radius)
-                    // Example: rounded_pyramid([20,15], 30, 4);
+                    3. rounded_pyramid(base=[x,y], height, radius, facets)
+                    // Example: rounded_pyramid([20,15], 30, 4, facets=16);
                     
-                    4. rounded_cone(base_radius, height, rounding_radius)
-                    // Example: rounded_cone(10, 25, 3);
+                    4. rounded_cone(base_radius, height, rounding_radius, facets)
+                    // Example: rounded_cone(10, 25, 3, facets=16);
                     
                     5. gear(number_of_teeth, circular_pitch|diametral_pitch)
                     // Example: linear_extrude(height = 10, center = true, convexity = 10, twist = 0) gear(number_of_teeth=17,diametral_pitch=1);

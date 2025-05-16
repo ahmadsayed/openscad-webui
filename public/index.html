@@ -105,7 +105,7 @@
             instance.FS.writeFile("/module.scad", module);
             instance.FS.writeFile("/input.scad", openscad);
             // Run OpenSCAD with the arguments "/input.scad -o cube.stl"
-            instance.callMain(["/input.scad", "-o", "cube.stl"]);
+            instance.callMain(["/input.scad", "--enable=manifold",  "-o", "cube.stl"]);
 
             // Read the data from cube.stl
             const output = instance.FS.readFile("/cube.stl");
