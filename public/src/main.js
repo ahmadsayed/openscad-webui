@@ -12,82 +12,107 @@ let scene;
 let renderer;
 let codeEditor;
 // JavaScript to handle vertical resizing between editor and chat
-document.addEventListener('DOMContentLoaded', function() {
-  const resizeBarVertical = document.querySelector('.resize-bar-vertical');
-  const editor = document.getElementById('editor');
-  const chatContainer = document.querySelector('.chat-container');
-  
-  if (resizeBarVertical && editor && chatContainer) {
-    let isResizing = false;
-    let startY, startHeightEditor, startHeightChat;
-    
-    // Function to handle mouse down event
-    const startResize = function(e) {
-      isResizing = true;
-      startY = e.clientY;
-      startHeightEditor = editor.offsetHeight;
-      startHeightChat = chatContainer.offsetHeight;
-      
-      // Add resize class to body
-      document.body.classList.add('resizing-vertical');
-      
-      // Prevent text selection during resize
-      document.body.style.userSelect = 'none';
-    };
-    
-    // Function to handle mouse move event
-    const resizeElement = function(e) {
-      if (!isResizing) return;
-      
-      // Calculate height difference
-      const deltaY = e.clientY - startY;
-      
-      // Adjust height of editor and chat container
-      const newEditorHeight = startHeightEditor + deltaY;
-      const newChatHeight = startHeightChat - deltaY;
-      
-      // Apply new heights if they meet minimum requirements
-      if (newEditorHeight > 100 && newChatHeight > 100) {
-        editor.style.height = newEditorHeight + 'px';
-        editor.style.flex = '0 0 ' + newEditorHeight + 'px';
-        chatContainer.style.flex = '1';
-      }
-    };
-    
-    // Function to handle mouse up event
-    const stopResize = function() {
-      if (isResizing) {
-        isResizing = false;
-        document.body.classList.remove('resizing-vertical');
-        document.body.style.userSelect = '';
-      }
-    };
-    
-    // Add event listeners
-    resizeBarVertical.addEventListener('mousedown', startResize);
-    document.addEventListener('mousemove', resizeElement);
-    document.addEventListener('mouseup', stopResize);
-    
-    // Touch support for mobile devices
-    resizeBarVertical.addEventListener('touchstart', function(e) {
-      const touch = e.touches[0];
-      startResize({ clientY: touch.clientY });
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the Ace Editor instance for the chat
+    const chatEditor = ace.edit("chatEditor");
+    const placeholder = document.querySelector('.placeholder-text');
+
+    // Hide placeholder immediately when editor gains focus (user clicks into it)
+    chatEditor.on('focus', function () {
+        placeholder.style.opacity = '0';
     });
-    
-    document.addEventListener('touchmove', function(e) {
-      if (!isResizing) return;
-      const touch = e.touches[0];
-      resizeElement({ clientY: touch.clientY });
+
+    // Hide placeholder as soon as any key is pressed (before actual text change occurs)
+    chatEditor.container.addEventListener('keydown', function () {
+        placeholder.style.opacity = '0';
     });
-    
-    document.addEventListener('touchend', stopResize);
-  }
+
+    // Show placeholder only when editor loses focus AND is empty
+    chatEditor.on('blur', function () {
+        if (chatEditor.getValue().trim() === '') {
+            placeholder.style.opacity = '0.7';
+        }
+    });
+
+    // Initial check - if editor already has content (e.g. on page reload), hide placeholder
+    if (chatEditor.getValue().trim() !== '') {
+        placeholder.style.opacity = '0';
+    }
+    const resizeBarVertical = document.querySelector('.resize-bar-vertical');
+    const editor = document.getElementById('editor');
+    const chatContainer = document.querySelector('.chat-container');
+
+    if (resizeBarVertical && editor && chatContainer) {
+        let isResizing = false;
+        let startY, startHeightEditor, startHeightChat;
+
+        // Function to handle mouse down event
+        const startResize = function (e) {
+            isResizing = true;
+            startY = e.clientY;
+            startHeightEditor = editor.offsetHeight;
+            startHeightChat = chatContainer.offsetHeight;
+
+            // Add resize class to body
+            document.body.classList.add('resizing-vertical');
+
+            // Prevent text selection during resize
+            document.body.style.userSelect = 'none';
+        };
+
+        // Function to handle mouse move event
+        const resizeElement = function (e) {
+            if (!isResizing) return;
+
+            // Calculate height difference
+            const deltaY = e.clientY - startY;
+
+            // Adjust height of editor and chat container
+            const newEditorHeight = startHeightEditor + deltaY;
+            const newChatHeight = startHeightChat - deltaY;
+
+            // Apply new heights if they meet minimum requirements
+            if (newEditorHeight > 100 && newChatHeight > 100) {
+                editor.style.height = newEditorHeight + 'px';
+                editor.style.flex = '0 0 ' + newEditorHeight + 'px';
+                chatContainer.style.flex = '1';
+            }
+        };
+
+        // Function to handle mouse up event
+        const stopResize = function () {
+            if (isResizing) {
+                isResizing = false;
+                document.body.classList.remove('resizing-vertical');
+                document.body.style.userSelect = '';
+            }
+        };
+
+        // Add event listeners
+        resizeBarVertical.addEventListener('mousedown', startResize);
+        document.addEventListener('mousemove', resizeElement);
+        document.addEventListener('mouseup', stopResize);
+
+        // Touch support for mobile devices
+        resizeBarVertical.addEventListener('touchstart', function (e) {
+            const touch = e.touches[0];
+            startResize({ clientY: touch.clientY });
+        });
+
+        document.addEventListener('touchmove', function (e) {
+            if (!isResizing) return;
+            const touch = e.touches[0];
+            resizeElement({ clientY: touch.clientY });
+        });
+
+        document.addEventListener('touchend', stopResize);
+    }
 });
 // Initialize the application
 async function init() {
     // Create the rendering scene
     scene = await createScene();
-    
+
     // Initialize the OpenSCAD renderer
     renderer = new OpenSCADRenderer(scene);
     // Initialize the code editor
@@ -95,7 +120,7 @@ async function init() {
         renderer.renderOpenSCAD(code);
     });
 
-        // Set default cube and render it
+    // Set default cube and render it
     const defaultCode = "cube(20, center=true);";
     codeEditor.setValue(defaultCode);
     renderer.renderOpenSCAD(defaultCode);
@@ -117,12 +142,12 @@ async function init() {
     splitScreen();
     initVerticalResize();
     initMenu(codeEditor, renderer);
-    
+
     // Export necessary functions to window for HTML event handlers
     window.newDesign = () => codeEditor.setValue("");
     window.saveDesign = () => renderer.renderOpenSCAD(codeEditor.getValue());
     window.downloadSTL = () => renderer.downloadSTL();
-    
+
     window.downloadSCAD = () => {
         const code = codeEditor.getValue();
         downloadTextAsFile("code.scad", code);
@@ -166,7 +191,7 @@ function fallbackCodeGeneration(message) {
     } else {
         generatedCode += `// Could not generate code from: "${message}"\n`
             + `// Try asking for a cube or sphere`;
-    } 
+    }
     return generatedCode;
 }
 
