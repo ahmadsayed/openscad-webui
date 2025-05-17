@@ -173,7 +173,9 @@ async function generateOpenscad(message, code, specs_and_math) {
 }
 app.post('/generate-code', async (req, res) => {
     try {
-        console.log(req.body);
+        console.log(JSON.stringify({
+            prompt: req.body
+        }));
         const message = req.body.prompt;
         const code = req.body.code;
         console.log(message);
