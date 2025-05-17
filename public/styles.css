@@ -1,8 +1,10 @@
+/* Reset and Base Styles */
 html {
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "PingFang TC", "Heiti TC", 微軟正黑體, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
 }
 
 *,
@@ -16,357 +18,158 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  color: #e0e0e0;
+  background-color: #1e1e1e;
 }
 
-.container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
+/* Split Layout Customization */
 .split__left {
   width: 50%;
-  background-color: #AACD6E;
+  background-color: #2d2d2d;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Make the editor flex to take available space, but respecting chat container size */
+#editor {
+  position: relative;
+  flex: 2; /* Give editor more weight by default */
+  min-height: 150px; /* Ensure minimum height when chat is expanded */
+  border-bottom: 1px solid #404040;
 }
 
 .split__right {
   flex: 1;
-  background-color: #C5C6B6;
+  background-color: #1e1e1e;
+  position: relative;
+  overflow: hidden;
 }
 
 .split__bar {
-  background-color: #3C3530;
-  width: 15px;
+  background-color: #404040;
+  width: 12px;
   height: 100%;
   cursor: col-resize;
+  transition: background-color 0.2s;
 }
 
+.split__bar:hover {
+  background-color: #505050;
+}
+
+/* Canvas Styles */
 #renderCanvas {
   width: 100%;
   height: 100%;
   touch-action: none;
+  display: block;
 }
 
-#editor {
-  position: relative;
+#loadingScreen {
+  position: absolute;
   top: 0;
-  right: 0;
-  bottom: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
+  font-size: 24px;
+}
+
+/* Main Layout */
+.container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 48px); /* Account for navbar */
 }
 
 .ace_editor {
-  border: 1px solid lightgray;
-  margin: auto;
-  height: 100%;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  line-height: 1.5;
+  font-size: 14px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
   width: 100%;
-}
-
-.scrollmargin {
-  height: 80px;
-}
-
-.scrollmargin2 {
-  height: 180px;
-}
-
-
-
-/* body {
-  font-family: 'Arial', sans-serif;
-} */
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.2rem 1rem;
-  background-color: #333;
-}
-
-.nav-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 0.5rem;
-}
-
-.nav-list li {
-  display: inline;
-  margin: 0 0.5rem;
-}
-
-.nav-list li a {
-  text-decoration: none;
-  color: white;
-  transition: 0.5s;
-}
-
-.nav-list li a:hover {
-  color: #f4f4f4;
-}
-
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-}
-
-.bar {
-  background-color: white;
-  height: 3px;
-  width: 25px;
-  margin: 3px;
-  border-radius: 2px;
-}
-
-@media screen and (max-width: 768px) {
-  .nav-list {
-    display: none;
-    width: 100%;
-    text-align: center;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    background-color: #333;
-    z-index: 1;
-    flex-direction: column;
-  }
-
-  .nav-list.active {
-    display: flex;
-  }
-
-  .menu-toggle {
-    display: flex;
-  }
-
-  .nav-list li {
-    display: block;
-    margin: 0.5rem 0;
-  }
-}
-
-
-.dropdown {
-  display: none;
-  position: absolute;
-  background-color: #444;
-  /* Slightly darker background */
-  min-width: 160px;
-  /* Set a min-width for the dropdown */
-  z-index: 1000;
-  left: 0;
-
-}
-
-.dropdown a {
-  color: white;
-  padding: 10px 16px;
-  text-decoration: none;
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.nav-item {
-  position: relative;
-  margin: 0 20px;
-  /* 0 for top and bottom, 20px for left and right */
-  display: inline-block;
-  /* Make the nav items line up horizontally */
-  cursor: pointer;
-  /* Indicates an interactive element */
-}
-
-.nav-item:hover .dropdown {
-  display: block;
-}
-
-.dropdown a:hover {
-  background-color: #555;
-  /* Darker on hover */
-
-}
-
-@media screen and (max-width: 768px) {
-  /* ... your other media query styles ... */
-
-  .dropdown {
-    position: static;
-    /* Remove absolute positioning on smaller screens */
-    width: 100%;
-    /* Make it full width on smaller screens */
-  }
-}
-
-
-.shortcut {
-  margin-left: 10px;
-  color: #aaa;
-  /* Make it a lighter color */
-  font-size: 0.8em;
-  /* Make it a bit smaller */
-}
-
-
-/* Add these styles to your CSS */
-.chat-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-top: 2px solid #3C3530;
-  position: relative;
-}
-
-#chatEditor {
-  flex: 1;
-  min-height: 150px;
-}
-
-#chatSubmit {
-  align-self: flex-end;
-  margin: 8px;
-  padding: 6px 12px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#chatSubmit:hover {
-  background: #45a049;
-}
-
-.split__left {
-  display: flex;
-  flex-direction: column;
   height: 100%;
 }
 
-
-
-
-
-
-
-/* Vertical resize bar */
+/* Vertical Resize Bar */
 .resize-bar-vertical {
-  height: 5px;
-  background-color: #3C3530;
+  height: 8px;
+  background-color: #404040;
   cursor: row-resize;
   flex-shrink: 0;
+  transition: background-color 0.2s;
+  z-index: 2; /* Ensure resize bar is above content for better handling */
 }
 
-/* Chat container styling */
+.resize-bar-vertical:hover {
+  background-color: #505050;
+}
+
+/* Chat Container Styling */
 .chat-container {
   flex: 1;
-  position: relative;
-  background-color: #f0f0f0;
+  min-height: 150px;
+  max-height: 50%; /* Allow expansion up to 50% of the left panel */
+  background-color: #2d2d2d;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 12px;
+  border-top: 1px solid #404040;
+  transition: max-height 0.3s ease;
+  overflow: hidden; /* Hide overflow when collapsed */
 }
 
-/* Chat editor styling */
 #chatEditor {
   flex: 1;
   border-radius: 8px;
-  border: 1px solid #d1d1d1;
-  background: white;
-  margin-bottom: 10px;
+  border: 1px solid #404040;
+  background: #1e1e1e;
+  margin-bottom: 12px;
+  min-height: 100px;
 }
 
-/* Send button styling */
+.chat-controls {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .chat-submit {
-  align-self: flex-end;
   padding: 8px 16px;
-  background: #10a37f;
+  background: #007bff;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: background 0.2s;
-}
-
-.chat-submit:hover {
-  background: #0e8e6d;
-}
-
-/* Ace Editor custom styling */
-.chat-container .ace_editor {
-  border-radius: 8px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-}
-
-.chat-container .ace_scroller {
-  border-radius: 8px;
-}
-
-
-
-/* Resize bar color */
-.resize-bar-vertical {
-    background-color: #404040;
-}
-
-/* Scrollbar styling */
-.chat-container .ace_scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.chat-container .ace_scrollbar::-webkit-scrollbar-track {
-    background: #2d2d2d;
-}
-
-.chat-container .ace_scrollbar::-webkit-scrollbar-thumb {
-    background: #505050;
-    border-radius: 4px;
-}
-
-.chat-container .ace_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #606060;
-}
-
-
-/* Chat container dark theme */
-.chat-container {
-  background-color: #2d2d2d;
-  border-top: 1px solid #404040;
-}
-
-#chatEditor {
-  border: 1px solid #404040;
-  background: #1e1e1e;
-}
-
-.chat-submit {
-  background: #007bff;
-  color: #ffffff;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .chat-submit:hover {
   background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
 }
 
-/* Ace Editor dark theme adjustments */
-.chat-container .ace_editor {
-  color: #e0e0e0;
+.chat-submit:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.chat-container .ace_content {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-}
-
-.chat-container .ace_cursor {
-  color: #ffffff;
-}
-
-
+/* Spinner Animation */
 .spinner {
   display: none;
   width: 24px;
@@ -377,7 +180,7 @@ body {
   animation: spin 1s ease-in-out infinite;
   position: absolute;
   right: 70px;
-  top: 16px;
+  top: 8px;
 }
 
 @keyframes spin {
@@ -391,8 +194,283 @@ body {
 .chat-container.thinking .chat-submit {
   background-color: #0056b3;
   cursor: not-allowed;
+  opacity: 0.8;
 }
 
-.chat-controls {
+/* Navigation Bar */
+.navbar {
+  display: flex;
+  justify-content: flex-start; /* Changed from space-between to align left */
+  align-items: center;
+  padding: 0 16px;
+  height: 48px;
+  background-color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
   position: relative;
+}
+
+.logo h1 {
+  color: white;
+  font-size: 18px;
+  margin: 0;
+  font-weight: 600;
+  margin-left: 12px; /* Add some spacing after the menu toggle */
+}
+
+.nav-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  margin-left: 24px; /* Add space between logo and menu items */
+}
+
+.nav-item {
+  position: relative;
+  margin: 0 8px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.nav-item a {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.nav-item a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Dropdown Menu */
+.dropdown {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  min-width: 200px;
+  background-color: #444;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownFade 0.2s ease;
+  margin-top: 4px;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nav-item:hover .dropdown {
+  display: block;
+}
+
+.dropdown a {
+  color: white;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.2s;
+  border-radius: 0;
+}
+
+.dropdown a:hover {
+  background-color: #555;
+}
+
+.shortcut {
+  margin-left: auto;
+  color: #aaa;
+  font-size: 0.8em;
+  font-weight: normal;
+}
+
+.flex-spacer {
+  flex: 1; /* Takes up all available space */
+}
+
+/* Mobile Menu Toggle */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  margin-right: 8px; /* Reduced margin since we're left-aligned now */
+}
+
+.bar {
+  background-color: white;
+  height: 3px;
+  width: 25px;
+  margin: 3px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Resize Indicator */
+body.resizing-vertical {
+  cursor: row-resize !important;
+}
+
+body.resizing-vertical .resize-bar-vertical {
+  background-color: #007bff;
+}
+
+/* Ensure the editor adjusts properly during resize */
+#editor.ace_editor {
+  transition: none; /* Disable transition during resize */
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #505050;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #606060;
+}
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .split__left, .split__right {
+    width: 100%;
+    height: 50vh;
+  }
+  
+  .split__bar {
+    width: 100%;
+    height: 12px;
+    cursor: row-resize;
+  }
+  .nav-list {
+    display: none;
+    position: absolute;
+    top: 48px;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .nav-list.active {
+    display: flex;
+  }
+  
+  .nav-item {
+    margin: 0;
+    width: 100%;
+  }
+  .nav-item a {
+    padding: 12px 16px;
+    width: 100%;
+  }
+  
+  .dropdown {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    margin-top: 0;
+    border-radius: 0;
+    animation: none;
+    margin-left: 16px;
+  }
+  
+  .menu-toggle {
+    display: flex;
+  }
+  
+  .logo h1 {
+    font-size: 16px;
+  }
+
+  /* Adjust the vertical resize for mobile */
+  .resize-bar-vertical {
+    height: 12px; /* Make it slightly bigger for touch targets */
+  }
+
+  /* Ensure chat container remains resizable on mobile */
+  .chat-container {
+    max-height: none; /* Remove max-height limitation on mobile */
+  }
+}
+
+/* styles.css - Add these to your existing CSS file */
+
+/* Updated button styling */
+.chat-submit {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    min-width: 100px; /* Prevent size jumping when text changes */
+    justify-content: center; /* Center content */
+}
+
+.chat-submit:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.chat-submit:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Thinking state styling */
+.chat-container.thinking .chat-submit {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+.chat-container.thinking .chat-submit .bi-send:before {
+    content: "\F5EF"; /* Bootstrap icon code for the spinner icon */
+    animation: spin 1s linear infinite;
+}
+
+.chat-container.thinking .button-text {
+    content: "Thinking...";
+}
+
+/* Make the spinner actually spin */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alternatively, you can hide the original spinner div */
+.chat-container.thinking .spinner {
+    display: none; /* Hide the original spinner when using the button animation */
 }

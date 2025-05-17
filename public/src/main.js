@@ -11,7 +11,78 @@ import { initMenu } from './ui/menu.js';
 let scene;
 let renderer;
 let codeEditor;
-
+// JavaScript to handle vertical resizing between editor and chat
+document.addEventListener('DOMContentLoaded', function() {
+  const resizeBarVertical = document.querySelector('.resize-bar-vertical');
+  const editor = document.getElementById('editor');
+  const chatContainer = document.querySelector('.chat-container');
+  
+  if (resizeBarVertical && editor && chatContainer) {
+    let isResizing = false;
+    let startY, startHeightEditor, startHeightChat;
+    
+    // Function to handle mouse down event
+    const startResize = function(e) {
+      isResizing = true;
+      startY = e.clientY;
+      startHeightEditor = editor.offsetHeight;
+      startHeightChat = chatContainer.offsetHeight;
+      
+      // Add resize class to body
+      document.body.classList.add('resizing-vertical');
+      
+      // Prevent text selection during resize
+      document.body.style.userSelect = 'none';
+    };
+    
+    // Function to handle mouse move event
+    const resizeElement = function(e) {
+      if (!isResizing) return;
+      
+      // Calculate height difference
+      const deltaY = e.clientY - startY;
+      
+      // Adjust height of editor and chat container
+      const newEditorHeight = startHeightEditor + deltaY;
+      const newChatHeight = startHeightChat - deltaY;
+      
+      // Apply new heights if they meet minimum requirements
+      if (newEditorHeight > 100 && newChatHeight > 100) {
+        editor.style.height = newEditorHeight + 'px';
+        editor.style.flex = '0 0 ' + newEditorHeight + 'px';
+        chatContainer.style.flex = '1';
+      }
+    };
+    
+    // Function to handle mouse up event
+    const stopResize = function() {
+      if (isResizing) {
+        isResizing = false;
+        document.body.classList.remove('resizing-vertical');
+        document.body.style.userSelect = '';
+      }
+    };
+    
+    // Add event listeners
+    resizeBarVertical.addEventListener('mousedown', startResize);
+    document.addEventListener('mousemove', resizeElement);
+    document.addEventListener('mouseup', stopResize);
+    
+    // Touch support for mobile devices
+    resizeBarVertical.addEventListener('touchstart', function(e) {
+      const touch = e.touches[0];
+      startResize({ clientY: touch.clientY });
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+      if (!isResizing) return;
+      const touch = e.touches[0];
+      resizeElement({ clientY: touch.clientY });
+    });
+    
+    document.addEventListener('touchend', stopResize);
+  }
+});
 // Initialize the application
 async function init() {
     // Create the rendering scene
