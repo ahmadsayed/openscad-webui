@@ -26,30 +26,30 @@ export class OpenSCADRenderer {
         try {
             // Load the OpenSCAD WASM module
             this.instance = await OpenSCAD();
-            
+
             // Load the module.scad file
             let response = await fetch('./modules/module.scad');
             let module = await response.text();
             this.instance.FS.writeFile("/module.scad", module);
-            
+
             console.log("OpenSCAD renderer initialized");
 
             // Write the input code to the virtual filesystem
             this.instance.FS.writeFile("/input.scad", openscadCode);
-            
+
             // Run OpenSCAD to generate the STL
             this.instance.callMain(["/input.scad", "--enable=manifold", "-o", "cube.stl"]);
-            
+
             // Read the generated STL
             const output = this.instance.FS.readFile("/cube.stl");
             const buffer = this._arrayBufferToBase64(output);
-            
+
             // Clear existing meshes
             this._clearScene();
-            
+
             // Load the STL into the scene
             await this._loadSTLToScene(buffer);
-            
+
             console.log("OpenSCAD rendering complete");
         } catch (error) {
             console.error("Error rendering OpenSCAD:", error);
@@ -84,11 +84,11 @@ export class OpenSCADRenderer {
         let binary = '';
         const bytes = new Uint8Array(buffer);
         const len = bytes.byteLength;
-        
+
         for (let i = 0; i < len; i++) {
             binary += String.fromCharCode(bytes[i]);
         }
-        
+
         return "data:;base64," + window.btoa(binary);
     }
 
@@ -113,20 +113,126 @@ export class OpenSCADRenderer {
         return new Promise((resolve) => {
             BABYLON.SceneLoader.Append("", buffer, this.scene, (scene) => {
                 // Create material for the model
-                const material = new BABYLON.StandardMaterial(scene);
-                material.diffuseColor = new BABYLON.Color3(1.0, 1.0, 0);
+                const material = new BABYLON.StandardMaterial("stlMaterial", scene);
+                material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0);
                 material.alpha = 1;
-                
-                // Apply material to all meshes
+
+                // Apply material to all meshes and apply transformation
                 scene.meshes.forEach(mesh => {
-                    mesh.material = material;
+                    if (mesh !== scene.activeCamera) {
+                        // Apply material
+                        mesh.material = material;
+                    }
                 });
-                
-                // Create axes viewer
-                const axis = new BABYLON.AxesViewer(scene, 10);
-                
+
+                // Create axes viewer with custom colors to match OpenSCAD
+                const axisSize = 5;
+                // const axesViewer = new BABYLON.AxesViewer(scene, axisSize);
+
+                // OpenSCAD uses red for X, green for Y, blue for Z
+                // We'll manually create our rotated axes to match OpenSCAD orientation
+
+                // X axis (red) - points right in both systems
+                const xAxis = BABYLON.MeshBuilder.CreateLines("xAxis", {
+                    points: [
+                        new BABYLON.Vector3(0, 0, 0),
+                        new BABYLON.Vector3(axisSize, 0, 0)
+                    ]
+                }, scene);
+                xAxis.color = new BABYLON.Color3(1, 0, 0);
+
+                // Y axis (green) - points back in OpenSCAD
+                const yAxis = BABYLON.MeshBuilder.CreateLines("yAxis", {
+                    points: [
+                        new BABYLON.Vector3(0, 0, 0),
+                        new BABYLON.Vector3(0, 0, axisSize)
+                    ]
+                }, scene);
+                yAxis.color = new BABYLON.Color3(0, 1, 0);
+
+                // Z axis (blue) - points up in OpenSCAD
+                const zAxis = BABYLON.MeshBuilder.CreateLines("zAxis", {
+                    points: [
+                        new BABYLON.Vector3(0, 0, 0),
+                        new BABYLON.Vector3(0, axisSize, 0)
+                    ]
+                }, scene);
+                zAxis.color = new BABYLON.Color3(0, 0, 1);
+
+                // Create axis labels
+                const labelX = this._createAxisLabel("X", new BABYLON.Vector3(axisSize + 0.5, 0, 0), scene, new BABYLON.Color3(1, 0, 0));
+                const labelY = this._createAxisLabel("Y", new BABYLON.Vector3(0, 0, axisSize + 0.5), scene, new BABYLON.Color3(0, 1, 0));
+                const labelZ = this._createAxisLabel("Z", new BABYLON.Vector3(0, axisSize + 0.5, 0), scene, new BABYLON.Color3(0, 0, 1));
+
+                // Group the axes and labels for positioning
+                const axesGroup = new BABYLON.TransformNode("axesGroup", scene);
+                xAxis.parent = axesGroup;
+                yAxis.parent = axesGroup;
+                zAxis.parent = axesGroup;
+                labelX.parent = axesGroup;
+                labelY.parent = axesGroup;
+                labelZ.parent = axesGroup;
+
+                // Position the axes group in a fixed position in the viewport
+                scene.onBeforeRenderObservable.add(() => {
+                    // Update position to keep axes in bottom left corner
+                    const bottomLeft = new BABYLON.Vector3(-0.8, -0.8, 0);
+                    const screenPos = BABYLON.Vector3.Project(
+                        bottomLeft,
+                        BABYLON.Matrix.Identity(),
+                        scene.getTransformMatrix(),
+                        scene.activeCamera.viewport.toGlobal(
+                            scene.getEngine().getRenderWidth(),
+                            scene.getEngine().getRenderHeight()
+                        )
+                    );
+
+                    axesGroup.position = scene.activeCamera.position.add(
+                        scene.activeCamera.getDirection(BABYLON.Vector3.Forward()).scale(10)
+                    );
+
+                    // Make sure the axis is properly sized relative to camera distance
+                    const distanceFromCamera = scene.activeCamera.position.length();
+                    const scaleFactor = distanceFromCamera * 0.02;
+                    axesGroup.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
+                });
+
                 resolve();
             }, null, null, ".stl");
         });
+    }
+
+    // Helper method to create axis labels
+    _createAxisLabel(text, position, scene, color) {
+        const plane = BABYLON.MeshBuilder.CreatePlane("label-" + text, {
+            width: 1,
+            height: 0.5
+        }, scene);
+        plane.position = position;
+
+        // Always face the camera
+        plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+        const dynamicTexture = new BABYLON.DynamicTexture("labelTexture-" + text,
+            { width: 128, height: 64 }, scene, true);
+        dynamicTexture.hasAlpha = true;
+
+        const context = dynamicTexture.getContext();
+        context.clearRect(0, 0, 128, 64);
+        context.font = "bold 58px Arial";
+        context.fillStyle = `rgb(${color.r * 255}, ${color.g * 255}, ${color.b * 255})`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(text, 64, 32);
+        dynamicTexture.update();
+
+        const material = new BABYLON.StandardMaterial("textMaterial-" + text, scene);
+        material.diffuseTexture = dynamicTexture;
+        material.emissiveColor = color;
+        material.disableLighting = true;
+        material.useAlphaFromDiffuseTexture = true;
+        plane.material = material;
+
+        return plane;
     }
 }

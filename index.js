@@ -154,11 +154,13 @@ async function generateOpenscad(message, code, specs_and_math) {
     console.log(generatedText);
 
     // Strict extraction between ```openscad and ```
-    const codeMatch = generatedText.match(/```openscad([\s\S]*?)```/i);
+    let codeMatch = generatedText.match(/```openscad([\s\S]*?)```/i);
+    if (!codeMatch) {
+        codeMatch = generatedText.match(/```([\s\S]*?)```/i);
+    }
     if (!codeMatch) {
         throw new Error('No OpenSCAD code block found in response');
     }
-
     let sanitizedText = codeMatch[1]
         .trim()
         .replace(/^[\n\r]+|[\n\r]+$/g, ''); // Remove leading/trailing newlines
