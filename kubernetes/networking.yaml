@@ -36,14 +36,7 @@ spec:
   rules:
   - host: promptscad.com
     http:
-      paths:
-      - path: /ads.txt
-        pathType: Exact
-        backend:
-          service:
-            name: dummy-service
-            port:
-              number: 80      
+      paths:    
       - path: /
         pathType: Prefix
         backend:

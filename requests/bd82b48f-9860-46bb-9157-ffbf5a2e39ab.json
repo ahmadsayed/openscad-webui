@@ -1,0 +1,1 @@
+{"status":"done","code":"include <module.scad>\n\ncube_size = 20;\nrounding_radius = 3; // 15% of cube size\nfacets = 16;\n\nrounded_cube([cube_size, cube_size, cube_size], rounding_radius, facets, center=true);","success":true}

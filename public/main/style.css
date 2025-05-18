@@ -1,0 +1,120 @@
+body {
+    margin: 0;
+    background-color: #2B2B2B;
+    color: #D4D4D4;
+    font-family: 'Consolas', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+h1 {
+    color: #73C48F;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.content {
+    background-color: #323232;
+    padding: 2rem;
+    border-radius: 4px;
+    border: 1px solid #3C3C3C;
+}
+
+.image-attribution {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.image-attribution img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #454545;
+}
+
+.image-attribution span {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
+
+.launch-button {
+    display: block;
+    width: 200px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background-color: #73C48F;
+    color: #2B2B2B;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.launch-button:hover {
+    background-color: #5DAF7B;
+}
+
+/* Pre-alpha notice styling */
+.pre-alpha-notice {
+    background-color: #8B3A3A;
+    color: #FFFFFF;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid #A04040;
+}
+
+.pre-alpha-notice strong {
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* FAQ section styling */
+.faq-section {
+    margin-top: 3rem;
+}
+
+.faq-section h2 {
+    color: #73C48F;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.faq-item {
+    background-color: #323232;
+    padding: 1.5rem;
+    border-radius: 4px;
+    border: 1px solid #3C3C3C;
+    margin-bottom: 1.5rem;
+}
+
+.faq-item h3 {
+    color: #73C48F;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.faq-item p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.faq-item a {
+    color: #73C48F;
+    text-decoration: none;
+}
+
+.faq-item a:hover {
+    text-decoration: underline;
+}
