@@ -3,6 +3,7 @@
 import OpenSCAD from "../openscad.js";
 import { downloadBinaryAsFile } from './utils/fileUtils.js';
 
+
 /**
  * Class responsible for rendering OpenSCAD code and managing the generated STL
  */
@@ -12,7 +13,8 @@ export class OpenSCADRenderer {
      */
     constructor(scene) {
         this.scene = scene;
-        this.instance = null;
+        this.worker = new Worker('./src/openscadWorker.js', { type: 'module' });
+        this.pendingRequests = new Map();
     }
 
 
@@ -23,39 +25,41 @@ export class OpenSCADRenderer {
      * @returns {Promise<void>}
      */
     async renderOpenSCAD(openscadCode) {
-        try {
-            // Load the OpenSCAD WASM module
-            this.instance = await OpenSCAD();
+        const id = Date.now() + Math.random().toString(36).substr(2, 5);
+        
+        return new Promise((resolve, reject) => {
+            this.pendingRequests.set(id, { resolve, reject });
 
-            // Load the module.scad file
-            let response = await fetch('./modules/module.scad');
-            let module = await response.text();
-            this.instance.FS.writeFile("/module.scad", module);
+            this.worker.onmessage = (e) => {
+                const { id, result, error } = e.data;
+                const request = this.pendingRequests.get(id);
+                
+                if (!request) return;
+                this.pendingRequests.delete(id);
 
-            console.log("OpenSCAD renderer initialized");
+                if (error) {
+                    request.reject(new Error(error));
+                } else {
+                    this._handleRenderResult(result).then(request.resolve).catch(request.reject);
+                }
+            };
 
-            // Write the input code to the virtual filesystem
-            this.instance.FS.writeFile("/input.scad", openscadCode);
-
-            // Run OpenSCAD to generate the STL
-            this.instance.callMain(["/input.scad", "--enable=manifold", "-o", "cube.stl"]);
-
-            // Read the generated STL
-            const output = this.instance.FS.readFile("/cube.stl");
-            const buffer = this._arrayBufferToBase64(output);
-
-            // Clear existing meshes
-            this._clearScene();
-
-            // Load the STL into the scene
-            await this._loadSTLToScene(buffer);
-
-            console.log("OpenSCAD rendering complete");
-        } catch (error) {
-            console.error("Error rendering OpenSCAD:", error);
-        }
+            this.worker.postMessage({
+                id,
+                command: 'render',
+                data: { openscadCode }
+            });
+        });
     }
 
+    async _handleRenderResult(stlBuffer) {
+        // Convert buffer to base64
+        const buffer = this._arrayBufferToBase64(stlBuffer);
+        
+        // Clear scene and load STL
+        this._clearScene();
+        await this._loadSTLToScene(buffer);
+    }
     /**
      * Download the generated STL file
      */
