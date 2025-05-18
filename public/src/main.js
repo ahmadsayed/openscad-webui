@@ -158,7 +158,8 @@ async function init() {
 // Call API to generate code from user message
 async function generateCodeFromMessage(message, currentCode) {
     try {
-        const response = await fetch('/generate-code', {
+        // Step 1: Initiate code generation and get request ID
+        const initResponse = await fetch('/generate-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -167,16 +168,47 @@ async function generateCodeFromMessage(message, currentCode) {
             }),
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        if (!initResponse.ok) throw new Error('Network response was not ok');
+        const initData = await initResponse.json();
 
-        if (!data.success) throw new Error(data.error || 'Unknown error');
-        return data.code;
+        if (!initData.success) throw new Error(initData.error || 'Initial request failed');
+        const requestId = initData.requestId;
+
+        // Step 2: Poll for status until completion or error
+        return await pollForCompletion(requestId);
     } catch (error) {
         console.error('Generation error:', error);
         // Fallback to simple generation
         return fallbackCodeGeneration(message);
     }
+}
+
+async function pollForCompletion(requestId, interval = 5000, maxAttempts = 200) {
+    // Wait 1-2 seconds before first poll
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            const statusResponse = await fetch(`/status/${requestId}`);
+            if (!statusResponse.ok) throw new Error('Status check failed');
+
+            const statusData = await statusResponse.json();
+
+            if (statusData.status === 'done' && statusData.success) {
+                return statusData.code;
+            }
+            if (statusData.status === 'error') {
+                throw new Error(statusData.error || 'Processing error');
+            }
+
+            // If still processing, wait before next poll
+            await new Promise(resolve => setTimeout(resolve, interval));
+        } catch (error) {
+            throw error; // Re-throw to be caught by outer try-catch
+        }
+    }
+    throw new Error('Max polling attempts reached');
 }
 
 // Simple fallback code generation

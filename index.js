@@ -1,5 +1,12 @@
 import express from 'express';
 import OpenAI from 'openai';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REQUEST_DIR = path.join(__dirname, 'requests');
 
 
 let generator = null;
@@ -173,19 +180,30 @@ async function generateOpenscad(message, code, specs_and_math) {
     return sanitizedText;
 
 }
+
+
 app.post('/generate-code', async (req, res) => {
     try {
-        console.log(JSON.stringify({
-            prompt: req.body
+        const requestId = uuidv4();
+        console.log("Start processing Request : " + requestId);
+        processRequest(requestId, req.body.prompt, req.body.code);
+
+        const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
+
+        // Ensure REQUEST_DIR exists
+        await fs.mkdir(REQUEST_DIR, { recursive: true });
+
+        // Save initial status
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'working',
+            message: req.body.prompt,
+            code: req.body.code
         }));
-        const message = req.body.prompt;
-        const code = req.body.code;
-        console.log(message);
-        let specs_and_math = await verifyTheMath(code, message);
-        let openscadeCode = await generateOpenscad(message, code, specs_and_math);
+
+        // Process in background
 
         res.json({
-            code: openscadeCode,
+            requestId: requestId,
             success: true
         });
 
@@ -198,6 +216,58 @@ app.post('/generate-code', async (req, res) => {
     }
 });
 
+
+
+async function processRequest(requestId, message, code) {
+    try {
+        console.log(requestId);
+        const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
+        let specs_and_math = await verifyTheMath(code, message);
+        let openscadeCode = await generateOpenscad(message, code, specs_and_math);
+        console.log(openscadeCode);
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'done',
+            code: openscadeCode,
+            success: true
+        }));
+        console.log(requestFile);
+    } catch (error) {
+        const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'error',
+            error: error.message,
+            success: false
+        }));
+    }
+}
+
+
+app.get('/status/:requestId', async (req, res) => {
+    try {
+        const requestFile = path.join(REQUEST_DIR, `${req.params.requestId}.json`);
+        const data = await fs.readFile(requestFile, 'utf8');
+        const result = JSON.parse(data);
+        res.set('Cache-Control', 'no-store')
+        res.json({
+            status: result.status,
+            ...(result.status === 'done' && { code: result.code }),
+            ...(result.status === 'error' && { error: result.error }),
+            success: result.success !== false
+        });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return res.status(404).json({
+                success: false,
+                error: 'Request not found'
+            });
+        }
+        console.error('Status check error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 
 app.post('/save', (req, res) => {
     console.log(req.body);
