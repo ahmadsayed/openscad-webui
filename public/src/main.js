@@ -6,6 +6,7 @@ import { initCodeEditor } from './editor/codeEditor.js';
 import { initChatEditor } from './editor/chatEditor.js';
 import { splitScreen, initVerticalResize } from './ui/layout.js';
 import { initMenu } from './ui/menu.js';
+import { downloadSCAD } from './utils/fileUtils.js';
 
 // Global state
 let scene;
@@ -117,7 +118,11 @@ async function init() {
     renderer = new OpenSCADRenderer(scene);
     // Initialize the code editor
     codeEditor = initCodeEditor(code => {
-        renderer.renderOpenSCAD(code);
+        // Render the OpenSCAD code and handle the UI state
+        const renderPromise = renderer.renderOpenSCAD(code);
+        
+        // Return the promise to allow the editor to handle loading states if needed
+        return renderPromise;
     });
 
     // Set default cube and render it
@@ -146,11 +151,15 @@ async function init() {
     // Export necessary functions to window for HTML event handlers
     window.newDesign = () => codeEditor.setValue("");
     window.saveDesign = () => renderer.renderOpenSCAD(codeEditor.getValue());
-    window.downloadSTL = () => renderer.downloadSTL();
+    window.downloadSTL = () => {
+        renderer.downloadSTL().catch(error => {
+            console.error("Failed to download STL:", error);
+        });
+    };
 
     window.downloadSCAD = () => {
         const code = codeEditor.getValue();
-        downloadTextAsFile("code.scad", code);
+        downloadSCAD(code);
     };
 
 }

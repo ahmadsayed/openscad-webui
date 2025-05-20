@@ -1,5 +1,52 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Node.js
 node_modules
 npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Docker
 Dockerfile
 .dockerignore
+docker-compose*
+
+# Environment variables
 .env
+.env.*
+*.env
+
+# Development files
+*.md
+*.log
+*.swp
+*.swo
+.DS_Store
+.vscode
+.idea
+*.sublime*
+
+# Test files
+test
+tests
+__tests__
+coverage
+
+# Build artifacts
+dist
+build
+.cache
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Kubernetes
+kubernetes/
+
+# Requests directory (will be created in container)
+requests/

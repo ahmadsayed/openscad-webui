@@ -1,6 +1,14 @@
 // fileUtils.js - Utilities for file operations
 
 /**
+ * Download OpenSCAD code as a .scad file
+ * @param {string} code - The OpenSCAD code to download
+ */
+export function downloadSCAD(code) {
+    downloadTextAsFile("code.scad", code);
+}
+
+/**
  * Open a design file using the file input
  * @param {Event} event - The triggering event
  */

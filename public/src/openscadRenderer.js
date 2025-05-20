@@ -15,6 +15,132 @@ export class OpenSCADRenderer {
         this.scene = scene;
         this.worker = new Worker('./src/openscadWorker.js', { type: 'module' });
         this.pendingRequests = new Map();
+        this.isProcessing = false;
+        
+        // Create processing indicator element
+        this._createProcessingIndicator();
+        
+        // Set up a single message handler for all worker responses
+        this.worker.onmessage = (e) => {
+            const data = e.data;
+            
+            // Handle progress updates
+            if (data.type === 'progress') {
+                this._updateProcessingIndicator(data.status, data.message);
+                return;
+            }
+            
+            // Handle regular responses
+            const { id, result, error } = data;
+            const request = this.pendingRequests.get(id);
+            
+            if (!request) return;
+            this.pendingRequests.delete(id);
+            
+            // Hide processing indicator if no more pending requests
+            if (this.pendingRequests.size === 0) {
+                this._hideProcessingIndicator();
+            }
+
+            if (error) {
+                request.reject(new Error(error));
+            } else {
+                if (request.type === 'render') {
+                    this._handleRenderResult(result).then(request.resolve).catch(request.reject);
+                } else if (request.type === 'getSTL') {
+                    try {
+                        const bytes = new Uint8Array(result);
+                        downloadBinaryAsFile("model.stl", bytes);
+                        request.resolve();
+                    } catch (err) {
+                        console.error("Error processing STL data:", err);
+                        request.reject(err);
+                    }
+                }
+            }
+        };
+    }
+    
+    /**
+     * Creates the processing indicator element
+     * @private
+     */
+    _createProcessingIndicator() {
+        // Check if the indicator already exists
+        if (document.querySelector('.processing-indicator')) {
+            return;
+        }
+        
+        // Create the indicator elements
+        const indicator = document.createElement('div');
+        indicator.className = 'processing-indicator';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        
+        const text = document.createElement('div');
+        text.className = 'processing-text';
+        text.textContent = 'Processing OpenSCAD...';
+        
+        // Assemble the indicator
+        indicator.appendChild(spinner);
+        indicator.appendChild(text);
+        
+        // Add to the document
+        document.querySelector('.split__right').appendChild(indicator);
+    }
+    
+    /**
+     * Updates the processing indicator with status information
+     * @private
+     * @param {string} status - The current processing status
+     * @param {string} message - The message to display
+     */
+    _updateProcessingIndicator(status, message) {
+        const indicator = document.querySelector('.processing-indicator');
+        if (!indicator) return;
+        
+        const textElement = indicator.querySelector('.processing-text');
+        if (textElement) {
+            textElement.textContent = message || 'Processing OpenSCAD...';
+        }
+        
+        // Make sure the indicator is visible
+        this._showProcessingIndicator();
+        
+        // If status is 'error' or 'completed', we'll hide the indicator after a delay
+        if (status === 'error' || status === 'completed') {
+            setTimeout(() => {
+                // Only hide if there are no pending requests
+                if (this.pendingRequests.size === 0) {
+                    this._hideProcessingIndicator();
+                }
+            }, 1500); // Show the completion/error message for 1.5 seconds
+        }
+    }
+    
+    /**
+     * Shows the processing indicator
+     * @private
+     */
+    _showProcessingIndicator() {
+        const indicator = document.querySelector('.processing-indicator');
+        if (indicator) {
+            indicator.classList.add('visible');
+        }
+        this.isProcessing = true;
+    }
+    
+    /**
+     * Hides the processing indicator
+     * @private
+     */
+    _hideProcessingIndicator() {
+        const indicator = document.querySelector('.processing-indicator');
+        if (indicator) {
+            indicator.classList.remove('visible');
+        }
+        this.isProcessing = false;
     }
 
 
@@ -27,22 +153,15 @@ export class OpenSCADRenderer {
     async renderOpenSCAD(openscadCode) {
         const id = Date.now() + Math.random().toString(36).substr(2, 5);
         
+        // Show processing indicator
+        this._showProcessingIndicator();
+        
         return new Promise((resolve, reject) => {
-            this.pendingRequests.set(id, { resolve, reject });
-
-            this.worker.onmessage = (e) => {
-                const { id, result, error } = e.data;
-                const request = this.pendingRequests.get(id);
-                
-                if (!request) return;
-                this.pendingRequests.delete(id);
-
-                if (error) {
-                    request.reject(new Error(error));
-                } else {
-                    this._handleRenderResult(result).then(request.resolve).catch(request.reject);
-                }
-            };
+            this.pendingRequests.set(id, { 
+                resolve, 
+                reject,
+                type: 'render'
+            });
 
             this.worker.postMessage({
                 id,
@@ -62,20 +181,26 @@ export class OpenSCADRenderer {
     }
     /**
      * Download the generated STL file
+     * @returns {Promise<void>}
      */
     downloadSTL() {
-        if (!this.instance) {
-            console.error("OpenSCAD instance not initialized");
-            return;
-        }
+        const id = Date.now() + Math.random().toString(36).substr(2, 5);
+        
+        // Show processing indicator
+        this._showProcessingIndicator();
+        
+        return new Promise((resolve, reject) => {
+            this.pendingRequests.set(id, { 
+                resolve, 
+                reject,
+                type: 'getSTL'
+            });
 
-        try {
-            const output = this.instance.FS.readFile("/cube.stl");
-            const bytes = new Uint8Array(output);
-            downloadBinaryAsFile("model.stl", bytes);
-        } catch (error) {
-            console.error("Error downloading STL:", error);
-        }
+            this.worker.postMessage({
+                id,
+                command: 'getSTL'
+            });
+        });
     }
 
     /**
