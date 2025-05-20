@@ -93,6 +93,10 @@ body {
   overflow: hidden;
   animation: dropdownFade 0.2s ease;
   margin-top: 4px;
+  /* Add padding to create a buffer zone */
+  padding-top: 8px;
+  /* Add a small negative margin to connect with the nav item */
+  margin-top: -4px;
 }
 
 @keyframes dropdownFade {
@@ -100,8 +104,29 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.nav-item:hover .dropdown {
+/* Create a persistent dropdown with delay */
+.nav-item .dropdown {
+  visibility: hidden;
+  opacity: 0;
   display: block;
+  transition: visibility 0s linear 0.3s, opacity 0.3s linear;
+}
+
+.nav-item:hover .dropdown {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+/* Add a buffer zone to prevent accidental menu closing */
+.nav-item:after {
+  content: '';
+  position: absolute;
+  height: 20px;
+  width: 100%;
+  left: 0;
+  top: 100%;
+  z-index: 999;
 }
 
 .dropdown a {
@@ -217,14 +242,17 @@ body {
   gap: 12px;
   z-index: 100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  -webkit-transition: opacity 0.3s ease, -webkit-transform 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, -webkit-transform 0.3s ease;
   opacity: 0;
+  -webkit-transform: translateY(-10px);
   transform: translateY(-10px);
   pointer-events: none;
 }
 
 .processing-indicator.visible {
   opacity: 1;
+  -webkit-transform: translateY(0);
   transform: translateY(0);
 }
 
@@ -234,6 +262,7 @@ body {
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: #007bff;
+  -webkit-animation: spin 1s linear infinite;
   animation: spin 1s linear infinite;
 }
 
@@ -344,12 +373,20 @@ body {
 
 .chat-container.thinking .chat-submit .bi-send:before {
   content: "\F5EF"; /* Bootstrap icon code for spinner */
+  -webkit-animation: spin 1s linear infinite;
   animation: spin 1s linear infinite;
 }
 
-/* Make the spinner actually spin */
+/* Make the spinner actually spin - with Firefox compatibility */
+@-webkit-keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}
+
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to { 
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+  }
 }
 
 /* Resize Indicator */
@@ -448,6 +485,7 @@ body.resizing-vertical .resize-bar-vertical {
     width: 100%;
   }
   
+  /* Mobile dropdown adjustments */
   .dropdown {
     position: static;
     width: 100%;
@@ -456,6 +494,21 @@ body.resizing-vertical .resize-bar-vertical {
     border-radius: 0;
     animation: none;
     margin-left: 16px;
+    /* Reset transition for mobile */
+    transition: none;
+    display: none;
+  }
+  
+  /* Show dropdown on tap for mobile */
+  .nav-item.active .dropdown {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  /* Remove the buffer zone on mobile as it's not needed */
+  .nav-item:after {
+    display: none;
   }
 
   /* Adjust the vertical resize for mobile */

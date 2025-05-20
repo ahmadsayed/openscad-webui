@@ -10,21 +10,25 @@ class OpenSCADWorker {
 
     async render(openscadCode) {
         try {
-            // Send a progress update
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'initializing', 
-                message: 'Initializing OpenSCAD...' 
-            });
+            // Send a progress update - use setTimeout to ensure Firefox doesn't hang
+            setTimeout(() => {
+                self.postMessage({ 
+                    type: 'progress', 
+                    status: 'initializing', 
+                    message: 'Initializing OpenSCAD...' 
+                });
+            }, 0);
             
             this.instance = await OpenSCAD();
 
             // Send a progress update
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'loading', 
-                message: 'Loading modules...' 
-            });
+            setTimeout(() => {
+                self.postMessage({ 
+                    type: 'progress', 
+                    status: 'loading', 
+                    message: 'Loading modules...' 
+                });
+            }, 0);
 
             // Load the module.scad file
             let response = await fetch('./modules/module.scad');
@@ -32,32 +36,38 @@ class OpenSCADWorker {
             this.instance.FS.writeFile("/module.scad", module);
 
             // Send a progress update
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'processing', 
-                message: 'Processing OpenSCAD code...' 
-            });
+            setTimeout(() => {
+                self.postMessage({ 
+                    type: 'progress', 
+                    status: 'processing', 
+                    message: 'Processing OpenSCAD code...' 
+                });
+            }, 0);
 
             // Write input and generate STL
             this.instance.FS.writeFile("/input.scad", openscadCode);
             this.instance.callMain(["/input.scad", "--enable=manifold", "-o", "cube.stl"]);
 
             // Send a progress update
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'finalizing', 
-                message: 'Finalizing model...' 
-            });
+            setTimeout(() => {
+                self.postMessage({ 
+                    type: 'progress', 
+                    status: 'finalizing', 
+                    message: 'Finalizing model...' 
+                });
+            }, 0);
 
             const output = this.instance.FS.readFile("/cube.stl");
             return output.buffer;
         } catch (error) {
             // Send error progress update
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'error', 
-                message: 'Error: ' + error.message 
-            });
+            setTimeout(() => {
+                self.postMessage({ 
+                    type: 'progress', 
+                    status: 'error', 
+                    message: 'Error: ' + error.message 
+                });
+            }, 0);
             throw error;
         }
     }
@@ -71,32 +81,41 @@ self.onmessage = async (e) => {
     try {
         switch (command) {
             case 'render':
-                // Send initial progress update
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'started', 
-                    message: 'Starting OpenSCAD rendering...' 
-                });
+                // Send initial progress update with setTimeout for Firefox compatibility
+                setTimeout(() => {
+                    self.postMessage({ 
+                        type: 'progress', 
+                        status: 'started', 
+                        message: 'Starting OpenSCAD rendering...' 
+                    });
+                }, 0);
                 
                 const stlBuffer = await worker.render(data.openscadCode);
                 
                 // Send completion progress update
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'completed', 
-                    message: 'Rendering completed' 
-                });
+                setTimeout(() => {
+                    self.postMessage({ 
+                        type: 'progress', 
+                        status: 'completed', 
+                        message: 'Rendering completed' 
+                    });
+                }, 0);
                 
-                self.postMessage({ id, result: stlBuffer }, [stlBuffer]);
+                // Use setTimeout to ensure Firefox doesn't hang on transferable objects
+                setTimeout(() => {
+                    self.postMessage({ id, result: stlBuffer }, [stlBuffer]);
+                }, 10);
                 break;
                 
             case 'getSTL':
                 // Send progress update
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'exporting', 
-                    message: 'Exporting STL file...' 
-                });
+                setTimeout(() => {
+                    self.postMessage({ 
+                        type: 'progress', 
+                        status: 'exporting', 
+                        message: 'Exporting STL file...' 
+                    });
+                }, 0);
                 
                 if (!worker.instance) {
                     throw new Error("OpenSCAD instance not initialized");
@@ -105,13 +124,18 @@ self.onmessage = async (e) => {
                     const output = worker.instance.FS.readFile("/cube.stl");
                     
                     // Send completion progress update
-                    self.postMessage({ 
-                        type: 'progress', 
-                        status: 'completed', 
-                        message: 'Export completed' 
-                    });
+                    setTimeout(() => {
+                        self.postMessage({ 
+                            type: 'progress', 
+                            status: 'completed', 
+                            message: 'Export completed' 
+                        });
+                    }, 0);
                     
-                    self.postMessage({ id, result: output.buffer }, [output.buffer]);
+                    // Use setTimeout to ensure Firefox doesn't hang on transferable objects
+                    setTimeout(() => {
+                        self.postMessage({ id, result: output.buffer }, [output.buffer]);
+                    }, 10);
                 } catch (error) {
                     throw new Error("Error reading STL file: " + error.message);
                 }
@@ -122,12 +146,16 @@ self.onmessage = async (e) => {
         }
     } catch (error) {
         // Send error progress update
-        self.postMessage({ 
-            type: 'progress', 
-            status: 'error', 
-            message: 'Error: ' + error.message 
-        });
+        setTimeout(() => {
+            self.postMessage({ 
+                type: 'progress', 
+                status: 'error', 
+                message: 'Error: ' + error.message 
+            });
+        }, 0);
         
-        self.postMessage({ id, error: error.message });
+        setTimeout(() => {
+            self.postMessage({ id, error: error.message });
+        }, 10);
     }
 };
