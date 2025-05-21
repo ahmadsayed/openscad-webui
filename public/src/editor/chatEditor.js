@@ -69,13 +69,28 @@ function setupEventHandlers(chatEditor, onSubmitCallback) {
 async function submitChat(chatEditor, onSubmitCallback) {
     const message = chatEditor.getValue().trim();
     const chatContainer = document.querySelector('.chat-container');
+    const submitButton = document.getElementById('chatSubmit');
+    const icon = submitButton.querySelector('i') || submitButton.querySelector('svg');
+    const originalText = submitButton.querySelector('.button-text')?.textContent || submitButton.textContent;
 
     if (!message) return;
 
+    // Create text span if it doesn't exist
+    let textSpan = submitButton.querySelector('.button-text');
+    if (!textSpan) {
+        textSpan = document.createElement('span');
+        textSpan.className = 'button-text';
+        submitButton.innerHTML = '';
+        if (icon) submitButton.appendChild(icon);
+        submitButton.appendChild(textSpan);
+    }
+
     try {
-        // Show thinking state
+        // Show initial thinking state
         chatContainer.classList.add('thinking');
         chatEditor.setReadOnly(true);
+        submitButton.classList.add('processing');
+        textSpan.textContent = 'Processing...';
 
         // Process the message with the provided callback
         const success = await onSubmitCallback(message);
@@ -86,10 +101,14 @@ async function submitChat(chatEditor, onSubmitCallback) {
         }
     } catch (error) {
         console.error('Chat submission error:', error);
-        alert(`Error: ${error.message}`);
+        textSpan.textContent = 'Error!';
     } finally {
         // Restore editor state
-        chatContainer.classList.remove('thinking');
-        chatEditor.setReadOnly(false);
+        setTimeout(() => {
+            chatContainer.classList.remove('thinking');
+            submitButton.classList.remove('processing');
+            textSpan.textContent = originalText;
+            chatEditor.setReadOnly(false);
+        }, 1000);
     }
 }

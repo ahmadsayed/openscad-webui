@@ -13,7 +13,7 @@ let generator = null;
 
 
 
-const app = express();
+export const app = express();
 const PORT = 3000;
 
 const modules=`     [MODULES] Use these with include <module.scad>:
@@ -50,13 +50,22 @@ app.use(express.urlencoded());
 app.use(express.json());
 
 
-const openai = new OpenAI({
-    baseURL: process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com',
-    apiKey: process.env.DEEPSEEK_API_KEY
-});
+let openai;
+
+export function initializeOpenAI(apiKey, baseURL = 'https://api.deepseek.com', mockClient = null) {
+  openai = mockClient || new OpenAI({ baseURL, apiKey });
+  return openai;
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  initializeOpenAI(
+    process.env.DEEPSEEK_API_KEY,
+    process.env.DEEPSEEK_API_BASE_URL
+  );
+}
 
 
-function validateOpenSCADSyntax(code) {
+export function validateOpenSCADSyntax(code) {
     return {
         valid: code.length > 5,
         errors: "",
@@ -64,7 +73,7 @@ function validateOpenSCADSyntax(code) {
 }
 
 
-async function verifyTheMath(existing_code, changes) {
+export async function verifyTheMath(existing_code, changes) {
     let prompt = {
         "system": "You are an OpenSCAD math specialist. " +
                 "Analyze input code and changes to output ONLY: " +
@@ -110,7 +119,7 @@ async function verifyTheMath(existing_code, changes) {
     return generatedText;
 }
 
-async function generateOpenscad(message, code, specs_and_math) {
+export async function generateOpenscad(message, code, specs_and_math) {
     const systemRole = {
         role: "system",
         content: `[OpenSCAD Expert Protocol]
@@ -126,7 +135,7 @@ async function generateOpenscad(message, code, specs_and_math) {
                     → Check unit consistency (mm vs radians)
                     → Prevent facet overload: $fn≤64 unless specified
                     → Center all primitives by default`
-    };
+    };           
     if (!validateOpenSCADSyntax(code).valid) {
         code = "cube(20, center=true);"
     }
@@ -138,8 +147,7 @@ async function generateOpenscad(message, code, specs_and_math) {
             2. PARAMETERIZE: Replace literals with variables (e.g., wheel_dia=50)
             3. RESOLUTION: $fn=16 unless 'smooth' specified then use $fn=64
             4. MODULARIZE: Group repeated patterns using module
-            5. MATH: Reference these specs: ${specs_and_math}
-            6. OUTPUT: Only valid OpenSCAD in \`\`\` blocks
+            5. OUTPUT: Only valid OpenSCAD in \`\`\` blocks
 
             [CONSTRAINTS]
             - No markdown beyond code fences
@@ -148,6 +156,11 @@ async function generateOpenscad(message, code, specs_and_math) {
     const completion = await openai.chat.completions.create({
         model: "deepseek-chat",
         messages: [
+            {
+                role: "assistant",
+                content: `Reference these specs: ${specs_and_math}`
+
+            },
             systemRole,
             {
                 role: "user",
@@ -218,15 +231,32 @@ app.post('/generate-code', async (req, res) => {
 
 
 
-async function processRequest(requestId, message, code) {
+export async function processRequest(requestId, message, code) {
     try {
         console.log(requestId);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
+        
+        // Update status to Calculating Geometry
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'working',
+            phase: 'Calculating Geometry',
+            success: true
+        }));
+
         let specs_and_math = await verifyTheMath(code, message);
+        
+        // Update status to Generating Code
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'working',
+            phase: 'Generating Code',
+            success: true
+        }));
+
         let openscadeCode = await generateOpenscad(message, code, specs_and_math);
         console.log(openscadeCode);
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'done',
+            phase: 'Rendering',
             code: openscadeCode,
             success: true
         }));
@@ -235,6 +265,7 @@ async function processRequest(requestId, message, code) {
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'error',
+            phase: 'Error',
             error: error.message,
             success: false
         }));
@@ -250,6 +281,7 @@ app.get('/status/:requestId', async (req, res) => {
         res.set('Cache-Control', 'no-store')
         res.json({
             status: result.status,
+            phase: result.phase || 'working',
             ...(result.status === 'done' && { code: result.code }),
             ...(result.status === 'error' && { error: result.error }),
             success: result.success !== false
@@ -289,7 +321,10 @@ app.post('/generate', (req, res) => {
 })
 app.use(express.static('public'));
 // Start server
+let server;
 
-app.listen(PORT, () => {
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
     console.log(`Server listening on port: ${PORT}`);
-});
+  });
+}

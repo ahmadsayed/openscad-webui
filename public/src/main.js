@@ -192,10 +192,19 @@ async function generateCodeFromMessage(message, currentCode) {
     }
 }
 
-async function pollForCompletion(requestId, interval = 5000, maxAttempts = 200) {
-    // Wait 1-2 seconds before first poll
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-
+async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) {
+    // Use requestAnimationFrame for more consistent timing across browsers
+    await new Promise(resolve => {
+        const start = performance.now();
+        const checkTime = (timestamp) => {
+            if (timestamp - start >= interval) {
+                resolve();
+            } else {
+                requestAnimationFrame(checkTime);
+            }
+        };
+        requestAnimationFrame(checkTime);
+    });
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
@@ -204,6 +213,18 @@ async function pollForCompletion(requestId, interval = 5000, maxAttempts = 200) 
 
             const statusData = await statusResponse.json();
 
+            // Update submit button with current phase if available
+            if (statusData.phase) {
+                const submitButton = document.getElementById('chatSubmit');
+                if (submitButton) {
+                    const textSpan = submitButton.querySelector('.button-text');
+                    if (textSpan) {
+                        textSpan.textContent = statusData.phase;
+                    }
+                    submitButton.classList.add('processing');
+                }
+            }
+
             if (statusData.status === 'done' && statusData.success) {
                 return statusData.code;
             }
@@ -211,8 +232,18 @@ async function pollForCompletion(requestId, interval = 5000, maxAttempts = 200) 
                 throw new Error(statusData.error || 'Processing error');
             }
 
-            // If still processing, wait before next poll
-            await new Promise(resolve => setTimeout(resolve, interval));
+            // If still processing, wait before next poll using requestAnimationFrame
+            await new Promise(resolve => {
+                const start = performance.now();
+                const checkTime = (timestamp) => {
+                    if (timestamp - start >= interval) {
+                        resolve();
+                    } else {
+                        requestAnimationFrame(checkTime);
+                    }
+                };
+                requestAnimationFrame(checkTime);
+            });
         } catch (error) {
             throw error; // Re-throw to be caught by outer try-catch
         }
