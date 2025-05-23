@@ -41,12 +41,38 @@ export function initVerticalResize() {
     const editorEl = document.getElementById('editor');
     const chatContainer = document.querySelector('.chat-container');
     let isDragging = false;
+    let startY, startHeightEditor, startHeightChat;
 
     // Handle mouse down on the resize bar
     resizeBar.addEventListener('mousedown', (e) => {
         isDragging = true;
+        startY = e.clientY;
+        startHeightEditor = editorEl.offsetHeight;
+        startHeightChat = chatContainer.offsetHeight;
+        
+        // Add resize class to body for visual feedback
+        document.body.classList.add('resizing-vertical');
+        document.body.style.userSelect = 'none';
+        
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    });
+
+    // Touch support for mobile devices
+    resizeBar.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        isDragging = true;
+        startY = touch.clientY;
+        startHeightEditor = editorEl.offsetHeight;
+        startHeightChat = chatContainer.offsetHeight;
+        
+        document.body.classList.add('resizing-vertical');
+        document.body.style.userSelect = 'none';
+        
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onMouseUp);
+        e.preventDefault();
     });
 
     /**
@@ -56,27 +82,50 @@ export function initVerticalResize() {
     function onMouseMove(e) {
         if (!isDragging) return;
         
-        const container = editorEl.parentElement;
-        const containerRect = container.getBoundingClientRect();
-        const y = e.clientY - containerRect.top;
+        const deltaY = e.clientY - startY;
+        const newEditorHeight = startHeightEditor + deltaY;
+        const newChatHeight = startHeightChat - deltaY;
 
-        // Update element heights
-        editorEl.style.height = `${y - 2}px`;
-        chatContainer.style.height = `calc(100% - ${y + 3}px)`;
+        // Apply new heights if they meet minimum requirements
+        if (newEditorHeight > 100 && newChatHeight > 100) {
+            editorEl.style.height = newEditorHeight + 'px';
+            editorEl.style.flex = '0 0 ' + newEditorHeight + 'px';
+            chatContainer.style.flex = '1';
+            chatContainer.style.height = 'auto';
 
-        // Resize the editors
-        const codeEditor = ace.edit('editor');
-        const chatEditor = ace.edit('chatEditor');
-        if (codeEditor) codeEditor.resize();
-        if (chatEditor) chatEditor.resize();
+            // Resize the editors after a short delay to ensure proper rendering
+            setTimeout(() => {
+                const codeEditor = ace.edit('editor');
+                const chatEditor = ace.edit('chatEditor');
+                if (codeEditor) codeEditor.resize();
+                if (chatEditor) chatEditor.resize();
+            }, 10);
+        }
+    }
+
+    /**
+     * Handle touch movement for vertical resizing
+     * @param {TouchEvent} e - The touch event
+     */
+    function onTouchMove(e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        onMouseMove({ clientY: touch.clientY });
     }
 
     /**
      * Handle mouse up to stop resizing
      */
     function onMouseUp() {
-        isDragging = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        if (isDragging) {
+            isDragging = false;
+            document.body.classList.remove('resizing-vertical');
+            document.body.style.userSelect = '';
+            
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onMouseUp);
+        }
     }
 }

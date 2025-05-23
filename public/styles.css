@@ -287,23 +287,23 @@ body {
 
 /* Chat Container Styling */
 .chat-container {
-  flex: 0.4;
+  flex: 1;
   min-height: 150px;
-  max-height: 50%;
   background-color: #2d2d2d;
   display: flex;
   flex-direction: column;
   padding: 12px;
   border-top: 1px solid #404040;
-  transition: max-height 0.3s ease;
   overflow: hidden;
 }
 
 /* Editor container for placeholder positioning */
 .editor-container {
   position: relative;
-  flex: 0.5;
-  margin-bottom: 0px;
+  flex: 1;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
 }
 
 #chatEditor {
@@ -311,8 +311,8 @@ body {
   border-radius: 8px;
   border: 1px solid #404040;
   background: #1e1e1e;
-  margin-bottom: 12px;
   min-height: 100px;
+  height: 100%;
 }
 
 /* Placeholder styling */

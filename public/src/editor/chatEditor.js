@@ -36,7 +36,9 @@ function configureEditor(chatEditor) {
         highlightActiveLine: false,
         showPrintMargin: false,
         minLines: 3,
-        maxLines: 10
+        maxLines: Infinity, // Allow unlimited expansion
+        wrap: true,
+        autoScrollEditorIntoView: true
     });
 }
 
