@@ -1,0 +1,1 @@
+{"status":"done","phase":"","code":"// Parameters\ncube_size = 20;\nhole_radius = 5;\nfacets = $preview ? 16 : 64;\nepsilon = 0.1;\n\ndifference() {\n    cube(cube_size, center=true);\n    cylinder(h=cube_size + epsilon, r=hole_radius, center=true, $fn=facets);\n}","success":true}

@@ -1,0 +1,1 @@
+{"status":"done","phase":"","code":"cube_size = 20;\nhole_dia = 10;\nhole_height = 22;\nfacets = 16;\n\ndifference() {\n    cube(cube_size, center=true);\n    cylinder(h=hole_height, d=hole_dia, center=true, $fn=facets);\n}","success":true}

@@ -46,7 +46,15 @@ class OpenSCADWorker {
 
             // Write input and generate STL
             this.instance.FS.writeFile("/input.scad", openscadCode);
-            this.instance.callMain(["/input.scad", "--enable=manifold", "-o", "cube.stl"]);
+            this.instance.callMain(["/input.scad", 
+                "--enable=manifold",           // Enable manifold geometry engine (faster)
+                "--enable=fast-csg",          // Enable fast CSG operations
+                "--enable=lazy-union",        // Enable lazy union optimization               
+                "-o", "cube.stl",
+                 "--render",                   // Force render mode
+                "--quiet"                     // Reduce output verbosity           
+            ]
+            );
 
             // Send a progress update
             setTimeout(() => {

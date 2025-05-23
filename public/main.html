@@ -4,27 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PromptSCAD: Free Online OpenSCAD Editor with AI Assistance</title>
+    <title>Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Edit OpenSCAD code online with AI-powered suggestions. Create parametric 3D models for printing with natural language prompts.">
-    <meta name="keywords" content="OpenSCAD editor, AI CAD tools, online 3D modeling, CAD automation, AI code assistant, parametric modeling, 3D printing">
+    <meta name="description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.">
+    <meta name="keywords" content="OpenSCAD editor online, AI CAD assistant, 3D modeling browser, parametric design tool, SCAD code editor, online 3D CAD, AI code generation, STL export, WebGL 3D viewer, free CAD software">
     <meta name="author" content="PromptSCAD">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="language" content="en">
+    <meta name="geo.region" content="US">
+    <meta name="geo.placename" content="Global">
     <link rel="canonical" href="https://promptscad.com/main.html">
     
     <!-- Open Graph / Facebook Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://promptscad.com/main.html">
-    <meta property="og:title" content="PromptSCAD: Free Online OpenSCAD Editor with AI Assistance">
-    <meta property="og:description" content="Edit OpenSCAD code online with AI-powered suggestions. Create parametric 3D models for printing with natural language prompts.">
+    <meta property="og:title" content="Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool">
+    <meta property="og:description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.">
     <meta property="og:image" content="https://promptscad.com/main/sample.png">
     
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://promptscad.com/main.html">
-    <meta name="twitter:title" content="PromptSCAD: Free Online OpenSCAD Editor with AI Assistance">
-    <meta name="twitter:description" content="Edit OpenSCAD code online with AI-powered suggestions. Create parametric 3D models for printing with natural language prompts.">
+    <meta name="twitter:title" content="Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool">
+    <meta name="twitter:description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.">
     <meta name="twitter:image" content="https://promptscad.com/main/sample.png">
     
     <!-- Favicon -->
@@ -57,7 +61,7 @@
         "price": "0",
         "priceCurrency": "USD"
       },
-      "description": "Edit OpenSCAD code online with AI-powered suggestions. Create parametric 3D models for printing with natural language prompts.",
+      "description": "Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.",
       "featureList": "AI-assisted code editing, 3D model preview, STL export, SCAD file management",
       "browserRequirements": "Requires a modern browser with WebGL support"
     }
@@ -66,7 +70,8 @@
 
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar">
+    <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="menu-toggle" id="mobile-menu">
             <span class="bar"></span>
             <span class="bar"></span>
@@ -109,9 +114,10 @@
         </ul>
         <div class="flex-spacer"></div>
     </nav>
+    </header>
 
     <!-- Main Container -->
-    <div class="container split">
+    <main class="container split" role="main" aria-label="OpenSCAD Editor Interface">
         <!-- Left Panel - Code Editor and Chat -->
         <div class="split__left">
             <!-- SCAD Code Editor -->
@@ -142,7 +148,7 @@
             <div id="loadingScreen"></div>
             <canvas id="renderCanvas"></canvas>
         </div>
-    </div>
+    </main>
 
     <!-- App Scripts -->
     <script src="./openscad.js" type="module"></script>
@@ -152,12 +158,6 @@
     <script type="module" src="./src/openscadWorker.js"></script>
 
     
-    <!-- Ad script -->
-    <script>
-        ezstandalone.cmd.push(function () {
-            ezstandalone.showAds(101);
-        });
-    </script>
 </body>
 
 </html>
