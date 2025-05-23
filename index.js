@@ -16,7 +16,7 @@ let generator = null;
 export const app = express();
 const PORT = 3000;
 
-const modules=`     [MODULES] Use these with include <module.scad>:
+const modules = `     [MODULES] Use these with include <module.scad>:
                     1. rounded_cube([width,depth,height], radius, facets)
                     // Example: rounded_cube([30,20,10], 3, facets=16);
                     
@@ -53,15 +53,15 @@ app.use(express.json());
 let openai;
 
 export function initializeOpenAI(apiKey, baseURL = 'https://api.deepseek.com', mockClient = null) {
-  openai = mockClient || new OpenAI({ baseURL, apiKey });
-  return openai;
+    openai = mockClient || new OpenAI({ baseURL, apiKey });
+    return openai;
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  initializeOpenAI(
-    process.env.DEEPSEEK_API_KEY,
-    process.env.DEEPSEEK_API_BASE_URL
-  );
+    initializeOpenAI(
+        process.env.DEEPSEEK_API_KEY,
+        process.env.DEEPSEEK_API_BASE_URL
+    );
 }
 
 
@@ -76,29 +76,38 @@ export function validateOpenSCADSyntax(code) {
 export async function verifyTheMath(existing_code, changes) {
     let prompt = {
         "system": "You are an OpenSCAD math specialist. " +
-                "Analyze input code and changes to output ONLY: " +
-                "1) Formulas for object positioning  "+
-                "2) Coordinate transformations " +
-                "3) Error checks " +
-                "4) Optimization rules. " +"Use OpenSCAD-specific math syntax. NEVER generate code - only equations and logical conditions." +
-                "Prioritize the use already existing module, if suitable " + modules,
-        "user": `OpenSCAD Code: ${existing_code}\nChanges Needed: ${changes}\n\nOutput mathematical specifications for:`,
+            "First determine user intention (modification request or question about potential issues). " +
+            "Then analyze the input code and: " +
+            "1) For modifications: Output mathematical specifications for the changes " +
+            "2) For questions: Identify potential issues and their mathematical implications " +
+            "Use OpenSCAD-specific math syntax. NEVER generate code - only equations and logical conditions." +
+            "Prioritize use of existing modules if suitable: " + modules,
+
+        "user": 
+            "OpenSCAD Code: " +existing_code +"\n" +
+            "User Input: " +changes + "\n\n" +
+            "Analyze and output mathematical specifications for:"
+        ,
+
         "response_requirements": {
             "format": [
-                "1. Coordinate System: [formulas with OpenSCAD axis references]",
-                "2. Transformations: [matrix/vector operations]",
-                "3. Error Conditions: [inequality checks]",
-                "4. Optimizations: [simplified equations]",
+                "1. Intention: [modification|question]",
+                "2. Coordinate System: [formulas with OpenSCAD axis references]",
+                "3. Transformations: [matrix/vector operations]",
+                "4. Error Conditions: [inequality checks]",
+                "5. Optimizations: [simplified equations]",
                 "Example: 'X-centering: x_offset = -total_width/2'"
             ],
             "constraints": [
                 "No code snippets",
                 "No explanations",
                 "Use OpenSCAD functions: norm(), cross(), atan2()",
-                "Prioritize matrix operations over trigonometry"
+                "Prioritize matrix operations over trigonometry",
+                "Include intention analysis first",
+                "Maintain original mathematical precision"
             ]
         }
-    }
+    };
     const completion = await openai.chat.completions.create({
         model: "deepseek-chat",
         messages: [
@@ -134,8 +143,10 @@ export async function generateOpenscad(message, code, specs_and_math) {
                     → Validate module parameters before use
                     → Check unit consistency (mm vs radians)
                     → Prevent facet overload: $fn≤64 unless specified
-                    → Center all primitives by default`
-    };           
+                    → Center all primitives by default
+                    → If one of the mentioned module used, you MUST include <module.scad>`
+
+    };
     if (!validateOpenSCADSyntax(code).valid) {
         code = "cube(20, center=true);"
     }
@@ -145,7 +156,7 @@ export async function generateOpenscad(message, code, specs_and_math) {
             [DIRECTIVES]
             1. CENTER: Apply center=true to all primitives (cube(), cylinder(), sphere())
             2. PARAMETERIZE: Replace literals with variables (e.g., wheel_dia=50)
-            3. RESOLUTION: $fn=16 unless 'smooth' specified then use $fn=64
+            3. RESOLUTION: $fn=16 unless 'smooth' specified then use $fn=64 and always Paremterize in a variable called facets
             4. MODULARIZE: Group repeated patterns using module
             5. OUTPUT: Only valid OpenSCAD in \`\`\` blocks
 
@@ -199,7 +210,13 @@ app.post('/generate-code', async (req, res) => {
     try {
         const requestId = uuidv4();
         console.log("Start processing Request : " + requestId);
-        processRequest(requestId, req.body.prompt, req.body.code);
+
+        // Trim prompt if over 64 words
+        const prompt = req.body.prompt.split(/\s+/).length > 64
+            ? req.body.prompt.split(/\s+/).slice(0, 64).join(' ')
+            : req.body.prompt;
+
+        processRequest(requestId, prompt, req.body.code);
 
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
 
@@ -235,7 +252,7 @@ export async function processRequest(requestId, message, code) {
     try {
         console.log(requestId);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
-        
+
         // Update status to Calculating Geometry
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'working',
@@ -244,7 +261,7 @@ export async function processRequest(requestId, message, code) {
         }));
 
         let specs_and_math = await verifyTheMath(code, message);
-        
+
         // Update status to Generating Code
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'working',
@@ -256,12 +273,13 @@ export async function processRequest(requestId, message, code) {
         console.log(openscadeCode);
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'done',
-            phase: 'Rendering',
+            phase: '',
             code: openscadeCode,
             success: true
         }));
         console.log(requestFile);
     } catch (error) {
+        console.log(error);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'error',
@@ -308,10 +326,6 @@ app.post('/save', (req, res) => {
     });
 });
 
-// Redirect middleware for /ads.txt
-app.get('/ads.txt', (req, res) => {
-  res.redirect(301, 'https://srv.adstxtmanager.com/19390/promptscad.com');
-});
 
 app.post('/generate', (req, res) => {
     console.log(req.body);
@@ -324,7 +338,7 @@ app.use(express.static('public'));
 let server;
 
 if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(PORT, () => {
-    console.log(`Server listening on port: ${PORT}`);
-  });
+    server = app.listen(PORT, () => {
+        console.log(`Server listening on port: ${PORT}`);
+    });
 }

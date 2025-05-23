@@ -75,6 +75,25 @@ async function submitChat(chatEditor, onSubmitCallback) {
 
     if (!message) return;
 
+    // Check word count limit (64 words max)
+    const wordCount = message.split(/\s+/).filter(word => word.length > 0).length;
+    if (wordCount > 64) {
+        submitButton.classList.add('error');
+        const textSpan = submitButton.querySelector('.button-text') || document.createElement('span');
+        textSpan.className = 'button-text';
+        textSpan.textContent = 'Too long! (64 words max)';
+        if (!submitButton.contains(textSpan)) {
+            submitButton.innerHTML = '';
+            if (icon) submitButton.appendChild(icon);
+            submitButton.appendChild(textSpan);
+        }
+        setTimeout(() => {
+            submitButton.classList.remove('error');
+            textSpan.textContent = originalText;
+        }, 2000);
+        return;
+    }
+
     // Create text span if it doesn't exist
     let textSpan = submitButton.querySelector('.button-text');
     if (!textSpan) {

@@ -120,7 +120,7 @@ async function init() {
     codeEditor = initCodeEditor(code => {
         // Render the OpenSCAD code and handle the UI state
         const renderPromise = renderer.renderOpenSCAD(code);
-        
+
         // Return the promise to allow the editor to handle loading states if needed
         return renderPromise;
     });
@@ -212,10 +212,11 @@ async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) 
             if (!statusResponse.ok) throw new Error('Status check failed');
 
             const statusData = await statusResponse.json();
+            const submitButton = document.getElementById('chatSubmit');
+            const chatContainer = document.querySelector('.chat-container');
 
             // Update submit button with current phase if available
             if (statusData.phase) {
-                const submitButton = document.getElementById('chatSubmit');
                 if (submitButton) {
                     const textSpan = submitButton.querySelector('.button-text');
                     if (textSpan) {
@@ -226,6 +227,15 @@ async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) 
             }
 
             if (statusData.status === 'done' && statusData.success) {
+                submitButton.classList.remove('processing');
+                chatContainer.classList.remove('thinking');
+                const chatEditor = ace.edit("chatEditor");
+                chatEditor.setReadOnly(false);
+
+                const textSpan = submitButton.querySelector('.button-text');
+                if (textSpan) {
+                    textSpan.textContent = "Send";
+                }
                 return statusData.code;
             }
             if (statusData.status === 'error') {
