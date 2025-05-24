@@ -335,28 +335,25 @@ body {
   justify-content: flex-end;
 }
 
-/* Updated button styling */
+/* Updated button styling to match index.html */
 .chat-submit {
   padding: 8px 16px;
-  background: #007bff;
-  color: white;
+  background: #73C48F;
+  color: #2B2B2B;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+  transition: background-color 0.3s;
   min-width: 100px;
   justify-content: center;
 }
 
 .chat-submit:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  background: #5DAF7B;
 }
 
 .chat-submit:active {

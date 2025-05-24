@@ -20,6 +20,14 @@
         <priority>0.9</priority>
     </url>
 
+    <!-- Simple Mode / AI-Only Interface -->
+    <url>
+        <loc>https://promptscad.com/simple.html</loc>
+        <lastmod>2025-01-24</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
     <!-- FAQ Section (anchor link from home page) -->
     <url>
         <loc>https://promptscad.com/#faq</loc>
