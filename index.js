@@ -144,7 +144,20 @@ export async function generateOpenscad(message, code, specs_and_math) {
                     → Check unit consistency (mm vs radians)
                     → Prevent facet overload: $fn≤64 unless specified
                     → Center all primitives by default
-                    → If one of the mentioned module used, you MUST include <module.scad>`
+                    → If one of the mentioned module used, you MUST include <module.scad>
+                    
+                    [VALIDATION REQUIREMENTS]
+                    1. SYNTAX VALIDATION: Check for proper OpenSCAD syntax including:
+                       - Balanced parentheses and brackets
+                       - Proper semicolon usage
+                       - Valid function/module names
+                       - Correct parameter syntax
+                    
+                    2. MODULE INCLUSION: Automatically add 'include <module.scad>' when using any of these modules:
+                       - rounded_cube, rounded_cylinder, rounded_pyramid, rounded_cone, gear
+                       - Check if include statement is missing and add it at the top
+                    
+                    3. CODE CORRECTION: Fix any syntax errors, missing semicolons, or malformed statements`
 
     };
     if (!validateOpenSCADSyntax(code).valid) {
@@ -152,6 +165,12 @@ export async function generateOpenscad(message, code, specs_and_math) {
     }
     const prompt = `OpenSCAD Code: ${code}
             Modifications: ${message}
+
+            [VALIDATION STEPS - EXECUTE IN ORDER]
+            1. SYNTAX VALIDATION: Verify all OpenSCAD syntax is correct
+            2. MODULE CHECK: If using rounded_cube, rounded_cylinder, rounded_pyramid, rounded_cone, or gear modules, ensure 'include <module.scad>' is at the top
+            3. ERROR CORRECTION: Fix any syntax issues, missing semicolons, or malformed statements
+            4. CODE GENERATION: Apply requested modifications
 
             [DIRECTIVES]
             1. CENTER: Apply center=true to all primitives (cube(), cylinder(), sphere())
@@ -163,7 +182,9 @@ export async function generateOpenscad(message, code, specs_and_math) {
             [CONSTRAINTS]
             - No markdown beyond code fences
             - No explanation
-            - Prefer translate/rotate over CSG`;
+            - Prefer translate/rotate over CSG
+            - Always validate syntax before output
+            - Auto-correct any detected issues`;
     const completion = await openai.chat.completions.create({
         model: "deepseek-chat",
         messages: [
@@ -333,6 +354,26 @@ app.post('/generate', (req, res) => {
         result: "success"
     })
 })
+
+// SEO and Crawler Routes
+app.get('/sitemap.xml', (req, res) => {
+    res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+app.get('/robots.txt', (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+// Additional SEO routes for common crawler requests
+app.get('/favicon.ico', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
 app.use(express.static('public'));
 // Start server
 let server;
