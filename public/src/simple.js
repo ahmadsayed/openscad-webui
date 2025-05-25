@@ -158,14 +158,11 @@ function updateParameterForm(code) {
         // Show the parameters section
         parametersSection.style.display = 'block';
         
-        // Set initial state - expanded by default
+        // Set initial state - collapsed by default
         if (parameterHeader && parameterContent) {
-            parameterHeader.classList.remove('collapsed');
-            parameterContent.classList.remove('collapsed');
-            // Set max-height after a brief delay to allow for content rendering
-            setTimeout(() => {
-                parameterContent.style.maxHeight = parameterContent.scrollHeight + 'px';
-            }, 10);
+            parameterHeader.classList.add('collapsed');
+            parameterContent.classList.add('collapsed');
+            parameterContent.style.maxHeight = '0px';
         }
     } else {
         // Hide the parameters section if no parameters found

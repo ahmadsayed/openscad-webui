@@ -46,13 +46,14 @@
         .simple-container {
             display: flex;
             width: 100%;
-            min-height: 100vh;
+            min-height: calc(100vh - 68px);
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            padding-top: 68px; /* Account for fixed navbar */
+            padding-bottom: 40px; /* Extra bottom padding for scrolling */
             background-color: #1e1e1e;
             overflow-y: auto;
+            box-sizing: border-box;
         }
 
         .simple-chat-section {
@@ -115,14 +116,14 @@
         }
 
         .parameter-content {
-            padding: 24px;
+            padding: 32px;
             transition: max-height 0.3s ease, padding 0.3s ease;
             overflow: hidden;
         }
 
         .parameter-content.collapsed {
             max-height: 0;
-            padding: 0 24px;
+            padding: 0 32px;
         }
 
         .simple-3d-section {
@@ -451,6 +452,19 @@
             }
         }
 
+        /* Ensure proper scrolling */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            padding-top: 68px; /* Account for fixed navbar */
+        }
+
         /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
@@ -553,14 +567,14 @@
 
         <!-- Parameters Section -->
         <div class="simple-parameters-section" id="parametersSection">
-            <div class="parameter-header" id="parameterHeader">
+            <div class="parameter-header collapsed" id="parameterHeader">
                 <h3 class="parameter-header-title">
                     <i class="bi bi-sliders"></i>
                     Edit Parameters
                 </h3>
                 <i class="bi bi-chevron-down parameter-toggle-icon"></i>
             </div>
-            <div class="parameter-content" id="parameterContent">
+            <div class="parameter-content collapsed" id="parameterContent">
                 <div id="parametersContainer">
                     <!-- Parameter form will be dynamically inserted here -->
                 </div>
