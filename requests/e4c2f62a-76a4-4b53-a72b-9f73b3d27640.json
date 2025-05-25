@@ -1,0 +1,1 @@
+{"status":"done","phase":"","code":"cube_size = 30;\nfacets = 16;\n$fn = facets;\n\n// Volume-equivalent sphere replacement\nsphere_radius = pow(3*pow(cube_size,3)/(4*PI), 1/3);  // ≈18.5664\nsphere(sphere_radius, center=true);","success":true}

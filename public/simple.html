@@ -42,15 +42,17 @@
 
     <!-- Custom styles for simple layout -->
     <style>
-        /* Override styles for simple layout */
+        /* Override styles for simple layout - make scrollable */
         .simple-container {
             display: flex;
             width: 100%;
-            min-height: calc(100vh - 48px);
+            min-height: 100vh;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            padding-top: 68px; /* Account for fixed navbar */
             background-color: #1e1e1e;
+            overflow-y: auto;
         }
 
         .simple-chat-section {
@@ -64,6 +66,65 @@
             margin-bottom: 24px;
         }
 
+        .simple-parameters-section {
+            background-color: #2d2d2d;
+            border-radius: 12px;
+            border: 1px solid #404040;
+            flex-shrink: 0;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 24px;
+            display: none;
+            overflow: hidden;
+        }
+
+        /* Collapsible parameter header */
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background-color: #333;
+            cursor: pointer;
+            border-bottom: 1px solid #404040;
+            transition: background-color 0.2s ease;
+        }
+
+        .parameter-header:hover {
+            background-color: #3a3a3a;
+        }
+
+        .parameter-header-title {
+            color: #e0e0e0;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .parameter-toggle-icon {
+            color: #73C48F;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .parameter-header.collapsed .parameter-toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .parameter-content {
+            padding: 24px;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+        }
+
+        .parameter-content.collapsed {
+            max-height: 0;
+            padding: 0 24px;
+        }
+
         .simple-3d-section {
             background-color: #2d2d2d;
             border-radius: 12px;
@@ -74,6 +135,7 @@
             max-width: 800px;
             height: 500px;
             min-height: 400px;
+            margin-bottom: 40px; /* Add bottom margin for scrolling */
         }
 
         .simple-chat-container {
@@ -173,11 +235,75 @@
             background-color: #dc3545;
         }
 
+        /* Parameter form styles */
+        .parameter-form {
+            background-color: transparent;
+            border-radius: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .parameter-form-title {
+            display: none; /* Hide since we have header title */
+        }
+
+        .parameter-group {
+            margin-bottom: 20px;
+        }
+
+        .parameter-group-title {
+            color: #73C48F;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            text-transform: capitalize;
+        }
+
+        .parameter-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+
+        .parameter-label {
+            color: #ccc;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 120px;
+            text-align: left;
+        }
+
+        .parameter-input {
+            background-color: #1e1e1e;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 100px;
+            text-align: right;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: #73C48F;
+            box-shadow: 0 0 0 2px rgba(115, 196, 143, 0.2);
+        }
+
+        .no-parameters {
+            color: #aaa;
+            font-style: italic;
+            text-align: center;
+            margin: 0;
+        }
+
         /* Mobile adjustments */
         @media screen and (max-width: 768px) {
             .simple-container {
                 padding: 12px;
-                min-height: calc(100vh - 48px);
+                padding-top: 60px;
             }
             
             .simple-chat-section {
@@ -185,12 +311,30 @@
                 margin-bottom: 16px;
                 border-radius: 8px;
             }
+
+            .simple-parameters-section {
+                margin-bottom: 16px;
+                border-radius: 8px;
+            }
+
+            .parameter-header {
+                padding: 12px 16px;
+            }
+
+            .parameter-content {
+                padding: 16px;
+            }
+
+            .parameter-content.collapsed {
+                padding: 0 16px;
+            }
             
             .simple-3d-section {
                 height: 60vh;
                 min-height: 300px;
                 max-width: 100%;
                 border-radius: 8px;
+                margin-bottom: 20px;
             }
             
             .simple-chat-title {
@@ -219,16 +363,45 @@
                 font-size: 14px;
                 line-height: 1.4;
             }
+
+            .parameter-field {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .parameter-label {
+                min-width: auto;
+                text-align: center;
+            }
+
+            .parameter-input {
+                width: 100%;
+                text-align: center;
+            }
         }
 
         /* Extra small mobile devices */
         @media screen and (max-width: 480px) {
             .simple-container {
                 padding: 8px;
+                padding-top: 56px;
             }
             
             .simple-chat-section {
                 padding: 12px;
+            }
+
+            .parameter-header {
+                padding: 10px 12px;
+            }
+
+            .parameter-content {
+                padding: 12px;
+            }
+
+            .parameter-content.collapsed {
+                padding: 0 12px;
             }
             
             .simple-3d-section {
@@ -276,6 +449,29 @@
                 margin: 0 auto 16px auto;
                 text-align: center;
             }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        .simple-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .simple-container::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .simple-container::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 4px;
+        }
+
+        .simple-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
     
@@ -351,6 +547,22 @@
                     <button id="simpleChatSubmit" class="simple-chat-submit">
                         <i class="bi bi-send"></i> <span class="button-text">Create 3D Model</span>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameters Section -->
+        <div class="simple-parameters-section" id="parametersSection">
+            <div class="parameter-header" id="parameterHeader">
+                <h3 class="parameter-header-title">
+                    <i class="bi bi-sliders"></i>
+                    Edit Parameters
+                </h3>
+                <i class="bi bi-chevron-down parameter-toggle-icon"></i>
+            </div>
+            <div class="parameter-content" id="parameterContent">
+                <div id="parametersContainer">
+                    <!-- Parameter form will be dynamically inserted here -->
                 </div>
             </div>
         </div>

@@ -18,29 +18,30 @@ const PORT = 3000;
 
 const modules = `     [MODULES] Use these with include <module.scad>:
                     1. rounded_cube([width,depth,height], radius, facets)
-                    // Example: rounded_cube([30,20,10], 3, facets=16);
+                    // Example: facets = 16; rounded_cube([cube_width, cube_depth, cube_height], corner_radius, facets);
                     
                     2. rounded_cylinder(height, radius, rounding_radius, facets)
-                    // Example: rounded_cylinder(20, 5, 2, facets=16);
+                    // Example: facets = 16; rounded_cylinder(cyl_height, cyl_radius, round_radius, facets);
                     
                     3. rounded_pyramid(base=[x,y], height, radius, facets)
-                    // Example: rounded_pyramid([20,15], 30, 4, facets=16);
+                    // Example: facets = 16; rounded_pyramid([base_x, base_y], pyramid_height, corner_radius, facets);
                     
                     4. rounded_cone(base_radius, height, rounding_radius, facets)
-                    // Example: rounded_cone(10, 25, 3, facets=16);
+                    // Example: facets = 16; rounded_cone(base_radius, cone_height, round_radius, facets);
                     
                     5. gear(number_of_teeth, circular_pitch|diametral_pitch)
-                    // Example: linear_extrude(height = 10, center = true, convexity = 10, twist = 0) gear(number_of_teeth=17,diametral_pitch=1);
+                    // Example: gear_teeth = 17; gear_pitch = 1; extrude_height = 10; linear_extrude(height = extrude_height, center = true, convexity = 10, twist = 0) gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
                     
                     6. Double Helical gears:
-                        translate([50,0])
+                        gear_teeth = 17; gear_pitch = 1; extrude_height = 10; twist_angle = 45; gear_spacing = 50;
+                        translate([gear_spacing, 0])
                         {
-                           linear_extrude(height = 10, center = true, convexity = 10, twist = -45)
-                           gear(number_of_teeth=17,diametral_pitch=1);
-                           translate([0,0,10])
-                           rotate([0,180,180/17])
-                           linear_extrude(height = 10, center = true, convexity = 10, twist = 45)
-                           gear(number_of_teeth=17,diametral_pitch=1);
+                           linear_extrude(height = extrude_height, center = true, convexity = 10, twist = -twist_angle)
+                           gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
+                           translate([0, 0, extrude_height])
+                           rotate([0, 180, 180/gear_teeth])
+                           linear_extrude(height = extrude_height, center = true, convexity = 10, twist = twist_angle)
+                           gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
                         }
                     `;
 
@@ -135,14 +136,14 @@ export async function generateOpenscad(message, code, specs_and_math) {
                     ${modules}
                     [DIRECTIVES]
                     • ALWAYS start with include <module.scad> when using modules
-                    • Use $fn=16 for rounded features unless specified
-                    • Parameterize values: gear_teeth=17, not magic numbers
+                    • Use facets=16 for rounded features unless specified, always parameterize $fn as facets variable
+                    • Parameterize values: gear_teeth=17, dimensions, radii, angles - not magic numbers
                     • Code With minimal description of each component in \`\`\`openscad blocks 
 
                     [ERROR PREVENTION]
                     → Validate module parameters before use
                     → Check unit consistency (mm vs radians)
-                    → Prevent facet overload: $fn≤64 unless specified
+                    → Prevent facet overload: facets≤64 unless specified, always use facets variable instead of $fn
                     → Center all primitives by default
                     → If one of the mentioned module used, you MUST include <module.scad>
                     
@@ -161,7 +162,7 @@ export async function generateOpenscad(message, code, specs_and_math) {
 
     };
     if (!validateOpenSCADSyntax(code).valid) {
-        code = "cube(20, center=true);"
+        code = "facets = 16; $fn = facets; cube_size = 20; cube(cube_size, center=true);"
     }
     const prompt = `OpenSCAD Code: ${code}
             Modifications: ${message}
@@ -175,10 +176,19 @@ export async function generateOpenscad(message, code, specs_and_math) {
             [DIRECTIVES]
             1. CENTER: Apply center=true to all primitives (cube(), cylinder(), sphere())
             2. PARAMETERIZE: Replace literals with variables (e.g., wheel_dia=50)
-            3. RESOLUTION: $fn=16 unless 'smooth' specified then use $fn=64 and always Paremterize in a variable called facets
+            3. RESOLUTION: facets=16 unless 'smooth' specified then use facets=64, always parameterize $fn as facets variable and use $fn=facets
             4. MODULARIZE: Group repeated patterns using module
             5. OUTPUT: Only valid OpenSCAD in \`\`\` blocks
-
+            6. CORE PARAMETER STRATEGY:
+                - Define only BASE properties (total_height, main_dia, wall_thickness)
+                - Derive SUBCOMPONENT values from base:
+                    * hole_height = total_height + 2*clearance
+                    * inner_radius = outer_radius - wall_thickness
+                - Exceptions: Unique mechanics (gear_teeth=17) get individual params
+            7. TOLERANCE HANDLING:
+                - Single clearance parameter for all fits
+                - Apply as: hole_dim = base_dim + 2*clearance
+                - Never create hole_height/hole_dia params - calculate in-place                
             [CONSTRAINTS]
             - No markdown beyond code fences
             - No explanation

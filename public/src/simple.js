@@ -3,12 +3,14 @@
 import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
 import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
+import { extractParameters, updateCodeWithParameters, createParameterForm } from './utils/parameterExtractor.js';
 
 // Global state
 let scene;
 let renderer;
 let chatEditor;
 let currentCode = "cube(20, center=true);"; // Track the current code for incremental building
+let currentParameters = []; // Track extracted parameters
 
 // Initialize the simplified application
 async function init() {
@@ -28,11 +30,17 @@ async function init() {
     // Initialize the simple chat editor
     initSimpleChatEditor();
 
+    // Initialize collapsible parameter form
+    initParameterCollapse();
+
     // Load saved code or use default
     const savedCode = loadCode('simple') || getMostRecentCode();
     const defaultCode = savedCode || "cube(20, center=true);";
     currentCode = defaultCode; // Initialize current code tracking
     renderer.renderOpenSCAD(defaultCode);
+
+    // Extract and display parameters for the initial code
+    updateParameterForm(defaultCode);
 
     // Export necessary functions to window for HTML event handlers
     window.newDesign = () => {
@@ -41,6 +49,8 @@ async function init() {
         saveCode('simple', defaultCode);
         // Clear and render the default cube
         renderer.renderOpenSCAD(defaultCode);
+        // Update parameter form
+        updateParameterForm(defaultCode);
     };
 
     window.downloadSTL = () => {
@@ -101,6 +111,83 @@ class SimpleOpenSCADRenderer extends OpenSCADRenderer {
             container.appendChild(indicator);
         }
     }
+}
+
+// Initialize collapsible parameter form
+function initParameterCollapse() {
+    const parameterHeader = document.getElementById('parameterHeader');
+    const parameterContent = document.getElementById('parameterContent');
+    
+    if (parameterHeader && parameterContent) {
+        parameterHeader.addEventListener('click', () => {
+            const isCollapsed = parameterHeader.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                // Expand
+                parameterHeader.classList.remove('collapsed');
+                parameterContent.classList.remove('collapsed');
+                parameterContent.style.maxHeight = parameterContent.scrollHeight + 'px';
+            } else {
+                // Collapse
+                parameterHeader.classList.add('collapsed');
+                parameterContent.classList.add('collapsed');
+                parameterContent.style.maxHeight = '0px';
+            }
+        });
+    }
+}
+
+// Update parameter form based on current code
+function updateParameterForm(code) {
+    const parametersSection = document.getElementById('parametersSection');
+    const parametersContainer = document.getElementById('parametersContainer');
+    const parameterContent = document.getElementById('parameterContent');
+    const parameterHeader = document.getElementById('parameterHeader');
+    
+    // Extract parameters from the code
+    currentParameters = extractParameters(code);
+    
+    // Clear existing form
+    parametersContainer.innerHTML = '';
+    
+    if (currentParameters.length > 0) {
+        // Create parameter form with callback for parameter changes
+        const form = createParameterForm(currentParameters, onParameterChange);
+        parametersContainer.appendChild(form);
+        
+        // Show the parameters section
+        parametersSection.style.display = 'block';
+        
+        // Set initial state - expanded by default
+        if (parameterHeader && parameterContent) {
+            parameterHeader.classList.remove('collapsed');
+            parameterContent.classList.remove('collapsed');
+            // Set max-height after a brief delay to allow for content rendering
+            setTimeout(() => {
+                parameterContent.style.maxHeight = parameterContent.scrollHeight + 'px';
+            }, 10);
+        }
+    } else {
+        // Hide the parameters section if no parameters found
+        parametersSection.style.display = 'none';
+    }
+}
+
+// Handle parameter changes
+function onParameterChange(updatedParameters) {
+    // Update the current code with new parameter values
+    const updatedCode = updateCodeWithParameters(currentCode, updatedParameters);
+    
+    // Update current code tracking
+    currentCode = updatedCode;
+    
+    // Save the updated code
+    saveCode('simple', updatedCode);
+    
+    // Re-render the 3D model with updated parameters
+    renderer.renderOpenSCAD(updatedCode).catch(error => {
+        console.error('Error rendering updated code:', error);
+    });
 }
 
 // Initialize the simple chat editor
@@ -229,6 +316,9 @@ async function submitSimpleChat(editor) {
         // Save the generated code immediately
         saveCode('simple', code);
         await renderer.renderOpenSCAD(code);
+        
+        // Extract and update parameters for the new code
+        updateParameterForm(code);
         
         // Clear the input on success
         editor.setValue("");
