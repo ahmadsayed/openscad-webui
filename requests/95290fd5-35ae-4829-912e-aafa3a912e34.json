@@ -1,1 +1,0 @@
-{"status":"done","phase":"","code":"include <module.scad>\n\ncube_size = 20;\nhole_diameter = 10;\nclearance = 1;\nfacets = 16;\n\ndifference() {\n    cube(cube_size, center=true);\n    cylinder(h=cube_size + 2*clearance, d=hole_diameter, center=true, $fn=facets);\n}","success":true}
