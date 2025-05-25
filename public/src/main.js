@@ -7,6 +7,7 @@ import { initChatEditor } from './editor/chatEditor.js';
 import { splitScreen, initVerticalResize } from './ui/layout.js';
 import { initMenu } from './ui/menu.js';
 import { downloadSCAD } from './utils/fileUtils.js';
+import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
 
 // Global state
 let scene;
@@ -47,17 +48,18 @@ async function init() {
 
     // Initialize the OpenSCAD renderer
     renderer = new OpenSCADRenderer(scene);
+    
     // Initialize the code editor
     codeEditor = initCodeEditor(code => {
-        // Render the OpenSCAD code and handle the UI state
-        const renderPromise = renderer.renderOpenSCAD(code);
-
-        // Return the promise to allow the editor to handle loading states if needed
-        return renderPromise;
+        // Auto-save code when it changes
+        autoSaveCode('main', code);
+        
+        // Don't auto-render on change - only render on save or generation complete
     });
 
-    // Set default cube and render it
-    const defaultCode = "cube(20, center=true);";
+    // Load saved code or use default
+    const savedCode = loadCode('main') || getMostRecentCode();
+    const defaultCode = savedCode || "cube(20, center=true);";
     codeEditor.setValue(defaultCode);
     renderer.renderOpenSCAD(defaultCode);
 
@@ -66,6 +68,8 @@ async function init() {
         try {
             const code = await generateCodeFromMessage(message, codeEditor.getValue());
             codeEditor.setValue(code);
+            // Save the generated code immediately
+            saveCode('main', code);
             renderer.renderOpenSCAD(code);
             return true;
         } catch (error) {
@@ -80,8 +84,26 @@ async function init() {
     initMenu(codeEditor, renderer);
 
     // Export necessary functions to window for HTML event handlers
-    window.newDesign = () => codeEditor.setValue("");
-    window.saveDesign = () => renderer.renderOpenSCAD(codeEditor.getValue());
+    window.newDesign = () => {
+        const defaultCode = "cube(20, center=true);";
+        codeEditor.setValue(defaultCode);
+        saveCode('main', defaultCode);
+        // Clear and render the default cube
+        renderer.renderOpenSCAD(defaultCode);
+    };
+    
+    window.saveDesign = () => {
+        const code = codeEditor.getValue();
+        saveCode('main', code);
+        renderer.renderOpenSCAD(code);
+    };
+    
+    // Create a render function for manual rendering
+    window.renderCode = () => {
+        const code = codeEditor.getValue();
+        renderer.renderOpenSCAD(code);
+    };
+    
     window.downloadSTL = () => {
         renderer.downloadSTL().catch(error => {
             console.error("Failed to download STL:", error);
@@ -91,6 +113,26 @@ async function init() {
     window.downloadSCAD = () => {
         const code = codeEditor.getValue();
         downloadSCAD(code);
+    };
+
+    // Save code before navigating to simple mode
+    window.addEventListener('beforeunload', () => {
+        const currentCode = codeEditor.getValue();
+        syncCodeBetweenModes('main', 'simple', currentCode);
+    });
+
+    // Export mode switch handler to window
+    window.handleModeSwitch = (event, targetMode) => {
+        event.preventDefault();
+        
+        // Force hide any processing indicators before switching
+        if (renderer && renderer.forceHideProcessingIndicator) {
+            renderer.forceHideProcessingIndicator();
+        }
+        
+        const currentCode = codeEditor.getValue();
+        syncCodeBetweenModes('main', targetMode, currentCode);
+        window.location.href = targetMode === 'simple' ? 'simple.html' : 'main.html';
     };
 
 }

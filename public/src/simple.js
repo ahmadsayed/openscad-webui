@@ -2,6 +2,7 @@
 
 import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
+import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
 
 // Global state
 let scene;
@@ -27,8 +28,9 @@ async function init() {
     // Initialize the simple chat editor
     initSimpleChatEditor();
 
-    // Set default cube and render it
-    const defaultCode = "cube(20, center=true);";
+    // Load saved code or use default
+    const savedCode = loadCode('simple') || getMostRecentCode();
+    const defaultCode = savedCode || "cube(20, center=true);";
     currentCode = defaultCode; // Initialize current code tracking
     renderer.renderOpenSCAD(defaultCode);
 
@@ -36,6 +38,8 @@ async function init() {
     window.newDesign = () => {
         const defaultCode = "cube(20, center=true);";
         currentCode = defaultCode; // Reset current code tracking
+        saveCode('simple', defaultCode);
+        // Clear and render the default cube
         renderer.renderOpenSCAD(defaultCode);
     };
 
@@ -43,6 +47,24 @@ async function init() {
         renderer.downloadSTL().catch(error => {
             console.error("Failed to download STL:", error);
         });
+    };
+
+    // Save code before navigating to advanced mode
+    window.addEventListener('beforeunload', () => {
+        syncCodeBetweenModes('simple', 'main', currentCode);
+    });
+
+    // Export mode switch handler to window
+    window.handleModeSwitch = (event, targetMode) => {
+        event.preventDefault();
+        
+        // Force hide any processing indicators before switching
+        if (renderer && renderer.forceHideProcessingIndicator) {
+            renderer.forceHideProcessingIndicator();
+        }
+        
+        syncCodeBetweenModes('simple', targetMode, currentCode);
+        window.location.href = targetMode === 'main' ? 'main.html' : 'simple.html';
     };
 }
 
@@ -204,6 +226,8 @@ async function submitSimpleChat(editor) {
         
         // Update current code and render the generated code
         currentCode = code;
+        // Save the generated code immediately
+        saveCode('simple', code);
         await renderer.renderOpenSCAD(code);
         
         // Clear the input on success

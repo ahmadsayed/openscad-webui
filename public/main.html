@@ -88,6 +88,7 @@
                 <div class="dropdown">
                     <a href="#" onclick="newDesign(event)">
                         <i class="bi bi-plus"></i> New
+                        <span class="shortcut">Ctrl + N</span>
                     </a>
                     <input type="file" id="fileInput" style="display:none;">
                     <a href="#" onclick="openDesign(event)">
@@ -112,7 +113,7 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a href="simple.html">Simple Mode</a>
+                <a href="simple.html" onclick="handleModeSwitch(event, 'simple')">Simple Mode</a>
             </li>
         </ul>
         <div class="flex-spacer"></div>

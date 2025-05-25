@@ -319,6 +319,7 @@
                 <div class="dropdown">
                     <a href="#" onclick="newDesign(event)">
                         <i class="bi bi-plus"></i> New
+                        <span class="shortcut">Ctrl + N</span>
                     </a>
                     <a href="#" onclick="downloadSTL(event)">
                         <i class="bi bi-download"></i> Download STL
@@ -326,7 +327,7 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a href="main.html">Advanced Mode</a>
+                <a href="main.html" onclick="handleModeSwitch(event, 'main')">Advanced Mode</a>
             </li>
         </ul>
         <div class="flex-spacer"></div>

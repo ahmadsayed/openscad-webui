@@ -6,10 +6,10 @@ let editor = null;
 
 /**
  * Initialize the main code editor with OpenSCAD syntax highlighting
- * @param {Function} onSaveCallback - Callback function to execute when Ctrl+S is pressed
+ * @param {Function} onChangeCallback - Callback function to execute when code changes
  * @returns {Object} The editor instance with helper functions
  */
-export function initCodeEditor(onSaveCallback) {
+export function initCodeEditor(onChangeCallback) {
     // Define the OpenSCAD mode for syntax highlighting
     defineOpenSCADMode();
     
@@ -22,11 +22,15 @@ export function initCodeEditor(onSaveCallback) {
     });
     editor.resize();
     
-    // Track Ctrl key state
-    let isCtrl = false;
+    // Setup change detection
+    if (typeof onChangeCallback === 'function') {
+        editor.session.on('change', function() {
+            onChangeCallback(editor.getValue());
+        });
+    }
     
     // Setup keyboard shortcuts
-    setupKeyboardShortcuts(onSaveCallback);
+    setupKeyboardShortcuts(onChangeCallback);
     
     // Return the editor interface
     return {
@@ -38,39 +42,38 @@ export function initCodeEditor(onSaveCallback) {
 
 /**
  * Setup keyboard shortcuts for the editor
- * @param {Function} onSaveCallback - Callback for save action
+ * @param {Function} onChangeCallback - Callback for code changes
  */
-function setupKeyboardShortcuts(onSaveCallback) {
-    let isCtrl = false;
+function setupKeyboardShortcuts(onChangeCallback) {
     const editorComponent = document.querySelector('#editor');
     
     editorComponent.addEventListener('keydown', function(e) {
-        // Track Ctrl key press
-        if (e.keyCode == 17) {
+        // Ctrl+S or Cmd+S: Save and render
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
-            isCtrl = true;
-        }
-        
-        // Ctrl+S: Save
-        if (e.keyCode == 83 && isCtrl) {
-            e.preventDefault();
-            if (typeof onSaveCallback === 'function') {
-                onSaveCallback(editor.getValue());
+            if (typeof onChangeCallback === 'function') {
+                onChangeCallback(editor.getValue());
+            }
+            // Also trigger the save design function
+            if (window.saveDesign) {
+                window.saveDesign();
             }
         }
         
-        // Ctrl+O: Open
-        if (e.keyCode == 79 && isCtrl) {
+        // Ctrl+N or Cmd+N: New design
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
             e.preventDefault();
-            window.openDesign(e);
+            if (window.newDesign) {
+                window.newDesign();
+            }
         }
-    });
-    
-    editorComponent.addEventListener('keyup', function(e) {
-        // Track Ctrl key release
-        if (e.keyCode == 17) {
+        
+        // Ctrl+O or Cmd+O: Open
+        if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
             e.preventDefault();
-            isCtrl = false;
+            if (window.openDesign) {
+                window.openDesign(e);
+            }
         }
     });
 }

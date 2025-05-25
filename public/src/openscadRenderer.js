@@ -105,17 +105,21 @@ export class OpenSCADRenderer {
             textElement.textContent = message || 'Processing OpenSCAD...';
         }
         
-        // Make sure the indicator is visible
-        this._showProcessingIndicator();
+        // Make sure the indicator is visible during processing
+        if (status !== 'completed' && status !== 'error') {
+            this._showProcessingIndicator();
+        }
         
-        // If status is 'error' or 'completed', we'll hide the indicator after a delay
+        // If status is 'error' or 'completed', hide the indicator immediately
         if (status === 'error' || status === 'completed') {
-            setTimeout(() => {
-                // Only hide if there are no pending requests
-                if (this.pendingRequests.size === 0) {
-                    this._hideProcessingIndicator();
-                }
-            }, 1500); // Show the completion/error message for 1.5 seconds
+            // Clear any existing timeout to prevent conflicts
+            if (this._hideTimeout) {
+                clearTimeout(this._hideTimeout);
+                this._hideTimeout = null;
+            }
+            
+            // Hide immediately for completed status
+            this._hideProcessingIndicator();
         }
     }
     
@@ -141,6 +145,24 @@ export class OpenSCADRenderer {
             indicator.classList.remove('visible');
         }
         this.isProcessing = false;
+    }
+
+    /**
+     * Force hide the processing indicator and clear any pending timeouts
+     * @public
+     */
+    forceHideProcessingIndicator() {
+        // Clear any existing timeout
+        if (this._hideTimeout) {
+            clearTimeout(this._hideTimeout);
+            this._hideTimeout = null;
+        }
+        
+        // Force hide the indicator
+        this._hideProcessingIndicator();
+        
+        // Clear pending requests if needed
+        this.pendingRequests.clear();
     }
 
 
