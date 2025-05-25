@@ -18,7 +18,7 @@ export function initCodeEditor(onSaveCallback) {
     editor.setTheme("ace/theme/monokai");
     editor.session.setMode("ace/mode/openscad");
     editor.setOptions({
-        fontSize: "15pt"
+        fontSize: "12pt"
     });
     editor.resize();
     
