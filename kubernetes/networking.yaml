@@ -1,46 +1,38 @@
----
-# Middleware for redirect
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: ads-txt-redirect
+  name: promptscad-www
   namespace: default
 spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
-    port: 443
-    host: "srv.adstxtmanager.com"
-    path: "/19390/promptscad.com"
----
-# Dummy service (required placeholder)
-apiVersion: v1
-kind: Service
-metadata:
-  name: dummy-service
-  namespace: default
-spec:
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080      
+  ingressClassName: traefik
+  rules:
+  - host: www.promptscad.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: promptscad
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: promptscad
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+  namespace: default
 spec:
   ingressClassName: traefik
   rules:
   - host: promptscad.com
     http:
-      paths:    
-      - path: /
-        pathType: Prefix
-        backend:
+      paths:
+      - backend:
           service:
             name: promptscad
             port:
               number: 80
+        path: /
+        pathType: Prefix
+        

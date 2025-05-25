@@ -29,7 +29,10 @@
   "scripts": {
     "start": "node index.js",
     "watch": "nodemon --ext '*'",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "docker:build": "node scripts/build-and-deploy.js",
+    "docker:build-only": "node scripts/build-docker.js",
+    "k8s:update": "node scripts/update-k8s.js"
   },
   "jest": {
     "testEnvironment": "node",

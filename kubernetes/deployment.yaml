@@ -1,15 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "26"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"promptscad"},"name":"promptscad","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"promptscad"}},"strategy":{},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"promptscad"}},"spec":{"containers":[{"env":[{"name":"DEEPSEEK_API_KEY","valueFrom":{"secretKeyRef":{"key":"DEEPSEEK_API_KEY","name":"deepseek-api-key"}}}],"image":"ahmadsayed/promptscad:10","name":"promptscad","ports":[{"containerPort":3000}],"resources":{}}]}}}}
+  creationTimestamp: "2025-05-13T14:32:09Z"
+  generation: 30
   labels:
     app: promptscad
   name: promptscad
+  namespace: default
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: promptscad
-  strategy: {}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
   template:
     metadata:
       creationTimestamp: null
@@ -17,17 +30,18 @@ spec:
         app: promptscad
     spec:
       containers:
-      - image: ahmadsayed/promptscad:10
-        name: promptscad
-        ports:
-        - containerPort: 3000
-        env:
+      - env:
         - name: DEEPSEEK_API_KEY
           valueFrom:
             secretKeyRef:
+              key: DEEPSEEK_API_KEY
               name: deepseek-api-key
-              key: DEEPSEEK_API_KEY        
-        resources: {}
+        image: ahmadsayed/promptscad:05251647
+        imagePullPolicy: IfNotPresent
+        name: promptscad
+        ports:
+        - containerPort: 3000
+          protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -42,23 +56,3 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: promptscad
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-spec:
-  ingressClassName: traefik
-  rules:
-  - host: promptscad.com
-    http:
-      paths:   
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: promptscad
-            port:
-              number: 80
