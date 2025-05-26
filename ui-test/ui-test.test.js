@@ -10,7 +10,6 @@ describe('OpenSCAD WebUI E2E Tests', () => {
   beforeAll(async () => {
     browser = await puppeteer.launch({
       headless: false,
-      slowMo: 10,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     page = await browser.newPage();
