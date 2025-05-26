@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer';
 beforeAll(async () => {
   global.browser = await puppeteer.launch({
     headless: false,
-    slowMo: 50,
+    slowMo: 10,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 });
