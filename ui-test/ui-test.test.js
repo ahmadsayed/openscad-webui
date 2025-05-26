@@ -173,4 +173,317 @@ describe('OpenSCAD WebUI E2E Tests', () => {
     // Wait a bit more to see the final result
     await delay(2000);
   }, 30000); // 30 second timeout for this test
+
+  test('should persist code across browser sessions', async () => {
+    // First close the existing browser and start fresh with persistent user data
+    console.log('Closing existing browser and starting with persistent profile...');
+    await page.close();
+    await browser.close();
+    
+    // Launch browser with persistent user data directory
+    browser = await puppeteer.launch({
+      headless: false,
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--user-data-dir=/tmp/puppeteer-test-profile'
+      ]
+    });
+    page = await browser.newPage();
+    await page.setViewport({ width: 1080, height: 1024 });
+
+    // Step 1: Go to simple.html -> File -> new
+    console.log('Navigating to simple.html...');
+    await page.goto('http://localhost:3000/simple.html', { waitUntil: 'networkidle2' });
+    await delay(2000);
+
+    // Click File menu
+    console.log('Clicking File menu...');
+    await page.waitForSelector('.nav-item a[href="#"]', { timeout: 10000 });
+    await page.click('.nav-item a[href="#"]');
+
+    // Click New
+    console.log('Clicking New option...');
+    await page.waitForSelector('.dropdown a[onclick*="newDesign"]', { timeout: 5000 });
+    await page.click('.dropdown a[onclick*="newDesign"]');
+    await delay(1000);
+
+    // Step 2: Switch to advanced mode
+    console.log('Switching to advanced mode...');
+    await page.waitForSelector('a[href="main.html"]', { timeout: 10000 });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }),
+      page.click('a[href="main.html"]')
+    ]);
+    await delay(3000);
+
+    // Clear everything and add sphere code
+    console.log('Clearing editor and adding sphere code...');
+    await page.waitForSelector('#editor', { timeout: 10000 });
+    
+    // Clear the editor and add new code
+    await page.evaluate(() => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        editor.setValue('sphere(r=20, center=true);');
+        editor.clearSelection();
+      }
+    });
+
+    // Verify the code was set
+    const editorContent = await page.evaluate(() => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        return editor.getValue();
+      }
+      return '';
+    });
+    console.log('Editor content after setting:', editorContent);
+    expect(editorContent.trim()).toBe('sphere(r=20, center=true);');
+
+    // File -> Save
+    console.log('Saving the file...');
+    await page.waitForSelector('.nav-item a[href="#"]', { timeout: 10000 });
+    await page.click('.nav-item a[href="#"]'); // Click File menu
+
+    await page.waitForSelector('.dropdown a[onclick*="saveDesign"]', { timeout: 5000 });
+    await page.click('.dropdown a[onclick*="saveDesign"]'); // Click Save
+    await delay(1000);
+
+    // Verify localStorage has the saved data before closing
+    const localStorageData = await page.evaluate(() => {
+      return localStorage.getItem('openscad-code') || localStorage.getItem('currentCode') || 'No data found';
+    });
+    console.log('LocalStorage data before closing:', localStorageData);
+
+    // Step 3: Close the browser
+    console.log('Closing the browser...');
+    await page.close();
+    await browser.close();
+
+    // Step 4: Reopen the browser and go to main.html (with persistent user data)
+    console.log('Reopening browser with persistent user data...');
+    browser = await puppeteer.launch({
+      headless: false,
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--user-data-dir=/tmp/puppeteer-test-profile'
+      ]
+    });
+    page = await browser.newPage();
+    await page.setViewport({ width: 1080, height: 1024 });
+
+    console.log('Navigating to main.html...');
+    await page.goto('http://localhost:3000/main.html', { waitUntil: 'networkidle2' });
+    await delay(3000);
+
+    // Step 5: Check the code editor still has sphere(r=20, center=true);
+    console.log('Checking if code persisted...');
+    await page.waitForSelector('#editor', { timeout: 10000 });
+    
+    const persistedContent = await page.evaluate(() => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        return editor.getValue();
+      }
+      return '';
+    });
+
+    console.log('Persisted editor content:', persistedContent);
+    expect(persistedContent.trim()).toBe('sphere(r=20, center=true);');
+    
+    console.log('✅ SUCCESS: Code persisted across browser sessions!');
+  }, 60000); // 60 second timeout for this test
+
+  test('should sync parameters between advanced and simple modes', async () => {
+    // Step 1: Go to main.html -> File -> new
+    console.log('Navigating to main.html...');
+    await page.goto('http://localhost:3000/main.html', { waitUntil: 'networkidle2' });
+    await delay(2000);
+
+    // Click File menu
+    console.log('Clicking File menu...');
+    await page.waitForSelector('.nav-item a[href="#"]', { timeout: 10000 });
+    await page.click('.nav-item a[href="#"]');
+
+    // Click New
+    console.log('Clicking New option...');
+    await page.waitForSelector('.dropdown a[onclick*="newDesign"]', { timeout: 5000 });
+    await page.click('.dropdown a[onclick*="newDesign"]');
+    await delay(1000);
+
+    // Step 2: Create the specified code in advanced mode
+    console.log('Adding parametric code to editor...');
+    await page.waitForSelector('#editor', { timeout: 10000 });
+    
+    const codeToAdd = `facets = 16;
+size = 20;
+$fn = facets; 
+cube(size, center=true);`;
+
+    // Set the code in the editor
+    await page.evaluate((code) => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        editor.setValue(code);
+        editor.clearSelection();
+      }
+    }, codeToAdd);
+
+    // Verify the code was set
+    const editorContent = await page.evaluate(() => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        return editor.getValue();
+      }
+      return '';
+    });
+    console.log('Editor content after setting:', editorContent);
+    expect(editorContent.trim()).toBe(codeToAdd);
+
+    // Step 3: Switch to simple mode
+    console.log('Switching to simple mode...');
+    await page.waitForSelector('a[href="simple.html"]', { timeout: 10000 });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }),
+      page.click('a[href="simple.html"]')
+    ]);
+    await delay(3000);
+
+    // Step 4: Expand the edit parameters section and check for parameter fields
+    console.log('Expanding edit parameters section...');
+    
+    // Look for the parameters toggle button/header and click it to expand
+    const parametersToggle = await page.$('#parametersToggle, .parameters-header, [data-toggle="parameters"], .collapse-toggle');
+    if (parametersToggle) {
+      console.log('Found parameters toggle, clicking to expand...');
+      await page.click('#parametersToggle, .parameters-header, [data-toggle="parameters"], .collapse-toggle');
+      await delay(1000);
+    } else {
+      console.log('No parameters toggle found, checking if section is already expanded...');
+    }
+    
+    // Wait for the parameters section to load
+    await page.waitForSelector('#parametersContainer', { timeout: 10000 });
+    
+    console.log('Checking for parameter fields in simple mode...');
+    
+    // Find parameter fields by looking at their associated labels
+    const parameterFields = await page.evaluate(() => {
+      const fields = {};
+      const labels = document.querySelectorAll('.parameter-label');
+      
+      for (const label of labels) {
+        const labelText = label.textContent.toLowerCase().trim();
+        const forId = label.getAttribute('for');
+        const input = forId ? document.getElementById(forId) : null;
+        
+        if (input) {
+          if (labelText.includes('size')) {
+            fields.size = {
+              exists: true,
+              id: forId,
+              value: input.value,
+              selector: `#${forId}`
+            };
+          } else if (labelText.includes('facets')) {
+            fields.facets = {
+              exists: true,
+              id: forId,
+              value: input.value,
+              selector: `#${forId}`
+            };
+          }
+        }
+      }
+      
+      return fields;
+    });
+    
+    console.log('Found parameter fields:', parameterFields);
+    
+    const sizeField = parameterFields.size?.exists || false;
+    const facetsField = parameterFields.facets?.exists || false;
+    const sizeValue = parameterFields.size?.value || '';
+    const facetsValue = parameterFields.facets?.value || '';
+    
+    console.log('Size field exists:', sizeField);
+    console.log('Facets field exists:', facetsField);
+    console.log('Current size value:', sizeValue);
+    console.log('Current facets value:', facetsValue);
+
+    // Assertions for parameter fields
+    expect(sizeField).toBe(true);
+    expect(facetsField).toBe(true);
+    expect(sizeValue).toBe('20');
+    expect(facetsValue).toBe('16');
+
+    // Step 5: Update the size from 20 to 30
+    console.log('Updating size parameter from 20 to 30...');
+    if (sizeField && parameterFields.size?.selector) {
+      const sizeFieldSelector = parameterFields.size.selector;
+      
+      // Clear the field and type new value
+      await page.focus(sizeFieldSelector);
+      await page.keyboard.down('Control');
+      await page.keyboard.press('a');
+      await page.keyboard.up('Control');
+      await page.type(sizeFieldSelector, '30');
+      
+      // Trigger change event
+      await page.evaluate((selector) => {
+        const field = document.querySelector(selector);
+        if (field) {
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, sizeFieldSelector);
+      
+      await delay(1000);
+      
+      // Verify the value was updated
+      const updatedSizeValue = await page.evaluate((selector) => {
+        const field = document.querySelector(selector);
+        return field ? field.value : '';
+      }, sizeFieldSelector);
+      console.log('Updated size value:', updatedSizeValue);
+      expect(updatedSizeValue).toBe('30');
+    }
+
+    // Step 6: Go back to advanced mode and check the code
+    console.log('Switching back to advanced mode...');
+    await page.waitForSelector('a[href="main.html"]', { timeout: 10000 });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }),
+      page.click('a[href="main.html"]')
+    ]);
+    await delay(3000);
+
+    // Step 7: Verify the code has been updated with size = 30
+    console.log('Checking if code was updated in advanced mode...');
+    await page.waitForSelector('#editor', { timeout: 10000 });
+    
+    const updatedCode = await page.evaluate(() => {
+      if (window.ace && window.ace.edit) {
+        const editor = window.ace.edit('editor');
+        return editor.getValue();
+      }
+      return '';
+    });
+    
+    console.log('Updated code in advanced mode:', updatedCode);
+    
+    // Check that the code contains "size = 30" instead of "size = 20"
+    const containsSize30 = updatedCode.includes('size = 30');
+    const containsSize20 = updatedCode.includes('size = 20');
+    
+    console.log('Code contains "size = 30":', containsSize30);
+    console.log('Code contains "size = 20":', containsSize20);
+    
+    expect(containsSize30).toBe(true);
+    expect(containsSize20).toBe(false);
+    
+    console.log('✅ SUCCESS: Parameters synced correctly between simple and advanced modes!');
+  }, 60000); // 60 second timeout for this test
 });
