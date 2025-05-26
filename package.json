@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "watch": "nodemon --ext '*'"
+    "watch": "nodemon --ext '*'",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:ui": "NODE_OPTIONS=--experimental-vm-modules jest ui-test/",
+    "docker:build": "node scripts/build-and-deploy.js",
+    "docker:build-only": "node scripts/build-docker.js",
+    "k8s:update": "node scripts/update-k8s.js"
   },
   "keywords": [],
   "author": "",
@@ -18,21 +23,16 @@
     "nodemon": "^3.1.9",
     "openai": "^4.94.0",
     "path": "^0.12.7",
+    "puppeteer": "^24.9.0",
+    "puppeteer-core": "^24.9.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "esbuild": "^0.20.2",
-    "terser": "^5.27.0",
     "jest": "^29.7.0",
-    "supertest": "^6.3.4"
-  },
-  "scripts": {
-    "start": "node index.js",
-    "watch": "nodemon --ext '*'",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "docker:build": "node scripts/build-and-deploy.js",
-    "docker:build-only": "node scripts/build-docker.js",
-    "k8s:update": "node scripts/update-k8s.js"
+    "jest-puppeteer": "^11.0.0",
+    "supertest": "^6.3.4",
+    "terser": "^5.27.0"
   },
   "jest": {
     "testEnvironment": "node",

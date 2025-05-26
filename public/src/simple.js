@@ -126,8 +126,24 @@ function initParameterCollapse() {
                 // Expand
                 parameterHeader.classList.remove('collapsed');
                 parameterContent.classList.remove('collapsed');
-                parameterContent.style.maxHeight = parameterContent.scrollHeight + 'px';
+                
+                // Calculate the actual content height including padding
+                const contentHeight = parameterContent.scrollHeight;
+                parameterContent.style.maxHeight = contentHeight + 'px';
+                
+                // After animation, remove max-height to allow natural expansion
+                setTimeout(() => {
+                    if (!parameterContent.classList.contains('collapsed')) {
+                        parameterContent.style.maxHeight = 'none';
+                    }
+                }, 300);
             } else {
+                // Before collapsing, set explicit height
+                parameterContent.style.maxHeight = parameterContent.scrollHeight + 'px';
+                
+                // Force reflow then collapse
+                parameterContent.offsetHeight;
+                
                 // Collapse
                 parameterHeader.classList.add('collapsed');
                 parameterContent.classList.add('collapsed');

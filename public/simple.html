@@ -42,11 +42,34 @@
 
     <!-- Custom styles for simple layout -->
     <style>
+        /* Fixed header styles */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .fixed-header .navbar {
+            height: 40px; /* Make header smaller */
+            padding: 0 16px;
+        }
+
+        .fixed-header .logo h1 {
+            font-size: 16px; /* Make logo smaller */
+            margin: 0;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
         /* Override styles for simple layout - make scrollable */
         .simple-container {
             display: flex;
             width: 100%;
-            min-height: calc(100vh - 68px);
+            min-height: calc(100vh - 40px);
             flex-direction: column;
             align-items: center;
             padding: 20px;
@@ -117,13 +140,16 @@
 
         .parameter-content {
             padding: 32px;
+            padding-bottom: 32px; /* Reduced bottom padding for more compact layout */
             transition: max-height 0.3s ease, padding 0.3s ease;
-            overflow: hidden;
+            overflow: visible; /* Change from hidden to visible to prevent trimming */
+            max-height: none; /* Remove max-height constraint when expanded */
         }
 
         .parameter-content.collapsed {
             max-height: 0;
             padding: 0 32px;
+            overflow: hidden; /* Only hide overflow when collapsed */
         }
 
         .simple-3d-section {
@@ -324,6 +350,7 @@
 
             .parameter-content {
                 padding: 16px;
+                padding-bottom: 20px; /* Reduced bottom padding for mobile for more compact layout */
             }
 
             .parameter-content.collapsed {
@@ -462,7 +489,7 @@
         }
         
         body {
-            padding-top: 68px; /* Account for fixed navbar */
+            padding-top: 40px; /* Account for fixed navbar */
         }
 
         /* Smooth scrolling */
@@ -511,7 +538,7 @@
 
 <body>
     <!-- Navigation Bar -->
-    <header>
+    <header class="fixed-header">
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="menu-toggle" id="mobile-menu">
             <span class="bar"></span>
