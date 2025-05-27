@@ -36,7 +36,7 @@ spec:
             secretKeyRef:
               key: DEEPSEEK_API_KEY
               name: deepseek-api-key
-        image: ahmadsayed/promptscad:05260115
+        image: ahmadsayed/promptscad:05272203
         imagePullPolicy: IfNotPresent
         name: promptscad
         ports:
