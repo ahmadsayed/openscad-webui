@@ -17,8 +17,20 @@ export class OpenSCADRenderer {
         this.pendingRequests = new Map();
         this.isProcessing = false;
         
+        // Drawing annotation properties
+        this.isDrawing = false;
+        this.drawingEnabled = false;
+        this.drawingColor = '#ff0000';
+        this.drawingLineWidth = 2;
+        this.annotationCanvas = null;
+        this.annotationCtx = null;
+        this.lastDrawPoint = null;
+        
         // Create processing indicator element
         this._createProcessingIndicator();
+        
+        // Initialize drawing canvas
+        this._initializeDrawingCanvas();
         
         // Set up a single message handler for all worker responses
         this.worker.onmessage = (e) => {
@@ -165,7 +177,280 @@ export class OpenSCADRenderer {
         this.pendingRequests.clear();
     }
 
+    /**
+     * Initialize the drawing canvas overlay for annotations
+     * @private
+     */
+    _initializeDrawingCanvas() {
+        const renderCanvas = document.getElementById("renderCanvas");
+        if (!renderCanvas) return;
 
+        // Create annotation canvas overlay
+        this.annotationCanvas = document.createElement('canvas');
+        this.annotationCanvas.id = 'annotationCanvas';
+        this.annotationCanvas.style.position = 'absolute';
+        this.annotationCanvas.style.top = '0';
+        this.annotationCanvas.style.left = '0';
+        this.annotationCanvas.style.pointerEvents = 'none'; // Allow events to pass through when not drawing
+        this.annotationCanvas.style.zIndex = '10';
+        this.annotationCanvas.style.cursor = 'crosshair';
+        
+        // Match the render canvas size
+        this.annotationCanvas.width = renderCanvas.width;
+        this.annotationCanvas.height = renderCanvas.height;
+        
+        // Get 2D context for drawing
+        this.annotationCtx = this.annotationCanvas.getContext('2d');
+        this.annotationCtx.lineCap = 'round';
+        this.annotationCtx.lineJoin = 'round';
+        
+        // Insert the annotation canvas after the render canvas
+        renderCanvas.parentNode.insertBefore(this.annotationCanvas, renderCanvas.nextSibling);
+        
+        // Set up resize observer to keep annotation canvas in sync
+        const resizeObserver = new ResizeObserver(() => {
+            this._resizeAnnotationCanvas();
+        });
+        resizeObserver.observe(renderCanvas);
+        
+        // Set up mouse event listeners
+        this._setupMouseEvents();
+    }
+
+    /**
+     * Resize annotation canvas to match render canvas
+     * @private
+     */
+    _resizeAnnotationCanvas() {
+        const renderCanvas = document.getElementById("renderCanvas");
+        if (!renderCanvas || !this.annotationCanvas) return;
+        
+        // Store current drawing before resize
+        const imageData = this.annotationCtx.getImageData(0, 0, this.annotationCanvas.width, this.annotationCanvas.height);
+        
+        // Resize canvas
+        this.annotationCanvas.width = renderCanvas.clientWidth;
+        this.annotationCanvas.height = renderCanvas.clientHeight;
+        this.annotationCanvas.style.width = renderCanvas.clientWidth + 'px';
+        this.annotationCanvas.style.height = renderCanvas.clientHeight + 'px';
+        
+        // Restore drawing settings
+        this.annotationCtx.lineCap = 'round';
+        this.annotationCtx.lineJoin = 'round';
+        this.annotationCtx.strokeStyle = this.drawingColor;
+        this.annotationCtx.lineWidth = this.drawingLineWidth;
+        
+        // Restore previous drawing (scaled)
+        this.annotationCtx.putImageData(imageData, 0, 0);
+    }
+
+    /**
+     * Set up mouse event listeners for drawing
+     * @private
+     */
+    _setupMouseEvents() {
+        const renderCanvas = document.getElementById("renderCanvas");
+        if (!renderCanvas) return;
+
+        // Store references to event handlers for cleanup
+        this._mouseDownHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            
+            console.log('Drawing started');
+            this.isDrawing = true;
+            this.annotationCanvas.style.pointerEvents = 'auto';
+            
+            const rect = renderCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            this.lastDrawPoint = { x, y };
+            
+            // Start new path
+            this.annotationCtx.beginPath();
+            this.annotationCtx.moveTo(x, y);
+            this.annotationCtx.strokeStyle = this.drawingColor;
+            this.annotationCtx.lineWidth = this.drawingLineWidth;
+            this.annotationCtx.lineCap = 'round';
+            this.annotationCtx.lineJoin = 'round';
+            
+            // Prevent camera movement while drawing
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        this._mouseMoveHandler = (e) => {
+            if (!this.isDrawing || !this.drawingEnabled) return;
+            
+            const rect = renderCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Draw line from last point to current point
+            this.annotationCtx.lineTo(x, y);
+            this.annotationCtx.stroke();
+            
+            this.lastDrawPoint = { x, y };
+            
+            // Prevent camera movement while drawing
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        this._mouseUpHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            
+            console.log('Drawing stopped');
+            this.isDrawing = false;
+            this.annotationCanvas.style.pointerEvents = 'none';
+            this.lastDrawPoint = null;
+            
+            // Prevent camera movement
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        this._mouseLeaveHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            
+            this.isDrawing = false;
+            this.annotationCanvas.style.pointerEvents = 'none';
+            this.lastDrawPoint = null;
+        };
+
+        // Use event capture (true) to intercept events before Babylon.js
+        renderCanvas.addEventListener('mousedown', this._mouseDownHandler, true);
+        renderCanvas.addEventListener('mousemove', this._mouseMoveHandler, true);
+        renderCanvas.addEventListener('mouseup', this._mouseUpHandler, true);
+        renderCanvas.addEventListener('mouseleave', this._mouseLeaveHandler, true);
+
+        // Touch events for mobile support
+        this._touchStartHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                bubbles: true
+            });
+            this._mouseDownHandler(mouseEvent);
+        };
+
+        this._touchMoveHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                bubbles: true
+            });
+            this._mouseMoveHandler(mouseEvent);
+        };
+
+        this._touchEndHandler = (e) => {
+            if (!this.drawingEnabled) return;
+            e.preventDefault();
+            
+            const mouseEvent = new MouseEvent('mouseup', {
+                bubbles: true
+            });
+            this._mouseUpHandler(mouseEvent);
+        };
+
+        renderCanvas.addEventListener('touchstart', this._touchStartHandler, true);
+        renderCanvas.addEventListener('touchmove', this._touchMoveHandler, true);
+        renderCanvas.addEventListener('touchend', this._touchEndHandler, true);
+    }
+
+    /**
+     * Enable drawing mode
+     * @public
+     */
+    enableDrawing() {
+        this.drawingEnabled = true;
+        const renderCanvas = document.getElementById("renderCanvas");
+        if (renderCanvas) {
+            renderCanvas.style.cursor = 'crosshair';
+        }
+        console.log('Drawing mode enabled');
+    }
+
+    /**
+     * Disable drawing mode
+     * @public
+     */
+    disableDrawing() {
+        this.drawingEnabled = false;
+        this.isDrawing = false;
+        const renderCanvas = document.getElementById("renderCanvas");
+        if (renderCanvas) {
+            renderCanvas.style.cursor = 'default';
+        }
+        if (this.annotationCanvas) {
+            this.annotationCanvas.style.pointerEvents = 'none';
+        }
+        console.log('Drawing mode disabled');
+    }
+
+    /**
+     * Toggle drawing mode
+     * @public
+     * @returns {boolean} Current drawing enabled state
+     */
+    toggleDrawing() {
+        if (this.drawingEnabled) {
+            this.disableDrawing();
+        } else {
+            this.enableDrawing();
+        }
+        return this.drawingEnabled;
+    }
+
+    /**
+     * Clear all annotations
+     * @public
+     */
+    clearAnnotations() {
+        if (this.annotationCtx) {
+            this.annotationCtx.clearRect(0, 0, this.annotationCanvas.width, this.annotationCanvas.height);
+        }
+    }
+
+    /**
+     * Set drawing color
+     * @public
+     * @param {string} color - CSS color string
+     */
+    setDrawingColor(color) {
+        this.drawingColor = color;
+    }
+
+    /**
+     * Set drawing line width
+     * @public
+     * @param {number} width - Line width in pixels
+     */
+    setDrawingLineWidth(width) {
+        this.drawingLineWidth = width;
+    }
+
+    /**
+     * Get current drawing state
+     * @public
+     * @returns {Object} Drawing state object
+     */
+    getDrawingState() {
+        return {
+            enabled: this.drawingEnabled,
+            color: this.drawingColor,
+            lineWidth: this.drawingLineWidth,
+            isDrawing: this.isDrawing
+        };
+    }
 
     /**
      * Render OpenSCAD code to the scene

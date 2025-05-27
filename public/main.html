@@ -113,6 +113,11 @@
                 </div>
             </li>
             <li class="nav-item">
+                <a href="#" id="drawingToggleBtn" onclick="window.toggleDrawingMode && window.toggleDrawingMode(); return false;">
+                    🎨 Draw
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="simple.html" onclick="handleModeSwitch(event, 'simple')">Simple Mode</a>
             </li>
         </ul>
@@ -151,6 +156,7 @@
         <div class="split__right">
             <div id="loadingScreen"></div>
             <canvas id="renderCanvas"></canvas>
+            <canvas id="annotationCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10;"></canvas>
         </div>
     </main>
 

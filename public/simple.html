@@ -564,6 +564,11 @@
                 </div>
             </li>
             <li class="nav-item">
+                <a href="#" id="drawingToggleBtn" onclick="window.toggleDrawingMode && window.toggleDrawingMode(); return false;">
+                    🎨 Draw
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="main.html" onclick="handleModeSwitch(event, 'main')">Advanced Mode</a>
             </li>
         </ul>
@@ -612,6 +617,7 @@
         <div class="simple-3d-section">
             <div id="loadingScreen"></div>
             <canvas id="renderCanvas"></canvas>
+            <canvas id="annotationCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10;"></canvas>
         </div>
     </main>
 

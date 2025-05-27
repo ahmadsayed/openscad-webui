@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drawing Debug Helper</title>
+    <style>
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 2000;
+            max-width: 400px;
+        }
+        .debug-panel h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+        }
+        .debug-item {
+            margin: 5px 0;
+            padding: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .status-ok { color: #00ff00; }
+        .status-error { color: #ff0000; }
+        .status-warning { color: #ffaa00; }
+        button {
+            margin: 5px;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <h3>🔧 Drawing Debug Panel</h3>
+        <div id="debug-info"></div>
+        <button onclick="runDiagnostics()">Run Diagnostics</button>
+        <button onclick="forceEnable()">Force Enable Drawing</button>
+        <button onclick="testDraw()">Test Draw</button>
+    </div>
+
+    <script>
+        function runDiagnostics() {
+            const info = document.getElementById('debug-info');
+            let html = '';
+            
+            // Check if functions exist
+            html += `<div class="debug-item">toggleDrawing function: <span class="${typeof window.toggleDrawing === 'function' ? 'status-ok' : 'status-error'}">${typeof window.toggleDrawing === 'function' ? 'EXISTS' : 'MISSING'}</span></div>`;
+            
+            html += `<div class="debug-item">enableDrawing function: <span class="${typeof window.enableDrawing === 'function' ? 'status-ok' : 'status-error'}">${typeof window.enableDrawing === 'function' ? 'EXISTS' : 'MISSING'}</span></div>`;
+            
+            html += `<div class="debug-item">getDrawingState function: <span class="${typeof window.getDrawingState === 'function' ? 'status-ok' : 'status-error'}">${typeof window.getDrawingState === 'function' ? 'EXISTS' : 'MISSING'}</span></div>`;
+            
+            // Check canvas elements
+            const renderCanvas = document.getElementById('renderCanvas');
+            html += `<div class="debug-item">renderCanvas element: <span class="${renderCanvas ? 'status-ok' : 'status-error'}">${renderCanvas ? 'FOUND' : 'NOT FOUND'}</span></div>`;
+            
+            const annotationCanvas = document.getElementById('annotationCanvas');
+            html += `<div class="debug-item">annotationCanvas element: <span class="${annotationCanvas ? 'status-ok' : 'status-error'}">${annotationCanvas ? 'FOUND' : 'NOT FOUND'}</span></div>`;
+            
+            // Check drawing state
+            if (typeof window.getDrawingState === 'function') {
+                try {
+                    const state = window.getDrawingState();
+                    if (state) {
+                        html += `<div class="debug-item">Drawing enabled: <span class="${state.enabled ? 'status-ok' : 'status-warning'}">${state.enabled ? 'YES' : 'NO'}</span></div>`;
+                        html += `<div class="debug-item">Drawing color: <span class="status-ok">${state.color}</span></div>`;
+                        html += `<div class="debug-item">Line width: <span class="status-ok">${state.lineWidth}</span></div>`;
+                        html += `<div class="debug-item">Currently drawing: <span class="${state.isDrawing ? 'status-ok' : 'status-warning'}">${state.isDrawing ? 'YES' : 'NO'}</span></div>`;
+                    } else {
+                        html += `<div class="debug-item">Drawing state: <span class="status-error">NULL</span></div>`;
+                    }
+                } catch (e) {
+                    html += `<div class="debug-item">Drawing state error: <span class="status-error">${e.message}</span></div>`;
+                }
+            }
+            
+            // Check if renderer exists
+            html += `<div class="debug-item">Global renderer: <span class="${typeof window.renderer !== 'undefined' ? 'status-ok' : 'status-error'}">${typeof window.renderer !== 'undefined' ? 'EXISTS' : 'MISSING'}</span></div>`;
+            
+            // Check canvas styles
+            if (renderCanvas) {
+                const style = window.getComputedStyle(renderCanvas);
+                html += `<div class="debug-item">Canvas cursor: <span class="status-ok">${style.cursor}</span></div>`;
+                html += `<div class="debug-item">Canvas pointer-events: <span class="status-ok">${style.pointerEvents}</span></div>`;
+            }
+            
+            if (annotationCanvas) {
+                const style = window.getComputedStyle(annotationCanvas);
+                html += `<div class="debug-item">Annotation canvas pointer-events: <span class="status-ok">${style.pointerEvents}</span></div>`;
+                html += `<div class="debug-item">Annotation canvas z-index: <span class="status-ok">${style.zIndex}</span></div>`;
+            }
+            
+            info.innerHTML = html;
+        }
+        
+        function forceEnable() {
+            console.log('Attempting to force enable drawing...');
+            
+            // Try multiple methods
+            if (typeof window.enableDrawing === 'function') {
+                window.enableDrawing();
+                console.log('Called window.enableDrawing()');
+            }
+            
+            if (typeof window.toggleDrawing === 'function') {
+                const result = window.toggleDrawing();
+                console.log('Called window.toggleDrawing(), result:', result);
+            }
+            
+            // Check if we can access the renderer directly
+            if (typeof window.renderer !== 'undefined' && window.renderer) {
+                try {
+                    window.renderer.enableDrawing();
+                    console.log('Called renderer.enableDrawing() directly');
+                } catch (e) {
+                    console.error('Error calling renderer.enableDrawing():', e);
+                }
+            }
+            
+            setTimeout(runDiagnostics, 100);
+        }
+        
+        function testDraw() {
+            const canvas = document.getElementById('annotationCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(50, 50);
+                ctx.lineTo(150, 150);
+                ctx.stroke();
+                console.log('Drew test line on annotation canvas');
+            } else {
+                console.error('Annotation canvas not found');
+            }
+        }
+        
+        // Auto-run diagnostics on load
+        setTimeout(runDiagnostics, 1000);
+        
+        // Monitor drawing state changes
+        setInterval(() => {
+            if (typeof window.getDrawingState === 'function') {
+                const state = window.getDrawingState();
+                if (state && state.enabled) {
+                    document.title = '🎨 Drawing ENABLED';
+                } else {
+                    document.title = '❌ Drawing DISABLED';
+                }
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

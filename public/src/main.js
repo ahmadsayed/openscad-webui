@@ -8,6 +8,7 @@ import { splitScreen, initVerticalResize } from './ui/layout.js';
 import { initMenu } from './ui/menu.js';
 import { downloadSCAD } from './utils/fileUtils.js';
 import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
+import { initializeImprovedDrawing } from './utils/drawingSystem.js';
 
 // Global state
 let scene;
@@ -82,6 +83,11 @@ async function init() {
     splitScreen();
     initVerticalResize();
     initMenu(codeEditor, renderer);
+
+    // Initialize improved drawing system after a short delay
+    setTimeout(() => {
+        initializeImprovedDrawing();
+    }, 1500);
 
     // Export necessary functions to window for HTML event handlers
     window.newDesign = () => {

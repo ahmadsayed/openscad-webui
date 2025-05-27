@@ -4,6 +4,7 @@ import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
 import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
 import { extractParameters, updateCodeWithParameters, createParameterForm } from './utils/parameterExtractor.js';
+import { initializeImprovedDrawing } from './utils/drawingSystem.js';
 
 // Global state
 let scene;
@@ -41,6 +42,11 @@ async function init() {
 
     // Extract and display parameters for the initial code
     updateParameterForm(defaultCode);
+
+    // Initialize improved drawing system after a short delay
+    setTimeout(() => {
+        initializeImprovedDrawing();
+    }, 1500);
 
     // Export necessary functions to window for HTML event handlers
     window.newDesign = () => {
