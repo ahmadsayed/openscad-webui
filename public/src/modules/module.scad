@@ -261,3 +261,15 @@ module test_involute_curve()
 		translate(polar_to_cartesian([involute_intersect_angle( 0.1,i) , i ])) circle($fn=15, r=0.5);
 	}
 }
+
+
+
+// 5. Honeycomb Pattern
+// ---------------------------------------------
+module honeycomb(width, depth, cell_size=5) {
+  // Example: linear_extrude(5) honeycomb(width=50, depth=40, cell_size=8);
+  for (x = [0:cell_size:width], y = [0:cell_size*1.5:depth]) {
+    translate([x + (y%2)*cell_size/2, y, 0])
+      circle(d=cell_size, $fn=6);
+  }
+}

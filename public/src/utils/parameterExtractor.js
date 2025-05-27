@@ -25,6 +25,11 @@ export function extractParameters(code) {
             continue;
         }
         
+        // Skip include and use statements - these are allowed at the top
+        if (line.startsWith('include') || line.startsWith('use')) {
+            continue;
+        }
+        
         // Check if this line is a variable definition
         const variableMatch = line.match(/^(\w+)\s*=\s*([^;]+);?\s*(?:\/\/.*)?$/);
         
@@ -52,7 +57,8 @@ export function extractParameters(code) {
                     variableName: varName
                 });
             }
-        } else if (line !== '' && !line.startsWith('//') && !line.startsWith('/*')) {
+        } else if (line !== '' && !line.startsWith('//') && !line.startsWith('/*') && 
+                   !line.startsWith('include') && !line.startsWith('use')) {
             // We've reached the actual OpenSCAD code, stop looking for parameters
             inParameterSection = false;
             break;

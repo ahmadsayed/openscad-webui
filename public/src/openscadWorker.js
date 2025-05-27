@@ -51,8 +51,7 @@ class OpenSCADWorker {
                 "--enable=fast-csg",          // Enable fast CSG operations
                 "--enable=lazy-union",        // Enable lazy union optimization               
                 "-o", "cube.stl",
-                 "--render",                   // Force render mode
-                "--quiet"                     // Reduce output verbosity           
+                 "--render"                   // Force render mode
             ]
             );
 
