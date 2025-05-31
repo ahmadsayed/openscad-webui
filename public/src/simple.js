@@ -366,6 +366,75 @@ async function submitSimpleChat(editor) {
 // Call API to generate code from user message
 async function generateCodeFromMessage(message, currentCode) {
     try {
+        // Check if drawing mode is active and capture image if needed
+        const isDrawingMode = window.getDrawingMode && window.getDrawingMode();
+        
+        if (isDrawingMode) {
+            // Capture the annotation canvas as image
+            const annotationCanvas = document.getElementById('annotationCanvas');
+            if (annotationCanvas) {
+                const imageData = annotationCanvas.toDataURL('image/png');
+                
+                // Check if there's actually any drawing on the canvas
+                const hasDrawing = checkCanvasHasDrawing(annotationCanvas);
+                
+                if (hasDrawing) {
+                    console.log('🎨 Drawing detected, using visual processing');
+                    return await generateCodeFromVisualInput(imageData, message, currentCode);
+                }
+            }
+        }
+        
+        // Fallback to text-only generation
+        console.log('📝 Using text-only generation');
+        return await generateCodeFromTextInput(message, currentCode);
+    } catch (error) {
+        console.error('Generation error:', error);
+        // Fallback to simple generation with current code
+        return fallbackCodeGeneration(message, currentCode);
+    }
+}
+
+// Generate code from visual input (drawing + text)
+async function generateCodeFromVisualInput(imageData, message, currentCode) {
+    try {
+        const visualPrompt = `Based on this drawing and the text prompt: "${message}", generate OpenSCAD code that creates a 3D model. The current code is: ${currentCode}. Please modify or enhance it based on the drawing and text description.`;
+        
+        const response = await fetch('/process-visual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageData: imageData,
+                prompt: visualPrompt
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Visual processing failed');
+        }
+        
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error || 'Visual processing failed');
+        }
+        
+        // Extract OpenSCAD code from the visual processing result
+        const visualDescription = result.result;
+        
+        // Now use the visual description to generate code via the regular pipeline
+        const enhancedMessage = `${message}. Based on this visual analysis: ${visualDescription}`;
+        return await generateCodeFromTextInput(enhancedMessage, currentCode);
+        
+    } catch (error) {
+        console.error('Visual processing error:', error);
+        // Fallback to text-only generation
+        return await generateCodeFromTextInput(message, currentCode);
+    }
+}
+
+// Generate code from text input only
+async function generateCodeFromTextInput(message, currentCode) {
+    try {
         // Step 1: Initiate code generation and get request ID
         const initResponse = await fetch('/generate-code', {
             method: 'POST',
@@ -385,10 +454,24 @@ async function generateCodeFromMessage(message, currentCode) {
         // Step 2: Poll for status until completion or error
         return await pollForCompletion(requestId);
     } catch (error) {
-        console.error('Generation error:', error);
-        // Fallback to simple generation with current code
-        return fallbackCodeGeneration(message, currentCode);
+        console.error('Text generation error:', error);
+        throw error;
     }
+}
+
+// Check if canvas has any drawing on it
+function checkCanvasHasDrawing(canvas) {
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    // Check if any pixel has non-zero alpha (indicating drawing)
+    for (let i = 3; i < data.length; i += 4) {
+        if (data[i] > 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) {

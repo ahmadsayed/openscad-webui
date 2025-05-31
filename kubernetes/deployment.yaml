@@ -36,7 +36,12 @@ spec:
             secretKeyRef:
               key: DEEPSEEK_API_KEY
               name: deepseek-api-key
-        image: ahmadsayed/promptscad:05272203
+        - name: QWEN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: QWEN_API_KEY
+              name: qwen-api-key
+        image: ahmadsayed/promptscad:05280433
         imagePullPolicy: IfNotPresent
         name: promptscad
         ports:

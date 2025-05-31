@@ -52,10 +52,19 @@ app.use(express.json());
 
 
 let openai;
+let qwenClient;
 
 export function initializeOpenAI(apiKey, baseURL = 'https://api.deepseek.com', mockClient = null) {
     openai = mockClient || new OpenAI({ baseURL, apiKey });
     return openai;
+}
+
+export function initializeQwen(apiKey, baseURL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', mockClient = null) {
+    qwenClient = mockClient || new OpenAI({
+        apiKey: process.env.QWEN_API_KEY || apiKey,
+        baseURL
+    });
+    return qwenClient;
 }
 
 if (process.env.NODE_ENV !== 'test') {
@@ -63,6 +72,13 @@ if (process.env.NODE_ENV !== 'test') {
         process.env.DEEPSEEK_API_KEY,
         process.env.DEEPSEEK_API_BASE_URL
     );
+    
+    if (process.env.QWEN_API_KEY) {
+        initializeQwen(
+            process.env.QWEN_API_KEY,
+            process.env.QWEN_API_BASE_URL
+        );
+    }
 }
 
 
@@ -215,21 +231,26 @@ export async function generateOpenscad(message, code, specs_and_math) {
     const generatedText = completion.choices[0].message.content;
     console.log(generatedText);
 
-    // Strict extraction between ```openscad and ```
-    let codeMatch = generatedText.match(/```openscad([\s\S]*?)```/i);
-    if (!codeMatch) {
-        codeMatch = generatedText.match(/```([\s\S]*?)```/i);
+    // Strict extraction and sanitization
+    let sanitizedText = generatedText;
+    
+    // Remove all markdown code blocks if present
+    const codeMatch = sanitizedText.match(/```(?:openscad)?([\s\S]*?)```/i);
+    if (codeMatch) {
+        sanitizedText = codeMatch[1];
     }
-    if (!codeMatch) {
-        throw new Error('No OpenSCAD code block found in response');
-    }
-    let sanitizedText = codeMatch[1]
-        .trim()
-        .replace(/^[\n\r]+|[\n\r]+$/g, ''); // Remove leading/trailing newlines
+    
+    // Remove any non-code explanations and artifacts
+    sanitizedText = sanitizedText
+        .replace(/^[\s\S]*?include <module\.scad>/i, 'include <module.scad>') // Keep only first include
+        .replace(/^scad\s*\n?/i, '') // Remove "scad" prefix
+        .replace(/\n\/\/[^\n]*/g, '') // Remove all comments
+        .replace(/^[\n\r]+|[\n\r]+$/g, '') // Trim whitespace
+        .replace(/\n{2,}/g, '\n'); // Collapse multiple newlines
 
-    // Final validation
-    if (!sanitizedText || sanitizedText.length < 10) { // Basic length check
-        throw new Error('Generated code appears to be empty or too short');
+    // Validate we have actual OpenSCAD code
+    if (!sanitizedText.match(/include|module|function|cube|cylinder|sphere|rotate|translate|scale|union|difference|intersection/i)) {
+        throw new Error('No valid OpenSCAD code found in response');
     }
 
     return sanitizedText;
@@ -277,6 +298,67 @@ app.post('/generate-code', async (req, res) => {
     }
 });
 
+
+
+export async function processVisualInput(imageData, prompt = "Describe this image in detail") {
+    if (!qwenClient) {
+        throw new Error('Qwen client not initialized. Please set QWEN_API_KEY environment variable.');
+    }
+
+    try {
+
+
+        const systemPrompt = `You are a senior CAD engineer providing feedback on a 3D model. Analyze the red markings in the attached drawing and:
+                            1. Provide clear, minimal instructions for required modifications
+                            2. Include relative dimensions for changes (e.g. "x% of current model")
+                            3. Reference the coordinate system:
+                            - Red axis: X
+                            - Green axis: Y 
+                            - Blue axis: Z
+                            4. Example format: "Make this modification - make a hole of  size is x% of current model, apply along Y axis"
+                        `;
+
+        const completion = await qwenClient.chat.completions.create({
+            model: "qwen-vl-plus",
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt
+                },
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: `Additional Instructions: ${prompt}\n\n` +
+                                `Key Requirements:\n` +
+                                `1. User is a CAD engineer requesting model modifications\n` +
+                                `2. Red markings indicate areas needing changes\n` +
+                                `3. Provide:\n` +
+                                `   - Precise mathematical instructions\n` +
+                                `   - Clear dimensional references\n` +
+                                `   - Coordinate system specifications`
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: imageData
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.5,
+            max_tokens: 2000
+        });
+        let content = completion.choices[0].message.content;
+        console.log(content);
+        return content;
+    } catch (error) {
+        console.error('Qwen VL API error:', error);
+        throw new Error(`Visual processing failed: ${error.message}`);
+    }
+}
 
 
 export async function processRequest(requestId, message, code) {
@@ -364,6 +446,46 @@ app.post('/generate', (req, res) => {
         result: "success"
     })
 })
+
+// Visual processing endpoint for c
+app.post('/process-visual', async (req, res) => {
+    try {
+        const { imageData, prompt } = req.body;
+        
+        if (!imageData) {
+            return res.status(400).json({
+                success: false,
+                error: 'Image data is required'
+            });
+        }
+
+        if (!qwenClient) {
+            return res.status(503).json({
+                success: false,
+                error: 'Qwen visual model not available. Please configure QWEN_API_KEY environment variable.'
+            });
+        }
+
+        console.log('Processing visual input with Qwen2.5-VL-72B-Instruct');
+
+        const analysis  = await processVisualInput(imageData, prompt);
+        console.log("******************************************");
+        console.log("Analysis:", analysis);
+        console.log("******************************************");
+        
+        res.json({
+            success: true,
+            analysis
+        });
+
+    } catch (error) {
+        console.error('Visual processing error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 
 // SEO and Crawler Routes
 app.get('/sitemap.xml', (req, res) => {
