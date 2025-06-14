@@ -25,7 +25,7 @@ export function initializeImprovedDrawing() {
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#ff0000';
+    ctx.strokeStyle = '#000000'; // Use black for both interfaces
     
     // Create an invisible overlay div to capture mouse events
     const overlay = document.createElement('div');
@@ -126,7 +126,7 @@ export function initializeImprovedDrawing() {
         console.log('🧹 Drawing cleared');
     };
     
-    window.setDrawColor = function(color) {
+    window.setDrawColor = function(color = 'black') {
         ctx.strokeStyle = color;
         console.log('🎨 Color set to:', color);
     };

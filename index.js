@@ -308,15 +308,16 @@ export async function processVisualInput(imageData, prompt = "Describe this imag
     try {
 
 
-        const systemPrompt = `You are a senior CAD engineer providing feedback on a 3D model. Analyze the red markings in the attached drawing and:
-                            1. Provide clear, minimal instructions for required modifications
-                            2. Include relative dimensions for changes (e.g. "x% of current model")
-                            3. Reference the coordinate system:
-                            - Red axis: X
-                            - Green axis: Y 
-                            - Blue axis: Z
-                            4. Example format: "Make this modification - make a hole of  size is x% of current model, apply along Y axis"
-                        `;
+        const systemPrompt = `You are a CAD assistant analyzing images of 3D models with user markings (in black). Provide detailed instructions for updating the model:
+                            1. Identify the exact location of black markings as precisely as possible
+                            2. Describe the shape and extent of each marked area
+                            3. Focus on specific modifications needed (e.g., "add hole", "extend surface")
+                            4. Reference the coordinate system:
+                                - Red axis: X
+                                - Green axis: Y 
+                                - Blue axis: Z
+                            5. Provide relative dimensions (e.g., "50% of current width")
+                            6. Avoid generating OpenSCAD code`;
 
         const completion = await qwenClient.chat.completions.create({
             model: "qwen-vl-plus",
@@ -330,14 +331,7 @@ export async function processVisualInput(imageData, prompt = "Describe this imag
                     content: [
                         {
                             type: "text",
-                            text: `Additional Instructions: ${prompt}\n\n` +
-                                `Key Requirements:\n` +
-                                `1. User is a CAD engineer requesting model modifications\n` +
-                                `2. Red markings indicate areas needing changes\n` +
-                                `3. Provide:\n` +
-                                `   - Precise mathematical instructions\n` +
-                                `   - Clear dimensional references\n` +
-                                `   - Coordinate system specifications`
+                            text: `Describe the user's intention based on this image:`
                         },
                         {
                             type: "image_url",
@@ -468,6 +462,17 @@ app.post('/process-visual', async (req, res) => {
 
         console.log('Processing visual input with Qwen2.5-VL-72B-Instruct');
 
+        // Extract base64 data and save image
+        const base64Data = imageData.replace(/^data:image\/png;base64,/, "");
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        const imageName = `visual-input-${Date.now()}.png`;
+        const imagePath = path.join(REQUEST_DIR, imageName);
+        
+        await fs.mkdir(REQUEST_DIR, { recursive: true });
+        await fs.writeFile(imagePath, imageBuffer);
+        
+        console.log(`Saved visual input to: ${imagePath}`);
+
         const analysis  = await processVisualInput(imageData, prompt);
         console.log("******************************************");
         console.log("Analysis:", analysis);
@@ -475,7 +480,8 @@ app.post('/process-visual', async (req, res) => {
         
         res.json({
             success: true,
-            analysis
+            analysis,
+            imagePath: imageName
         });
 
     } catch (error) {
@@ -498,6 +504,13 @@ app.get('/robots.txt', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+
+app.get('/sw.js', (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.sendFile(path.join(__dirname, 'public', 'sw.js'));
 });
 
 // Additional SEO routes for common crawler requests

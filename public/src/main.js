@@ -150,10 +150,26 @@ async function generateCodeFromMessage(message, currentCode) {
         const isDrawingMode = window.getDrawingMode && window.getDrawingMode();
         
         if (isDrawingMode) {
-            // Capture the annotation canvas as image
             const annotationCanvas = document.getElementById('annotationCanvas');
-            if (annotationCanvas) {
-                const imageData = annotationCanvas.toDataURL('image/png');
+            const renderCanvas = document.getElementById('renderCanvas');
+            
+            if (annotationCanvas && renderCanvas) {
+                // Create a combined canvas
+                const combinedCanvas = document.createElement('canvas');
+                combinedCanvas.width = renderCanvas.width;
+                combinedCanvas.height = renderCanvas.height;
+                const ctx = combinedCanvas.getContext('2d');
+                
+                // Ensure Babylon scene is rendered
+                renderer.scene.render();
+                
+                // Draw render canvas first (Babylon 3D model)
+                ctx.drawImage(renderCanvas, 0, 0);
+                
+                // Draw annotation canvas on top (user markings)
+                ctx.drawImage(annotationCanvas, 0, 0);
+                
+                const imageData = combinedCanvas.toDataURL('image/png');
                 
                 // Check if there's actually any drawing on the canvas
                 const hasDrawing = checkCanvasHasDrawing(annotationCanvas);
@@ -175,158 +191,14 @@ async function generateCodeFromMessage(message, currentCode) {
     }
 }
 
-// Generate code from visual input (drawing + text)
-async function generateCodeFromVisualInput(imageData, message, currentCode) {
-    /*
-    you are a senior cad engineer. you are giving feedback based on the red drawing attached. provide minimal instruction about the required modification include relative dimension of the change. and consider the following axis, green is y, red is x, blue is z for example : Make this modification, the size of change is x% of the current model, apply the change along Y coordinate
-    */
-    try {
-        const visualPrompt = `${message}`;
-        
-        const response = await fetch('/process-visual', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                imageData: imageData,
-                prompt: visualPrompt
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Visual processing failed');
-        }
-        
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || 'Visual processing failed');
-        }
-        
-        // Extract OpenSCAD code from the visual processing result
-        const visualDescription = result.result;
-        
-        // Now use the visual description to generate code via the regular pipeline
-        const enhancedMessage = `${message}. Based on this visual analysis: ${visualDescription}`;
-        return await generateCodeFromTextInput(enhancedMessage, currentCode);
-        
-    } catch (error) {
-        console.error('Visual processing error:', error);
-        // Fallback to text-only generation
-        return await generateCodeFromTextInput(message, currentCode);
-    }
-}
+// Import shared code generation utilities
+import { 
+    checkCanvasHasDrawing, 
+    generateCodeFromVisualInput, 
+    generateCodeFromTextInput 
+} from './utils/codeGeneration.js';
 
-// Generate code from text input only
-async function generateCodeFromTextInput(message, currentCode) {
-    try {
-        // Step 1: Initiate code generation and get request ID
-        const initResponse = await fetch('/generate-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                code: currentCode,
-                prompt: message
-            }),
-        });
-
-        if (!initResponse.ok) throw new Error('Network response was not ok');
-        const initData = await initResponse.json();
-
-        if (!initData.success) throw new Error(initData.error || 'Initial request failed');
-        const requestId = initData.requestId;
-
-        // Step 2: Poll for status until completion or error
-        return await pollForCompletion(requestId);
-    } catch (error) {
-        console.error('Text generation error:', error);
-        throw error;
-    }
-}
-
-// Check if canvas has any drawing on it
-function checkCanvasHasDrawing(canvas) {
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    
-    // Check if any pixel has non-zero alpha (indicating drawing)
-    for (let i = 3; i < data.length; i += 4) {
-        if (data[i] > 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) {
-    // Use requestAnimationFrame for more consistent timing across browsers
-    await new Promise(resolve => {
-        const start = performance.now();
-        const checkTime = (timestamp) => {
-            if (timestamp - start >= interval) {
-                resolve();
-            } else {
-                requestAnimationFrame(checkTime);
-            }
-        };
-        requestAnimationFrame(checkTime);
-    });
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-            const statusResponse = await fetch(`/status/${requestId}`);
-            if (!statusResponse.ok) throw new Error('Status check failed');
-
-            const statusData = await statusResponse.json();
-            const submitButton = document.getElementById('chatSubmit');
-            const chatContainer = document.querySelector('.chat-container');
-
-            // Update submit button with current phase if available
-            if (statusData.phase) {
-                if (submitButton) {
-                    const textSpan = submitButton.querySelector('.button-text');
-                    if (textSpan) {
-                        textSpan.textContent = statusData.phase;
-                    }
-                    submitButton.classList.add('processing');
-                }
-            }
-
-            if (statusData.status === 'done' && statusData.success) {
-                submitButton.classList.remove('processing');
-                chatContainer.classList.remove('thinking');
-                const chatEditor = ace.edit("chatEditor");
-                chatEditor.setReadOnly(false);
-
-                const textSpan = submitButton.querySelector('.button-text');
-                if (textSpan) {
-                    textSpan.textContent = "Send";
-                }
-                return statusData.code;
-            }
-            if (statusData.status === 'error') {
-                throw new Error(statusData.error || 'Processing error');
-            }
-
-            // If still processing, wait before next poll using requestAnimationFrame
-            await new Promise(resolve => {
-                const start = performance.now();
-                const checkTime = (timestamp) => {
-                    if (timestamp - start >= interval) {
-                        resolve();
-                    } else {
-                        requestAnimationFrame(checkTime);
-                    }
-                };
-                requestAnimationFrame(checkTime);
-            });
-        } catch (error) {
-            throw error; // Re-throw to be caught by outer try-catch
-        }
-    }
-    throw new Error('Max polling attempts reached');
-}
-
-// Simple fallback code generation
+// Simple fallback code generation for main.js
 function fallbackCodeGeneration(message) {
     let generatedCode = '// Generated from chat input\n';
     if (message.toLowerCase().includes('cube')) {
@@ -341,6 +213,7 @@ function fallbackCodeGeneration(message) {
     }
     return generatedCode;
 }
+
 
 // Initialize the application when the page loads
 window.addEventListener('load', init);
