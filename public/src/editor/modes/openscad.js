@@ -22,7 +22,12 @@ export function defineOpenSCADMode() {
                 const keywords = "module|function|if|else|for|include|use";
                 
                 // Define built-in functions
-                const builtinFunctions = "cube|cylinder|sphere|translate|rotate|scale|union|difference|intersection";
+                const builtinFunctions = "cube|cylinder|sphere|polyhedron|hull|translate|rotate|scale|mirror|" +
+                    "union|difference|intersection|minkowski|color|linear_extrude|rotate_extrude|" +
+                    "projection|surface|offset|resize|text";
+
+                // Define operators
+                const operators = "[\\+\\-\\*/%=<>\\^\\|&]";
 
                 // Define highlighting rules
                 this.$rules = {
@@ -44,8 +49,36 @@ export function defineOpenSCADMode() {
                             regex: "\\b(" + builtinFunctions + ")\\b"
                         },
                         {
+                            token: "keyword.operator",
+                            regex: operators
+                        },
+                        {
+                            token: "string",
+                            regex: '["\'][^"\']*["\']'
+                        },
+                        {
+                            token: "constant.language",
+                            regex: "\\b(true|false|undef)\\b"
+                        },
+                        {
                             token: "comment",
                             regex: "//.*$"
+                        },
+                        {
+                            token: "comment",
+                            regex: "/\\*",
+                            next: "comment"
+                        }
+                    ],
+                    "comment": [
+                        {
+                            token: "comment",
+                            regex: "\\*/",
+                            next: "start"
+                        },
+                        {
+                            token: "comment",
+                            regex: ".+"
                         }
                     ]
                 };
