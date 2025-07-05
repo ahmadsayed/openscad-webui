@@ -35,6 +35,11 @@ export function initCodeEditor(onChangeCallback) {
     });
     editor.resize();
     
+    // Add OpenSCAD-specific completer after a short delay to ensure editor is ready
+    setTimeout(() => {
+        setupOpenSCADCompleter();
+    }, 100);
+    
     // Setup change detection
     if (typeof onChangeCallback === 'function') {
         editor.session.on('change', function() {
@@ -51,6 +56,41 @@ export function initCodeEditor(onChangeCallback) {
         setValue: (value) => editor.setValue(value),
         getEditor: () => editor
     };
+}
+
+/**
+ * Setup OpenSCAD-specific autocompletion
+ */
+function setupOpenSCADCompleter() {
+    // Simple approach: Add custom command for manual completion
+    editor.commands.addCommand({
+        name: 'openscadComplete',
+        bindKey: {win: 'Ctrl-Space', mac: 'Cmd-Space'},
+        exec: function(editor) {
+            const pos = editor.getCursorPosition();
+            const line = editor.session.getLine(pos.row);
+            const prefix = line.substring(0, pos.column).split(/\s+/).pop();
+            
+            // Simple OpenSCAD completions
+            const completions = {
+                'cu': 'cube([10, 10, 10]);',
+                'sp': 'sphere(r = 5);',
+                'cy': 'cylinder(h = 10, r = 5);',
+                'tr': 'translate([0, 0, 0])',
+                'ro': 'rotate([0, 0, 0])',
+                'un': 'union()',
+                'di': 'difference()',
+                'mo': 'module name() {\n\t\n}',
+                'fu': 'function name() = '
+            };
+            
+            if (completions[prefix]) {
+                const range = editor.selection.getRange();
+                range.start.column -= prefix.length;
+                editor.session.replace(range, completions[prefix]);
+            }
+        }
+    });
 }
 
 /**
@@ -108,7 +148,11 @@ function setupKeyboardShortcuts(onChangeCallback) {
             if (editor.session.isRowFolded(row)) {
                 editor.session.unfold(row);
             } else {
-                editor.session.foldAll(row, row);
+                // Use the proper fold method for the current row
+                const range = editor.session.getFoldWidgetRange(row);
+                if (range) {
+                    editor.session.addFold("...", range);
+                }
             }
         }
     });

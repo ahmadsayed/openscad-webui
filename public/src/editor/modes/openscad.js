@@ -100,65 +100,86 @@ export function defineOpenSCADMode() {
                     const match = line.match(this.foldingStartMarker);
                     
                     if (match) {
-                        const startColumn = match.index + match[0].length;
                         const maxRow = session.getLength();
-                        let endRow = row;
-                        let endColumn = 0;
-                        let openBrackets = 0;
-                        let openParens = 0;
-                        let openSquare = 0;
+                        let bracketCount = 0;
+                        let openBraceColumn = -1;
                         
-                        // Count opening brackets/parens in the current line
-                        for (let i = startColumn; i < line.length; i++) {
+                        // Find the opening brace on the current line
+                        for (let i = 0; i < line.length; i++) {
                             const char = line[i];
-                            if (char === '{') openBrackets++;
-                            else if (char === '(') openParens++;
-                            else if (char === '[') openSquare++;
-                            else if (char === '}') openBrackets--;
-                            else if (char === ')') openParens--;
-                            else if (char === ']') openSquare--;
+                            if (char === '{') {
+                                bracketCount++;
+                                if (openBraceColumn === -1) {
+                                    openBraceColumn = i;
+                                }
+                            } else if (char === '}') {
+                                bracketCount--;
+                                if (bracketCount === 0 && openBraceColumn !== -1) {
+                                    // Found matching closing bracket on same line
+                                    // Fold from after the opening brace to before the closing brace
+                                    return new (require("../range").Range)(row, openBraceColumn + 1, row, i);
+                                }
+                            }
                         }
                         
-                        // Find the matching closing bracket/paren
-                        for (let i = row + 1; i < maxRow; i++) {
-                            const currentLine = session.getLine(i);
-                            
-                            for (let j = 0; j < currentLine.length; j++) {
-                                const char = currentLine[j];
-                                if (char === '{') openBrackets++;
-                                else if (char === '(') openParens++;
-                                else if (char === '[') openSquare++;
-                                else if (char === '}') {
-                                    openBrackets--;
-                                    if (openBrackets < 0) {
-                                        endRow = i;
-                                        endColumn = j;
-                                        break;
-                                    }
-                                }
-                                else if (char === ')') {
-                                    openParens--;
-                                    if (openParens < 0) {
-                                        endRow = i;
-                                        endColumn = j;
-                                        break;
-                                    }
-                                }
-                                else if (char === ']') {
-                                    openSquare--;
-                                    if (openSquare < 0) {
-                                        endRow = i;
-                                        endColumn = j;
-                                        break;
+                        // If we found an opening brace but no closing brace on the same line
+                        if (openBraceColumn !== -1 && bracketCount > 0) {
+                            // Search subsequent lines for the matching closing brace
+                            for (let i = row + 1; i < maxRow; i++) {
+                                const currentLine = session.getLine(i);
+                                
+                                for (let j = 0; j < currentLine.length; j++) {
+                                    const char = currentLine[j];
+                                    if (char === '{') {
+                                        bracketCount++;
+                                    } else if (char === '}') {
+                                        bracketCount--;
+                                        if (bracketCount === 0) {
+                                            // Fold from after the opening brace to before the closing brace
+                                            return new (require("../range").Range)(row, openBraceColumn + 1, i, j);
+                                        }
                                     }
                                 }
                             }
-                            
-                            if (endRow > row) break;
                         }
                         
-                        if (endRow > row) {
-                            return new (require("../range").Range)(row, startColumn, endRow, endColumn);
+                        // Handle cases where there's a function/control structure followed by a brace on the same line
+                        // Look for pattern like "function() {" or "if (...) {"
+                        let parenCount = 0;
+                        let foundOpenParen = false;
+                        
+                        for (let i = 0; i < line.length; i++) {
+                            const char = line[i];
+                            if (char === '(') {
+                                parenCount++;
+                                foundOpenParen = true;
+                            } else if (char === ')') {
+                                parenCount--;
+                                if (foundOpenParen && parenCount === 0) {
+                                    // Look for opening brace after closing parenthesis
+                                    for (let k = i + 1; k < line.length; k++) {
+                                        if (line[k] === '{') {
+                                            // Now find the matching closing brace
+                                            let braceCount = 1;
+                                            for (let m = row + 1; m < maxRow; m++) {
+                                                const nextLine = session.getLine(m);
+                                                for (let n = 0; n < nextLine.length; n++) {
+                                                    if (nextLine[n] === '{') braceCount++;
+                                                    else if (nextLine[n] === '}') {
+                                                        braceCount--;
+                                                        if (braceCount === 0) {
+                                                            // Fold from after the opening brace to before the closing brace
+                                                            return new (require("../range").Range)(row, k + 1, m, n);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
                         }
                     }
                     
