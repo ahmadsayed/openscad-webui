@@ -2,7 +2,7 @@
 
 import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
-import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
+import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes, getStorageStats, cleanupOldEntries } from './utils/codeStorage.js';
 import { extractParameters, updateCodeWithParameters, createParameterForm } from './utils/parameterExtractor.js';
 
 // Global state
@@ -382,6 +382,42 @@ function fallbackCodeGeneration(message, currentCode) {
     return sharedFallbackCodeGeneration(message, currentCode);
 }
 
+
+// Add storage management functions to window
+window.showStorageStats = function(event) {
+    if (event) event.preventDefault();
+    const stats = getStorageStats();
+    
+    let message = `📊 Storage Statistics\n\n`;
+    message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\n`;
+    message += `Storage used: ${stats.formattedCurrentSize}/${stats.formattedMaxSize} (${stats.usagePercent}%)\n`;
+    
+    if (renderer && renderer.getCurrentHash) {
+        const currentHash = renderer.getCurrentHash();
+        if (currentHash) {
+            message += `Current model: ${currentHash.substring(0, 8)}...\n`;
+        }
+    }
+    
+    if (stats.needsCleanup) {
+        message += `\n⚠️ Cleanup recommended (${stats.usagePercent}% full)`;
+    } else {
+        message += `\n✅ Storage healthy`;
+    }
+    
+    message += `\n\nThis cache stores 3D models to avoid regeneration.\n`;
+    message += `Each model has a unique hash based on OpenSCAD code.`;
+    
+    alert(message);
+};
+
+window.clearStorageCache = function(event) {
+    if (event) event.preventDefault();
+    if (confirm('Clear all cached 3D models? This will free up storage but models will need to be regenerated.')) {
+        const deletedCount = cleanupOldEntries(0); // Delete all entries
+        alert(`Cleared ${deletedCount} cached models.`);
+    }
+};
 
 // Initialize the application when the page loads
 window.addEventListener('load', init);

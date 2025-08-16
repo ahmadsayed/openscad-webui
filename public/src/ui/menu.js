@@ -107,33 +107,35 @@ function setupFileInput(editor, renderer) {
     };
     
     // Add storage management functions to window
-    window.showStorageStats = function() {
+    window.showStorageStats = function(event) {
+        if (event) event.preventDefault();
         const stats = getStorageStats();
         
-        let message = `📊 Storage Statistics\\n\\n`;
-        message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\\n`;
-        message += `Storage used: ${stats.formattedCurrentSize}/${stats.formattedMaxSize} (${stats.usagePercent}%)\\n`;
+        let message = `📊 Storage Statistics\n\n`;
+        message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\n`;
+        message += `Storage used: ${stats.formattedCurrentSize}/${stats.formattedMaxSize} (${stats.usagePercent}%)\n`;
         
         if (renderer && renderer.getCurrentHash) {
             const currentHash = renderer.getCurrentHash();
             if (currentHash) {
-                message += `Current model: ${currentHash.substring(0, 8)}...\\n`;
+                message += `Current model: ${currentHash.substring(0, 8)}...\n`;
             }
         }
         
         if (stats.needsCleanup) {
-            message += `\\n⚠️ Cleanup recommended (${stats.usagePercent}% full)`;
+            message += `\n⚠️ Cleanup recommended (${stats.usagePercent}% full)`;
         } else {
-            message += `\\n✅ Storage healthy`;
+            message += `\n✅ Storage healthy`;
         }
         
-        message += `\\n\\nThis cache stores 3D models to avoid regeneration.\\n`;
+        message += `\n\nThis cache stores 3D models to avoid regeneration.\n`;
         message += `Each model has a unique hash based on OpenSCAD code.`;
         
         alert(message);
     };
     
-    window.clearStorageCache = function() {
+    window.clearStorageCache = function(event) {
+        if (event) event.preventDefault();
         if (confirm('Clear all cached 3D models? This will free up storage but models will need to be regenerated.')) {
             const deletedCount = cleanupOldEntries(0); // Delete all entries
             alert(`Cleared ${deletedCount} cached models.`);
