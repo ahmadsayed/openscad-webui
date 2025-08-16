@@ -273,3 +273,359 @@ module honeycomb(width, depth, cell_size=5) {
       circle(d=cell_size, $fn=6);
   }
 }
+
+// 6. Chamfered Cube
+// ---------------------------------------------
+module chamfered_cube(size, chamfer=1) {
+    // Creates a cube with chamfered edges
+    hull() {
+        translate([chamfer, chamfer, chamfer])
+            cube([size[0]-2*chamfer, size[1]-2*chamfer, size[2]-2*chamfer]);
+        translate([0, chamfer, chamfer])
+            cube([size[0], size[1]-2*chamfer, size[2]-2*chamfer]);
+        translate([chamfer, 0, chamfer])
+            cube([size[0]-2*chamfer, size[1], size[2]-2*chamfer]);
+        translate([chamfer, chamfer, 0])
+            cube([size[0]-2*chamfer, size[1]-2*chamfer, size[2]]);
+    }
+}
+
+// 7. Hollow Cylinder (Tube)
+// ---------------------------------------------
+module tube(outer_radius, inner_radius, height, center=false) {
+    difference() {
+        cylinder(r=outer_radius, h=height, center=center);
+        cylinder(r=inner_radius, h=height+0.1, center=center);
+    }
+}
+
+// 8. Torus
+// ---------------------------------------------
+module torus(major_radius, minor_radius, facets=32) {
+    rotate_extrude($fn=facets)
+        translate([major_radius, 0, 0])
+            circle(r=minor_radius, $fn=facets/2);
+}
+
+// 9. Prism (N-sided)
+// ---------------------------------------------
+module prism(sides, radius, height, center=false) {
+    linear_extrude(height=height, center=center)
+        circle(r=radius, $fn=sides);
+}
+
+// 10. Slot (Rounded Rectangle)
+// ---------------------------------------------
+module slot(length, width, height, center=false) {
+    r = width/2;
+    linear_extrude(height=height, center=center) {
+        hull() {
+            translate([-length/2+r, 0, 0]) circle(r=r);
+            translate([length/2-r, 0, 0]) circle(r=r);
+        }
+    }
+}
+
+// 11. Fillet (2D)
+// ---------------------------------------------
+module fillet_2d(radius, angle=90) {
+    difference() {
+        square([radius, radius]);
+        translate([radius, radius])
+            circle(r=radius);
+    }
+}
+
+// 12. Chamfer (2D)
+// ---------------------------------------------
+module chamfer_2d(size) {
+    polygon(points=[[0,0], [size,0], [0,size]]);
+}
+
+// 13. Rounded Rectangle (2D)
+// ---------------------------------------------
+module rounded_rectangle(size, radius, center=false) {
+    x = size[0];
+    y = size[1];
+    r = radius;
+    
+    translate(center ? [-x/2, -y/2] : [0, 0]) {
+        hull() {
+            translate([r, r]) circle(r=r);
+            translate([x-r, r]) circle(r=r);
+            translate([x-r, y-r]) circle(r=r);
+            translate([r, y-r]) circle(r=r);
+        }
+    }
+}
+
+// 14. Helix
+// ---------------------------------------------
+module helix(radius, pitch, height, thickness=1, facets=32) {
+    turns = height / pitch;
+    step = 360 / facets;
+    
+    for (i = [0:step:turns*360-step]) {
+        hull() {
+            translate([radius*cos(i), radius*sin(i), i*pitch/360])
+                sphere(r=thickness/2);
+            translate([radius*cos(i+step), radius*sin(i+step), (i+step)*pitch/360])
+                sphere(r=thickness/2);
+        }
+    }
+}
+
+// 15. Spring
+// ---------------------------------------------
+module spring(radius, wire_radius, pitch, height, facets=16) {
+    turns = height / pitch;
+    step = 360 / facets;
+    
+    for (i = [0:step:turns*360-step]) {
+        hull() {
+            translate([radius*cos(i), radius*sin(i), i*pitch/360])
+                sphere(r=wire_radius);
+            translate([radius*cos(i+step), radius*sin(i+step), (i+step)*pitch/360])
+                sphere(r=wire_radius);
+        }
+    }
+}
+
+// 16. Knurling Pattern
+// ---------------------------------------------
+module knurling(radius, height, pitch=2, depth=0.5, facets=64) {
+    difference() {
+        cylinder(r=radius, h=height, $fn=facets);
+        for (i = [0:360/facets:359]) {
+            for (z = [0:pitch:height]) {
+                rotate([0, 0, i + (z % (2*pitch) == 0 ? 0 : 180/facets)])
+                    translate([radius-depth/2, 0, z])
+                        rotate([0, 45, 0])
+                            cube([depth*2, 0.5, depth*2], center=true);
+            }
+        }
+    }
+}
+
+// 17. Text Extrusion Helper
+// ---------------------------------------------
+module text_3d(text, size=10, height=2, font="Liberation Sans", center=false) {
+    linear_extrude(height=height, center=center)
+        text(text, size=size, font=font, halign="center", valign="center");
+}
+
+// 18. Screw Thread (Simple)
+// ---------------------------------------------
+module simple_thread(radius, pitch, height, thread_depth=0.5, facets=32) {
+    turns = height / pitch;
+    
+    difference() {
+        cylinder(r=radius, h=height, $fn=facets);
+        
+        for (i = [0:360/facets:turns*360]) {
+            rotate([0, 0, i])
+                translate([radius-thread_depth/2, 0, i*pitch/360])
+                    rotate([0, 45, 0])
+                        cube([thread_depth*2, thread_depth, thread_depth*2], center=true);
+        }
+    }
+}
+
+// 19. Bearing (Simple)
+// ---------------------------------------------
+module bearing(outer_radius, inner_radius, height, ball_radius=2, num_balls=8) {
+    difference() {
+        cylinder(r=outer_radius, h=height);
+        cylinder(r=inner_radius, h=height+0.1);
+        
+        // Ball groove
+        ball_center_radius = (outer_radius + inner_radius) / 2;
+        translate([0, 0, height/2])
+            rotate_extrude()
+                translate([ball_center_radius, 0, 0])
+                    circle(r=ball_radius*1.1);
+    }
+    
+    // Balls
+    ball_center_radius = (outer_radius + inner_radius) / 2;
+    for (i = [0:360/num_balls:359]) {
+        rotate([0, 0, i])
+            translate([ball_center_radius, 0, height/2])
+                sphere(r=ball_radius);
+    }
+}
+
+// 20. Washer
+// ---------------------------------------------
+module washer(outer_radius, inner_radius, thickness) {
+    difference() {
+        cylinder(r=outer_radius, h=thickness);
+        cylinder(r=inner_radius, h=thickness+0.1);
+    }
+}
+
+// 21. Countersunk Hole
+// ---------------------------------------------
+module countersunk_hole(hole_radius, head_radius, head_depth, total_depth) {
+    union() {
+        cylinder(r=hole_radius, h=total_depth);
+        translate([0, 0, total_depth-head_depth])
+            cylinder(r1=hole_radius, r2=head_radius, h=head_depth);
+    }
+}
+
+// 22. Dovetail Joint
+// ---------------------------------------------
+module dovetail_male(width, height, depth, angle=15) {
+    linear_extrude(height=depth) {
+        polygon(points=[
+            [0, 0],
+            [width, 0],
+            [width + height*tan(angle), height],
+            [-height*tan(angle), height]
+        ]);
+    }
+}
+
+module dovetail_female(width, height, depth, angle=15, clearance=0.1) {
+    linear_extrude(height=depth+0.1) {
+        polygon(points=[
+            [-clearance, -clearance],
+            [width+clearance, -clearance],
+            [width + height*tan(angle)+clearance, height+clearance],
+            [-height*tan(angle)-clearance, height+clearance]
+        ]);
+    }
+}
+
+// 23. Parametric Bolt
+// ---------------------------------------------
+module bolt(head_radius, head_height, shaft_radius, shaft_length, thread_pitch=1) {
+    // Head
+    cylinder(r=head_radius, h=head_height);
+    
+    // Shaft with simple threading
+    translate([0, 0, -shaft_length])
+        simple_thread(shaft_radius, thread_pitch, shaft_length);
+}
+
+// 24. Parametric Nut
+// ---------------------------------------------
+module nut(outer_radius, inner_radius, height, sides=6, thread_pitch=1) {
+    difference() {
+        cylinder(r=outer_radius, h=height, $fn=sides);
+        simple_thread(inner_radius, thread_pitch, height+0.1);
+    }
+}
+
+// 25. Flexible Hinge
+// ---------------------------------------------
+module flexible_hinge(length, width, thickness, gap=0.5, segments=10) {
+    segment_length = length / segments;
+    
+    for (i = [0:segments-1]) {
+        translate([i * segment_length, 0, 0]) {
+            if (i % 2 == 0) {
+                cube([segment_length - gap, width, thickness]);
+            } else {
+                translate([0, 0, thickness])
+                    cube([segment_length - gap, width, thickness]);
+            }
+        }
+    }
+}
+
+// 26. Lattice Structure
+// ---------------------------------------------
+module lattice(size, cell_size=5, beam_width=1) {
+    for (x = [0:cell_size:size[0]]) {
+        translate([x, 0, 0])
+            cube([beam_width, size[1], size[2]]);
+    }
+    for (y = [0:cell_size:size[1]]) {
+        translate([0, y, 0])
+            cube([size[0], beam_width, size[2]]);
+    }
+    for (z = [0:cell_size:size[2]]) {
+        translate([0, 0, z])
+            cube([size[0], size[1], beam_width]);
+    }
+}
+
+// 27. Voronoi Pattern (Simple)
+// ---------------------------------------------
+module voronoi_cell(points, bounds) {
+    // Simple implementation - creates polygonal cells
+    // This is a simplified version; full Voronoi requires more complex algorithms
+    intersection() {
+        square(bounds);
+        for (i = [0:len(points)-1]) {
+            for (j = [i+1:len(points)-1]) {
+                // Create bisector line between points i and j
+                mid = (points[i] + points[j]) / 2;
+                dir = points[j] - points[i];
+                normal = [-dir[1], dir[0]];
+                
+                // Half-plane cut
+                translate(mid)
+                    rotate(atan2(normal[1], normal[0]))
+                        translate([-bounds[0], 0])
+                            square([bounds[0]*2, bounds[1]]);
+            }
+        }
+    }
+}
+
+// 28. Spiral
+// ---------------------------------------------
+module spiral(inner_radius, outer_radius, height, turns=5, facets=64) {
+    step = 360 / facets;
+    radius_step = (outer_radius - inner_radius) / (turns * 360 / step);
+    
+    for (i = [0:step:turns*360-step]) {
+        current_radius = inner_radius + i * radius_step;
+        hull() {
+            translate([current_radius*cos(i), current_radius*sin(i), 0])
+                cylinder(r=0.5, h=height);
+            translate([(current_radius+radius_step)*cos(i+step), (current_radius+radius_step)*sin(i+step), 0])
+                cylinder(r=0.5, h=height);
+        }
+    }
+}
+
+// 29. Parametric Gear Rack
+// ---------------------------------------------
+module gear_rack(length, tooth_count, tooth_height=2, tooth_width=3) {
+    tooth_spacing = length / tooth_count;
+    
+    for (i = [0:tooth_count-1]) {
+        translate([i * tooth_spacing, 0, 0]) {
+            linear_extrude(height=tooth_height) {
+                polygon(points=[
+                    [0, 0],
+                    [tooth_width/2, tooth_height],
+                    [tooth_spacing - tooth_width/2, tooth_height],
+                    [tooth_spacing, 0]
+                ]);
+            }
+        }
+    }
+}
+
+// 30. Living Hinge
+// ---------------------------------------------
+module living_hinge(length, width, thickness=0.8, cut_width=0.4, cut_spacing=1.2) {
+    difference() {
+        cube([length, width, thickness]);
+        
+        for (x = [cut_spacing:cut_spacing*2:length-cut_spacing]) {
+            translate([x, 0, thickness/4])
+                cube([cut_width, width+0.1, thickness/2]);
+        }
+        
+        for (x = [cut_spacing*2:cut_spacing*2:length-cut_spacing]) {
+            translate([x, 0, thickness/4])
+                cube([cut_width, width+0.1, thickness/2]);
+        }
+    }
+}

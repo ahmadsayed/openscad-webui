@@ -26,39 +26,57 @@ export function checkCanvasHasDrawing(canvas) {
  * @returns {Promise<string>}
  */
 export async function pollForCompletion(requestId, interval = 1000, maxAttempts = 200) {
-    // Use requestAnimationFrame for consistent timing
-    await new Promise(resolve => {
-        const start = performance.now();
-        const checkTime = (timestamp) => {
-            if (timestamp - start >= interval) resolve();
-            else requestAnimationFrame(checkTime);
-        };
-        requestAnimationFrame(checkTime);
-    });
-
+    console.log(`🔄 Polling for completion of request: ${requestId}`);
+    
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
+            console.log(`📡 Polling attempt ${attempt + 1}/${maxAttempts} for request ${requestId}`);
+            
             const statusResponse = await fetch(`/status/${requestId}`);
-            if (!statusResponse.ok) throw new Error('Status check failed');
+            if (!statusResponse.ok) {
+                console.warn(`❌ Status check failed for ${requestId}: ${statusResponse.status} ${statusResponse.statusText}`);
+                throw new Error(`Status check failed: ${statusResponse.status}`);
+            }
             
             const statusData = await statusResponse.json();
-            if (statusData.status === 'done' && statusData.success) return statusData.code;
-            if (statusData.status === 'error') throw new Error(statusData.error);
+            console.log(`📊 Request ${requestId} status:`, statusData);
             
-            // Wait before next poll
-            await new Promise(resolve => {
-                const start = performance.now();
-                const checkTime = (timestamp) => {
-                    if (timestamp - start >= interval) resolve();
-                    else requestAnimationFrame(checkTime);
-                };
-                requestAnimationFrame(checkTime);
-            });
+            // Check for completion
+            if (statusData.status === 'done' && statusData.success && statusData.code) {
+                console.log(`✅ Request ${requestId} completed successfully`);
+                return statusData.code;
+            }
+            
+            // Check for errors
+            if (statusData.status === 'error' || statusData.success === false) {
+                const errorMsg = statusData.error || 'Unknown error occurred';
+                console.error(`❌ Request ${requestId} failed:`, errorMsg);
+                throw new Error(errorMsg);
+            }
+            
+            // Still working, wait before next poll
+            console.log(`⏳ Request ${requestId} still working... (${statusData.phase || 'processing'})`);
+            
+            // Simple delay using setTimeout
+            await new Promise(resolve => setTimeout(resolve, interval));
+            
         } catch (error) {
-            throw error;
+            console.error(`💥 Error polling request ${requestId}:`, error);
+            // If it's a network error, throw immediately
+            if (error.message.includes('fetch') || error.message.includes('Network')) {
+                throw error;
+            }
+            // For other errors, continue polling for a few more attempts
+            if (attempt >= 3) {
+                throw error;
+            }
+            console.log(`🔄 Retrying after error (attempt ${attempt + 1})...`);
+            await new Promise(resolve => setTimeout(resolve, interval));
         }
     }
-    throw new Error('Max polling attempts reached');
+    
+    console.error(`⏰ Request ${requestId} timed out after ${maxAttempts} attempts`);
+    throw new Error(`Request timed out after ${maxAttempts} polling attempts`);
 }
 
 /**

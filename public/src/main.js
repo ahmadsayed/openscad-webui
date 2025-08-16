@@ -52,10 +52,8 @@ async function init() {
     
     // Initialize the code editor
     codeEditor = initCodeEditor(code => {
-        // Auto-save code when it changes
-        autoSaveCode('main', code);
-        
-        // Don't auto-render on change - only render on save or generation complete
+        // Only render on manual save (Ctrl+S)
+        // No auto-save functionality
     });
 
     // Load saved code or use default
@@ -70,8 +68,8 @@ async function init() {
             const code = await generateCodeFromMessage(message, codeEditor.getValue());
             codeEditor.setValue(code);
             // Save the generated code immediately
-            saveCode('main', code);
-            renderer.renderOpenSCAD(code);
+            await saveCode('main', code);
+            await renderer.renderOpenSCAD(code);
             return true;
         } catch (error) {
             console.error('Error generating code:', error);
@@ -90,18 +88,27 @@ async function init() {
     }, 1500);
 
     // Export necessary functions to window for HTML event handlers
-    window.newDesign = () => {
+    window.newDesign = async () => {
         const defaultCode = "cube(20, center=true);";
         codeEditor.setValue(defaultCode);
-        saveCode('main', defaultCode);
+        await saveCode('main', defaultCode);
         // Clear and render the default cube
         renderer.renderOpenSCAD(defaultCode);
     };
     
-    window.saveDesign = () => {
+    window.saveDesign = async () => {
+        console.log('💾 Manual save triggered - recalculating hash and checking cache...');
         const code = codeEditor.getValue();
-        saveCode('main', code);
-        renderer.renderOpenSCAD(code);
+        
+        // Always render with hash recalculation and cache check
+        // This will handle cache lookup and only regenerate if needed
+        await manualRender(code);
+        
+        // After rendering, get the STL data (either from cache or newly generated)
+        const stlData = renderer.getCurrentStlData();
+        await saveCode('main', code, stlData);
+        
+        console.log('✅ Manual save complete with up-to-date hash and STL data');
     };
     
     // Create a render function for manual rendering
@@ -120,76 +127,31 @@ async function init() {
         const code = codeEditor.getValue();
         downloadSCAD(code);
     };
+    
+    // Export test function for debugging
+    window.testCodeEditingHash = testCodeEditingHash;
 
     // Save code before navigating to simple mode
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', async () => {
         const currentCode = codeEditor.getValue();
-        syncCodeBetweenModes('main', 'simple', currentCode);
+        const currentStlData = renderer ? renderer.getCurrentStlData() : null;
+        await syncCodeBetweenModes('main', 'simple', currentCode, currentStlData);
     });
 
     // Export mode switch handler to window
-    window.handleModeSwitch = (event, targetMode) => {
-        event.preventDefault();
-        
-        // Force hide any processing indicators before switching
-        if (renderer && renderer.forceHideProcessingIndicator) {
-            renderer.forceHideProcessingIndicator();
-        }
-        
-        const currentCode = codeEditor.getValue();
-        syncCodeBetweenModes('main', targetMode, currentCode);
-        window.location.href = targetMode === 'simple' ? 'simple.html' : 'main.html';
+    window.handleModeSwitch = async (event, targetMode) => {
+        await sharedHandleModeSwitch(event, targetMode, 'main', codeEditor.getValue(), renderer);
     };
 
 }
 
-// Call API to generate code from user message
-async function generateCodeFromMessage(message, currentCode) {
-    try {
-        // Check if drawing mode is active and capture image if needed
-        const isDrawingMode = window.getDrawingMode && window.getDrawingMode();
-        
-        if (isDrawingMode) {
-            const annotationCanvas = document.getElementById('annotationCanvas');
-            const renderCanvas = document.getElementById('renderCanvas');
-            
-            if (annotationCanvas && renderCanvas) {
-                // Create a combined canvas
-                const combinedCanvas = document.createElement('canvas');
-                combinedCanvas.width = renderCanvas.width;
-                combinedCanvas.height = renderCanvas.height;
-                const ctx = combinedCanvas.getContext('2d');
-                
-                // Ensure Babylon scene is rendered
-                renderer.scene.render();
-                
-                // Draw render canvas first (Babylon 3D model)
-                ctx.drawImage(renderCanvas, 0, 0);
-                
-                // Draw annotation canvas on top (user markings)
-                ctx.drawImage(annotationCanvas, 0, 0);
-                
-                const imageData = combinedCanvas.toDataURL('image/png');
-                
-                // Check if there's actually any drawing on the canvas
-                const hasDrawing = checkCanvasHasDrawing(annotationCanvas);
-                
-                if (hasDrawing) {
-                    console.log('🎨 Drawing detected, using visual processing');
-                    return await generateCodeFromVisualInput(imageData, message, currentCode);
-                }
-            }
-        }
-        
-        // Fallback to text-only generation
-        console.log('📝 Using text-only generation');
-        return await generateCodeFromTextInput(message, currentCode);
-    } catch (error) {
-        console.error('Generation error:', error);
-        // Fallback to simple generation
-        return fallbackCodeGeneration(message);
-    }
-}
+// Import shared functions
+import { 
+    generateCodeFromMessage as sharedGenerateCodeFromMessage,
+    fallbackCodeGeneration as sharedFallbackCodeGeneration,
+    handleModeSwitch as sharedHandleModeSwitch,
+    setupPlaceholder as sharedSetupPlaceholder
+} from './utils/sharedFunctions.js';
 
 // Import shared code generation utilities
 import { 
@@ -198,20 +160,28 @@ import {
     generateCodeFromTextInput 
 } from './utils/codeGeneration.js';
 
-// Simple fallback code generation for main.js
+// Import test functions for debugging
+import { testCodeEditingHash } from './utils/storageTest.js';
+
+// Use shared generateCodeFromMessage function
+async function generateCodeFromMessage(message, currentCode) {
+    return await sharedGenerateCodeFromMessage(message, currentCode, renderer);
+}
+
+// Use shared fallbackCodeGeneration function
 function fallbackCodeGeneration(message) {
-    let generatedCode = '// Generated from chat input\n';
-    if (message.toLowerCase().includes('cube')) {
-        const size = message.match(/\d+/)?.[0] || 10;
-        generatedCode += `cube(${size}, center=true);`;
-    } else if (message.toLowerCase().includes('sphere')) {
-        const radius = message.match(/\d+/)?.[0] || 5;
-        generatedCode += `sphere(r=${radius});`;
-    } else {
-        generatedCode += `// Could not generate code from: "${message}"\n`
-            + `// Try asking for a cube or sphere`;
+    return sharedFallbackCodeGeneration(message);
+}
+
+// Manual render function (called on save)
+async function manualRender(code) {
+    try {
+        console.log('🔄 Manual render triggered...');
+        await renderer.renderOpenSCAD(code);
+        console.log('✅ Manual render complete');
+    } catch (error) {
+        console.error('Render error:', error);
     }
-    return generatedCode;
 }
 
 

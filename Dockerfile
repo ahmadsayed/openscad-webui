@@ -9,6 +9,7 @@ ENV NODE_ENV=production
 
 # Copy package files for better caching
 COPY package*.json ./
+COPY prompts.json  /app/
 
 # Install dependencies with exact versions from package-lock.json
 # Use npm ci instead of npm install for faster, more reliable builds
@@ -30,6 +31,7 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --chown=appuser:appgroup package.json ./
 COPY --chown=appuser:appgroup index.js ./
+COPY --chown=appuser:appgroup prompts.json ./
 COPY --chown=appuser:appgroup public ./public
 
 # Create requests directory with proper permissions

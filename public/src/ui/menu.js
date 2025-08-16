@@ -1,6 +1,7 @@
 // menu.js - Manages menu functionality
 
 import { openDesign } from '../utils/fileUtils.js';
+import { getHashIndex, cleanupOldEntries, getStorageStats } from '../utils/codeStorage.js';
 
 /**
  * Initialize the menu functionality
@@ -103,5 +104,39 @@ function setupFileInput(editor, renderer) {
     // Make openDesign function available globally
     window.openDesign = function(event) {
         fileInput.click();
+    };
+    
+    // Add storage management functions to window
+    window.showStorageStats = function() {
+        const stats = getStorageStats();
+        
+        let message = `📊 Storage Statistics\\n\\n`;
+        message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\\n`;
+        message += `Storage used: ${stats.formattedCurrentSize}/${stats.formattedMaxSize} (${stats.usagePercent}%)\\n`;
+        
+        if (renderer && renderer.getCurrentHash) {
+            const currentHash = renderer.getCurrentHash();
+            if (currentHash) {
+                message += `Current model: ${currentHash.substring(0, 8)}...\\n`;
+            }
+        }
+        
+        if (stats.needsCleanup) {
+            message += `\\n⚠️ Cleanup recommended (${stats.usagePercent}% full)`;
+        } else {
+            message += `\\n✅ Storage healthy`;
+        }
+        
+        message += `\\n\\nThis cache stores 3D models to avoid regeneration.\\n`;
+        message += `Each model has a unique hash based on OpenSCAD code.`;
+        
+        alert(message);
+    };
+    
+    window.clearStorageCache = function() {
+        if (confirm('Clear all cached 3D models? This will free up storage but models will need to be regenerated.')) {
+            const deletedCount = cleanupOldEntries(0); // Delete all entries
+            alert(`Cleared ${deletedCount} cached models.`);
+        }
     };
 }

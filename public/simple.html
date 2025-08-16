@@ -569,6 +569,17 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="#">Tools</a>
+                <div class="dropdown">
+                    <a href="#" onclick="showStorageStats(event)">
+                        <i class="bi bi-info-circle"></i> Storage Info
+                    </a>
+                    <a href="#" onclick="clearStorageCache(event)">
+                        <i class="bi bi-trash"></i> Clear Cache
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item">
                 <a href="main.html" onclick="handleModeSwitch(event, 'main')">Advanced Mode</a>
             </li>
         </ul>

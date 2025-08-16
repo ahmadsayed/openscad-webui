@@ -111,7 +111,9 @@ async function submitChat(chatEditor, onSubmitCallback) {
         chatContainer.classList.add('thinking');
         chatEditor.setReadOnly(true);
         submitButton.classList.add('processing');
+        submitButton.disabled = true;
         textSpan.textContent = 'Processing...';
+        console.log('🔒 Chat button disabled for processing');
 
         // Process the message with the provided callback
         const success = await onSubmitCallback(message);
@@ -119,17 +121,41 @@ async function submitChat(chatEditor, onSubmitCallback) {
         if (success) {
             // Clear the input on success
             chatEditor.setValue("");
+            
+            submitButton.textContent = "Send";
+            // Immediately enable button functionality while keeping visual feedback
+            submitButton.disabled = false;
+            chatEditor.setReadOnly(false);
+            
+            // Remove processing state after short delay for visual feedback
+            chatContainer.classList.remove('thinking');
+             submitButton.classList.remove('processing');
+
+            
+            
+        } else {
+            // Show error message and restore button state together
+            textSpan.textContent = 'Failed!';
+            
+            setTimeout(() => {
+                chatContainer.classList.remove('thinking');
+                submitButton.classList.remove('processing');
+                submitButton.disabled = false;
+                textSpan.textContent = originalText;
+                chatEditor.setReadOnly(false);
+            }, 1800); // Wait for error message display
         }
     } catch (error) {
         console.error('Chat submission error:', error);
         textSpan.textContent = 'Error!';
-    } finally {
-        // Restore editor state
+        
+        // Restore button state after showing error message
         setTimeout(() => {
             chatContainer.classList.remove('thinking');
             submitButton.classList.remove('processing');
+            submitButton.disabled = false;
             textSpan.textContent = originalText;
             chatEditor.setReadOnly(false);
-        }, 1000);
+        }, 2200); // Wait for error message display
     }
 }

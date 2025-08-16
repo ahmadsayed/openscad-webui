@@ -2,6 +2,7 @@
 
 import OpenSCAD from "../openscad.js";
 import { downloadBinaryAsFile } from './utils/fileUtils.js';
+import { generateCodeHash, saveCodeWithHash, loadCodeByHash, cleanupOldEntries, getHashIndex, getStorageStats } from './utils/codeStorage.js';
 
 
 /**
@@ -16,6 +17,9 @@ export class OpenSCADRenderer {
         this.worker = new Worker('./src/openscadWorker.js', { type: 'module' });
         this.pendingRequests = new Map();
         this.isProcessing = false;
+        this.currentCode = null;
+        this.currentHash = null;
+        this.currentStlData = null;
         
         // Drawing annotation properties
         this.isDrawing = false;
@@ -58,11 +62,11 @@ export class OpenSCADRenderer {
                 request.reject(new Error(error));
             } else {
                 if (request.type === 'render') {
-                    this._handleRenderResult(result).then(request.resolve).catch(request.reject);
+                    this._handleRenderResult(result, request.code).then(request.resolve).catch(request.reject);
                 } else if (request.type === 'getSTL') {
                     try {
                         const bytes = new Uint8Array(result);
-                        downloadBinaryAsFile("model.stl", bytes);
+                        downloadBinaryAsFile(`${this.currentHash || 'model'}.stl`, bytes);
                         request.resolve();
                     } catch (err) {
                         console.error("Error processing STL data:", err);
@@ -460,6 +464,35 @@ export class OpenSCADRenderer {
     async renderOpenSCAD(openscadCode) {
         const id = Date.now() + Math.random().toString(36).substr(2, 5);
         
+        // Always generate hash fresh from the provided code
+        const newHash = await generateCodeHash(openscadCode);
+        const oldHash = this.currentHash;
+        
+        // Store current code and hash
+        this.currentCode = openscadCode;
+        this.currentHash = newHash;
+        
+        // Debug logging
+        console.log(`🔍 Code changed: ${oldHash !== newHash ? 'YES' : 'NO'}`);
+        console.log(`🔍 Old hash: ${oldHash ? oldHash.substring(0, 8) + '...' : 'none'}`);
+        console.log(`🔍 New hash: ${newHash.substring(0, 8)}...`);
+        
+        // Check if we already have this exact code/STL cached
+        const cachedData = loadCodeByHash(this.currentHash);
+        if (cachedData && cachedData.stlData) {
+            console.log(`💾 Cache HIT for hash: ${this.currentHash.substring(0, 8)}...`);
+            console.log(`📊 Skipping OpenSCAD compilation, loading cached STL.`);
+            try {
+                await this._handleRenderResult(cachedData.stlData.buffer, openscadCode, true);
+                return;
+            } catch (error) {
+                console.warn('Failed to load cached model, regenerating:', error);
+            }
+        } else {
+            console.log(`💾 Cache MISS for hash: ${this.currentHash.substring(0, 8)}...`);
+            console.log(`🔄 Will generate new model with OpenSCAD compilation.`);
+        }
+        
         // Show processing indicator
         this._showProcessingIndicator();
         
@@ -467,7 +500,8 @@ export class OpenSCADRenderer {
             this.pendingRequests.set(id, { 
                 resolve, 
                 reject,
-                type: 'render'
+                type: 'render',
+                code: openscadCode
             });
 
             this.worker.postMessage({
@@ -478,7 +512,24 @@ export class OpenSCADRenderer {
         });
     }
 
-    async _handleRenderResult(stlBuffer) {
+    async _handleRenderResult(stlBuffer, code, fromCache = false) {
+        // Store STL data for future use
+        this.currentStlData = new Uint8Array(stlBuffer);
+        
+        // Save code and STL with hash if not from cache
+        if (!fromCache && code && this.currentHash) {
+            await saveCodeWithHash(this.currentHash, code, this.currentStlData);
+            console.log(`💾 Cached model with hash: ${this.currentHash.substring(0, 8)}... (${Math.round(this.currentStlData.length / 1024)}KB)`);
+            
+            // Cleanup old entries periodically
+            if (Math.random() < 0.1) { // 10% chance
+                const deletedCount = cleanupOldEntries();
+                if (deletedCount > 0) {
+                    console.log(`🧹 Cleaned up ${deletedCount} old cached models`);
+                }
+            }
+        }
+        
         // Convert buffer to base64
         const buffer = this._arrayBufferToBase64(stlBuffer);
         
@@ -491,6 +542,14 @@ export class OpenSCADRenderer {
      * @returns {Promise<void>}
      */
     downloadSTL() {
+        // If we have cached STL data, use it directly
+        if (this.currentStlData && this.currentHash) {
+            const filename = `${this.currentHash.substring(0, 16)}.stl`;
+            downloadBinaryAsFile(filename, this.currentStlData);
+            return Promise.resolve();
+        }
+        
+        // Otherwise request fresh STL from worker
         const id = Date.now() + Math.random().toString(36).substr(2, 5);
         
         // Show processing indicator
@@ -508,6 +567,22 @@ export class OpenSCADRenderer {
                 command: 'getSTL'
             });
         });
+    }
+    
+    /**
+     * Get current code hash
+     * @returns {string|null} Current code hash
+     */
+    getCurrentHash() {
+        return this.currentHash;
+    }
+    
+    /**
+     * Get current STL data
+     * @returns {Uint8Array|null} Current STL data
+     */
+    getCurrentStlData() {
+        return this.currentStlData;
     }
 
     /**
@@ -670,5 +745,17 @@ export class OpenSCADRenderer {
         plane.material = material;
 
         return plane;
+    }
+    
+    /**
+     * Get storage statistics
+     * @returns {Object} Storage usage information
+     */
+    getStorageStats() {
+        const stats = getStorageStats();
+        return {
+            ...stats,
+            currentHash: this.currentHash ? this.currentHash.substring(0, 8) + '...' : null
+        };
     }
 }

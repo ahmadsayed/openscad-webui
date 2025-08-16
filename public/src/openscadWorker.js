@@ -31,7 +31,7 @@ class OpenSCADWorker {
             }, 0);
 
             // Load the module.scad file
-            let response = await fetch('./modules/module.scad');
+            let response = await fetch('../src/modules/module.scad');
             let module = await response.text();
             this.instance.FS.writeFile("/module.scad", module);
 
@@ -44,8 +44,9 @@ class OpenSCADWorker {
                 });
             }, 0);
 
-            // Write input and generate STL
-            this.instance.FS.writeFile("/input.scad", openscadCode);
+            // Write input and generate STL with automatic module inclusion
+            const codeWithModules = `include </module.scad>\n\n${openscadCode}`;
+            this.instance.FS.writeFile("/input.scad", codeWithModules);
             this.instance.callMain(["/input.scad", 
                 "--enable=manifold",           // Enable manifold geometry engine (faster)
                 "--enable=fast-csg",          // Enable fast CSG operations

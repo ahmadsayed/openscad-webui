@@ -49,12 +49,12 @@ async function init() {
     }, 1500);
 
     // Export necessary functions to window for HTML event handlers
-    window.newDesign = () => {
+    window.newDesign = async () => {
         const defaultCode = "cube(20, center=true);";
         currentCode = defaultCode; // Reset current code tracking
-        saveCode('simple', defaultCode);
+        await saveCode('simple', defaultCode);
         // Clear and render the default cube
-        renderer.renderOpenSCAD(defaultCode);
+        await renderer.renderOpenSCAD(defaultCode);
         // Update parameter form
         updateParameterForm(defaultCode);
     };
@@ -66,21 +66,14 @@ async function init() {
     };
 
     // Save code before navigating to advanced mode
-    window.addEventListener('beforeunload', () => {
-        syncCodeBetweenModes('simple', 'main', currentCode);
+    window.addEventListener('beforeunload', async () => {
+        const currentStlData = renderer ? renderer.getCurrentStlData() : null;
+        await syncCodeBetweenModes('simple', 'main', currentCode, currentStlData);
     });
 
     // Export mode switch handler to window
-    window.handleModeSwitch = (event, targetMode) => {
-        event.preventDefault();
-        
-        // Force hide any processing indicators before switching
-        if (renderer && renderer.forceHideProcessingIndicator) {
-            renderer.forceHideProcessingIndicator();
-        }
-        
-        syncCodeBetweenModes('simple', targetMode, currentCode);
-        window.location.href = targetMode === 'main' ? 'main.html' : 'simple.html';
+    window.handleModeSwitch = async (event, targetMode) => {
+        await sharedHandleModeSwitch(event, targetMode, 'simple', currentCode, renderer);
     };
 }
 
@@ -193,20 +186,29 @@ function updateParameterForm(code) {
 }
 
 // Handle parameter changes
-function onParameterChange(updatedParameters) {
+async function onParameterChange(updatedParameters) {
+    console.log('🔧 Parameters changed, updating code and recalculating hash...');
+    
     // Update the current code with new parameter values
     const updatedCode = updateCodeWithParameters(currentCode, updatedParameters);
     
     // Update current code tracking
     currentCode = updatedCode;
     
-    // Save the updated code
-    saveCode('simple', updatedCode);
-    
-    // Re-render the 3D model with updated parameters
-    renderer.renderOpenSCAD(updatedCode).catch(error => {
+    // First: Render with hash recalculation and cache check
+    // This will handle cache lookup and only regenerate if needed
+    try {
+        await renderer.renderOpenSCAD(updatedCode);
+        console.log('🔄 Parameter render complete (cache checked)');
+        
+        // After rendering, get the correct STL data (either from cache or newly generated)
+        const stlData = renderer.getCurrentStlData();
+        await saveCode('simple', updatedCode, stlData);
+        
+        console.log('✅ Parameter update complete with correct hash and STL data');
+    } catch (error) {
         console.error('Error rendering updated code:', error);
-    });
+    }
 }
 
 // Initialize the simple chat editor
@@ -333,7 +335,7 @@ async function submitSimpleChat(editor) {
         // Update current code and render the generated code
         currentCode = code;
         // Save the generated code immediately
-        saveCode('simple', code);
+        await saveCode('simple', code);
         await renderer.renderOpenSCAD(code);
         
         // Extract and update parameters for the new code
@@ -363,53 +365,13 @@ async function submitSimpleChat(editor) {
     }
 }
 
-// Call API to generate code from user message
-async function generateCodeFromMessage(message, currentCode) {
-    try {
-        // Check if drawing mode is active and capture image if needed
-        const isDrawingMode = window.getDrawingMode && window.getDrawingMode();
-        
-        if (isDrawingMode) {
-            const annotationCanvas = document.getElementById('annotationCanvas');
-            const renderCanvas = document.getElementById('renderCanvas');
-            
-            if (annotationCanvas && renderCanvas) {
-                // Create a combined canvas
-                const combinedCanvas = document.createElement('canvas');
-                combinedCanvas.width = renderCanvas.width;
-                combinedCanvas.height = renderCanvas.height;
-                const ctx = combinedCanvas.getContext('2d');
-                
-                // Ensure Babylon scene is rendered
-                renderer.scene.render();
-                
-                // Draw render canvas first (Babylon 3D model)
-                ctx.drawImage(renderCanvas, 0, 0);
-                
-                // Draw annotation canvas on top (user markings)
-                ctx.drawImage(annotationCanvas, 0, 0);
-                
-                const imageData = combinedCanvas.toDataURL('image/png');
-                
-                // Check if there's actually any drawing on the canvas
-                const hasDrawing = checkCanvasHasDrawing(annotationCanvas);
-                
-                if (hasDrawing) {
-                    console.log('🎨 Drawing detected, using visual processing');
-                    return await generateCodeFromVisualInput(imageData, message, currentCode);
-                }
-            }
-        }
-        
-        // Fallback to text-only generation
-        console.log('📝 Using text-only generation');
-        return await generateCodeFromTextInput(message, currentCode);
-    } catch (error) {
-        console.error('Generation error:', error);
-        // Fallback to simple generation with current code
-        return fallbackCodeGeneration(message, currentCode);
-    }
-}
+// Import shared functions
+import { 
+    generateCodeFromMessage as sharedGenerateCodeFromMessage,
+    fallbackCodeGeneration as sharedFallbackCodeGeneration,
+    handleModeSwitch as sharedHandleModeSwitch,
+    setupPlaceholder as sharedSetupPlaceholder
+} from './utils/sharedFunctions.js';
 
 // Import shared code generation utilities
 import { 
@@ -418,45 +380,14 @@ import {
     generateCodeFromTextInput 
 } from './utils/codeGeneration.js';
 
-// Simple fallback code generation for simple.js
+// Use shared generateCodeFromMessage function
+async function generateCodeFromMessage(message, currentCode) {
+    return await sharedGenerateCodeFromMessage(message, currentCode, renderer);
+}
+
+// Use shared fallbackCodeGeneration function
 function fallbackCodeGeneration(message, currentCode) {
-    const lowerMessage = message.toLowerCase();
-    let generatedCode = '// Generated from: "' + message + '"\n';
-    generatedCode += '// Building on: ' + currentCode.split('\n')[0] + '\n\n';
-    
-    if (lowerMessage.includes('cube') || lowerMessage.includes('box')) {
-        const size = message.match(/\d+/)?.[0] || 20;
-        if (lowerMessage.includes('round') || lowerMessage.includes('smooth')) {
-            generatedCode += `minkowski() {\n    cube([${size}, ${size}, ${size}], center=true);\n    sphere(r=2);\n}`;
-        } else {
-            generatedCode += `cube([${size}, ${size}, ${size}], center=true);`;
-        }
-    } else if (lowerMessage.includes('sphere') || lowerMessage.includes('ball')) {
-        const radius = message.match(/\d+/)?.[0] || 10;
-        generatedCode += `sphere(r=${radius});`;
-    } else if (lowerMessage.includes('cylinder') || lowerMessage.includes('tube')) {
-        const height = message.match(/\d+/)?.[0] || 20;
-        const radius = Math.floor(height / 2);
-        generatedCode += `cylinder(h=${height}, r=${radius}, center=true);`;
-    } else if (lowerMessage.includes('house')) {
-        generatedCode += `// Simple house\n`;
-        generatedCode += `// Base\ncube([30, 20, 15], center=true);\n`;
-        generatedCode += `// Roof\ntranslate([0, 0, 15])\n`;
-        generatedCode += `rotate([90, 0, 0])\n`;
-        generatedCode += `linear_extrude(height=20, center=true)\n`;
-        generatedCode += `polygon([[0, 0], [15, 10], [30, 0]]);`;
-    } else if (lowerMessage.includes('pyramid')) {
-        const size = message.match(/\d+/)?.[0] || 20;
-        generatedCode += `// Pyramid\n`;
-        generatedCode += `linear_extrude(height=${size}, scale=0)\n`;
-        generatedCode += `square([${size}, ${size}], center=true);`;
-    } else {
-        // Default to a simple cube with a helpful comment
-        generatedCode += `// Try describing shapes like: cube, sphere, cylinder, house, or pyramid\n`;
-        generatedCode += `cube([20, 20, 20], center=true);`;
-    }
-    
-    return generatedCode;
+    return sharedFallbackCodeGeneration(message, currentCode);
 }
 
 

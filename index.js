@@ -8,6 +8,15 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REQUEST_DIR = path.join(__dirname, 'requests');
 
+// Load prompts from external file
+let prompts = null;
+async function loadPrompts() {
+    if (!prompts) {
+        const promptsData = await fs.readFile(path.join(__dirname, 'prompts.json'), 'utf8');
+        prompts = JSON.parse(promptsData);
+    }
+    return prompts;
+}
 
 let generator = null;
 
@@ -16,34 +25,6 @@ let generator = null;
 export const app = express();
 const PORT = 3000;
 
-const modules = `     [MODULES] Use these with include <module.scad>:
-                    1. rounded_cube([width,depth,height], radius, facets)
-                    // Example: facets = 16; rounded_cube([cube_width, cube_depth, cube_height], corner_radius, facets);
-                    
-                    2. rounded_cylinder(height, radius, rounding_radius, facets)
-                    // Example: facets = 16; rounded_cylinder(cyl_height, cyl_radius, round_radius, facets);
-                    
-                    3. rounded_pyramid(base=[x,y], height, radius, facets)
-                    // Example: facets = 16; rounded_pyramid([base_x, base_y], pyramid_height, corner_radius, facets);
-                    
-                    4. rounded_cone(base_radius, height, rounding_radius, facets)
-                    // Example: facets = 16; rounded_cone(base_radius, cone_height, round_radius, facets);
-                    
-                    5. gear(number_of_teeth, circular_pitch|diametral_pitch)
-                    // Example: gear_teeth = 17; gear_pitch = 1; extrude_height = 10; linear_extrude(height = extrude_height, center = true, convexity = 10, twist = 0) gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
-                    
-                    6. Double Helical gears:
-                        gear_teeth = 17; gear_pitch = 1; extrude_height = 10; twist_angle = 45; gear_spacing = 50;
-                        translate([gear_spacing, 0])
-                        {
-                           linear_extrude(height = extrude_height, center = true, convexity = 10, twist = -twist_angle)
-                           gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
-                           translate([0, 0, extrude_height])
-                           rotate([0, 180, 180/gear_teeth])
-                           linear_extrude(height = extrude_height, center = true, convexity = 10, twist = twist_angle)
-                           gear(number_of_teeth=gear_teeth, diametral_pitch=gear_pitch);
-                        }
-                    `;
 
 
 
@@ -91,50 +72,21 @@ export function validateOpenSCADSyntax(code) {
 
 
 export async function verifyTheMath(existing_code, changes) {
-    let prompt = {
-        "system": "You are an OpenSCAD math specialist. " +
-            "First determine user intention (modification request or question about potential issues). " +
-            "Then analyze the input code and: " +
-            "1) For modifications: Output mathematical specifications for the changes " +
-            "2) For questions: Identify potential issues and their mathematical implications " +
-            "Use OpenSCAD-specific math syntax. NEVER generate code - only equations and logical conditions." +
-            "Prioritize use of existing modules if suitable: " + modules,
-
-        "user": 
-            "OpenSCAD Code: " +existing_code +"\n" +
-            "User Input: " +changes + "\n\n" +
-            "Analyze and output mathematical specifications for:"
-        ,
-
-        "response_requirements": {
-            "format": [
-                "1. Intention: [modification|question]",
-                "2. Coordinate System: [formulas with OpenSCAD axis references]",
-                "3. Transformations: [matrix/vector operations]",
-                "4. Error Conditions: [inequality checks]",
-                "5. Optimizations: [simplified equations]",
-                "Example: 'X-centering: x_offset = -total_width/2'"
-            ],
-            "constraints": [
-                "No code snippets",
-                "No explanations",
-                "Use OpenSCAD functions: norm(), cross(), atan2()",
-                "Prioritize matrix operations over trigonometry",
-                "Include intention analysis first",
-                "Maintain original mathematical precision"
-            ]
-        }
-    };
+    const promptData = await loadPrompts();
+    const systemPrompt = promptData.verifyTheMath.system.replace('{modules}', promptData.modules.content);
+    const userPrompt = promptData.verifyTheMath.userTemplate
+        .replace('{existing_code}', existing_code)
+        .replace('{changes}', changes);
     const completion = await openai.chat.completions.create({
         model: "deepseek-chat",
         messages: [
             {
                 role: "system",
-                content: prompt.system
+                content: systemPrompt
             },
             {
                 role: "user",
-                content: prompt.user
+                content: userPrompt
             }
         ]
     });
@@ -146,71 +98,18 @@ export async function verifyTheMath(existing_code, changes) {
 }
 
 export async function generateOpenscad(message, code, specs_and_math) {
+    const promptData = await loadPrompts();
+    const systemRoleContent = promptData.generateOpenscad.systemRole.replace('{modules}', promptData.modules.content);
     const systemRole = {
         role: "system",
-        content: `[OpenSCAD Expert Protocol]
-                    ${modules}
-                    [DIRECTIVES]
-                    • ALWAYS start with include <module.scad> when using modules
-                    • Use facets=16 for rounded features unless specified, always parameterize $fn as facets variable
-                    • Parameterize values: gear_teeth=17, dimensions, radii, angles - not magic numbers
-                    • Code With minimal description of each component in \`\`\`openscad blocks 
-
-                    [ERROR PREVENTION]
-                    → Validate module parameters before use
-                    → Check unit consistency (mm vs radians)
-                    → Prevent facet overload: facets≤64 unless specified, always use facets variable instead of $fn
-                    → Center all primitives by default
-                    → If one of the mentioned module used, you MUST include <module.scad>
-                    
-                    [VALIDATION REQUIREMENTS]
-                    1. SYNTAX VALIDATION: Check for proper OpenSCAD syntax including:
-                       - Balanced parentheses and brackets
-                       - Proper semicolon usage
-                       - Valid function/module names
-                       - Correct parameter syntax
-                    
-                    2. MODULE INCLUSION: Automatically add 'include <module.scad>' when using any of these modules:
-                       - rounded_cube, rounded_cylinder, rounded_pyramid, rounded_cone, gear
-                       - Check if include statement is missing and add it at the top
-                    
-                    3. CODE CORRECTION: Fix any syntax errors, missing semicolons, or malformed statements`
-
+        content: systemRoleContent
     };
     if (!validateOpenSCADSyntax(code).valid) {
         code = "facets = 16; $fn = facets; cube_size = 20; cube(cube_size, center=true);"
     }
-    const prompt = `OpenSCAD Code: ${code}
-            Modifications: ${message}
-
-            [VALIDATION STEPS - EXECUTE IN ORDER]
-            1. SYNTAX VALIDATION: Verify all OpenSCAD syntax is correct
-            2. MODULE CHECK: If using rounded_cube, rounded_cylinder, rounded_pyramid, rounded_cone, or gear modules, ensure 'include <module.scad>' is at the top
-            3. ERROR CORRECTION: Fix any syntax issues, missing semicolons, or malformed statements
-            4. CODE GENERATION: Apply requested modifications
-
-            [DIRECTIVES]
-            1. CENTER: Apply center=true to all primitives (cube(), cylinder(), sphere())
-            2. PARAMETERIZE: Replace literals with variables (e.g., wheel_dia=50)
-            3. RESOLUTION: facets=16 unless 'smooth' specified then use facets=64, always parameterize $fn as facets variable and use $fn=facets
-            4. MODULARIZE: Group repeated patterns using module
-            5. OUTPUT: Only valid OpenSCAD in \`\`\` blocks
-            6. CORE PARAMETER STRATEGY:
-                - Define only BASE properties (total_height, main_dia, wall_thickness)
-                - Derive SUBCOMPONENT values from base:
-                    * hole_height = total_height + 2*clearance
-                    * inner_radius = outer_radius - wall_thickness
-                - Exceptions: Unique mechanics (gear_teeth=17) get individual params
-            7. TOLERANCE HANDLING:
-                - Single clearance parameter for all fits
-                - Apply as: hole_dim = base_dim + 2*clearance
-                - Never create hole_height/hole_dia params - calculate in-place                
-            [CONSTRAINTS]
-            - No markdown beyond code fences
-            - No explanation
-            - Prefer translate/rotate over CSG
-            - Always validate syntax before output
-            - Auto-correct any detected issues`;
+    const prompt = promptData.generateOpenscad.userTemplate
+        .replace('{code}', code)
+        .replace('{message}', message);
     const completion = await openai.chat.completions.create({
         model: "deepseek-chat",
         messages: [
@@ -308,16 +207,8 @@ export async function processVisualInput(imageData, prompt = "Describe this imag
     try {
 
 
-        const systemPrompt = `You are a CAD assistant analyzing images of 3D models with user markings (in black). Provide detailed instructions for updating the model:
-                            1. Identify the exact location of black markings as precisely as possible
-                            2. Describe the shape and extent of each marked area
-                            3. Focus on specific modifications needed (e.g., "add hole", "extend surface")
-                            4. Reference the coordinate system:
-                                - Red axis: X
-                                - Green axis: Y 
-                                - Blue axis: Z
-                            5. Provide relative dimensions (e.g., "50% of current width")
-                            6. Avoid generating OpenSCAD code`;
+        const promptData = await loadPrompts();
+        const systemPrompt = promptData.processVisualInput.systemPrompt;
 
         const completion = await qwenClient.chat.completions.create({
             model: "qwen-vl-plus",
@@ -331,7 +222,7 @@ export async function processVisualInput(imageData, prompt = "Describe this imag
                     content: [
                         {
                             type: "text",
-                            text: `Describe the user's intention based on this image:`
+                            text: promptData.processVisualInput.userTemplate
                         },
                         {
                             type: "image_url",
