@@ -3,57 +3,20 @@
  * This file contains common functionality to eliminate code duplication
  */
 
-import { checkCanvasHasDrawing, generateCodeFromVisualInput, generateCodeFromTextInput } from './codeGeneration.js';
+import { generateCodeFromTextInput } from './codeGeneration.js';
 import { syncCodeBetweenModes } from './codeStorage.js';
 
 /**
  * Shared function to generate code from user message
- * Handles both visual and text-based generation with optimized performance
+ * Handles text-based generation only (drawing features removed)
  * @param {string} message - The user's message
  * @param {string} currentCode - The current code for incremental building
- * @param {Object} renderer - The renderer instance
+ * @param {Object} renderer - The renderer instance (unused, kept for compatibility)
  * @returns {Promise<string>} - The generated code
  */
 export async function generateCodeFromMessage(message, currentCode, renderer) {
     try {
-        // Check if drawing mode is active and capture image if needed
-        const isDrawingMode = window.getDrawingMode && window.getDrawingMode();
-        
-        if (isDrawingMode) {
-            const annotationCanvas = document.getElementById('annotationCanvas');
-            const renderCanvas = document.getElementById('renderCanvas');
-            
-            if (annotationCanvas && renderCanvas) {
-                // Quick check for drawing before expensive operations
-                const hasDrawing = checkCanvasHasDrawing(annotationCanvas);
-                if (!hasDrawing) {
-                    return await generateCodeFromTextInput(message, currentCode);
-                }
-                
-                // Use requestAnimationFrame for smoother rendering
-                await new Promise(resolve => requestAnimationFrame(resolve));
-                
-                // Ensure Babylon scene is rendered
-                renderer.scene.render();
-                
-                // Create combined canvas efficiently
-                const combinedCanvas = document.createElement('canvas');
-                combinedCanvas.width = renderCanvas.width;
-                combinedCanvas.height = renderCanvas.height;
-                const ctx = combinedCanvas.getContext('2d');
-                
-                // Draw both canvases in one operation
-                ctx.drawImage(renderCanvas, 0, 0);
-                ctx.drawImage(annotationCanvas, 0, 0);
-                
-                const imageData = combinedCanvas.toDataURL('image/png', 0.8); // Use compression
-                
-                console.log('🎨 Drawing detected, using visual processing');
-                return await generateCodeFromVisualInput(imageData, message, currentCode);
-            }
-        }
-        
-        // Fast text-only generation path
+        // Fast text-only generation path (drawing features removed)
         console.log('📝 Using text-only generation');
         return await generateCodeFromTextInput(message, currentCode);
     } catch (error) {
@@ -169,12 +132,8 @@ export function setupPlaceholder(editor, placeholderSelector) {
 }
 
 /**
- * Shared initialization for improved drawing system
+ * Shared initialization (drawing system removed)
  */
 export function initializeDrawingSystem() {
-    setTimeout(() => {
-        import('./drawingSystem.js').then(module => {
-            module.initializeImprovedDrawing();
-        });
-    }, 1500);
+    // Drawing system removed - no initialization needed
 }
