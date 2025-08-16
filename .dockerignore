@@ -2,6 +2,7 @@
 .git
 .gitignore
 .github
+.clinerules/
 
 # Node.js
 node_modules
