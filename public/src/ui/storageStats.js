@@ -1,6 +1,6 @@
 /**
- * Storage Statistics with Pie Chart Visualization
- * Provides enhanced storage stats with visual pie chart representation
+ * Storage Statistics with Usage Information
+ * Provides storage stats with usage numbers
  */
 
 import { getStorageStats, STORAGE_LIMITS } from '../utils/storage/index.js';
@@ -43,9 +43,6 @@ export function showStorageStatsWithChart(renderer) {
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     `;
     
-    // Generate pie chart HTML
-    const pieChartHTML = generatePieChart(stats);
-    
     // Generate recent models list
     const recentModelsHTML = generateRecentModelsList(index);
     
@@ -56,38 +53,51 @@ export function showStorageStatsWithChart(renderer) {
                     style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
         </div>
         
-        <div style="display: flex; gap: 30px; align-items: center; margin-bottom: 25px;">
-            ${pieChartHTML}
-            <div style="flex: 1;">
-                <div style="margin-bottom: 15px;">
-                    <strong>Storage Usage</strong>
-                    <div style="font-size: 24px; color: ${stats.usagePercent > 80 ? '#e74c3c' : stats.usagePercent > 60 ? '#f39c12' : '#27ae60'};">
-                        ${stats.usagePercent}%
+        <div style="margin-bottom: 25px;">
+            <div style="margin-bottom: 15px;">
+                <strong>Storage Usage</strong>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 100px; height: 100px; position: relative;">
+                        <svg width="100" height="100" viewBox="0 0 100 100" style="transform: rotate(-90deg)">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="10"/>
+                            <circle cx="50" cy="50" r="45" fill="none" 
+                                    stroke="${stats.usagePercent > 80 ? '#e74c3c' : stats.usagePercent > 60 ? '#f39c12' : '#27ae60'}" 
+                                    stroke-width="10" stroke-dasharray="${Math.PI * 90 * stats.usagePercent/100} ${Math.PI * 90}"/>
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                    font-size: 24px; color: ${stats.usagePercent > 80 ? '#e74c3c' : stats.usagePercent > 60 ? '#f39c12' : '#27ae60'};">
+                            ${stats.usagePercent}%
+                        </div>
                     </div>
-                    <div style="font-size: 14px; color: #666;">
-                        ${stats.formattedCurrentSize} / ${stats.formattedMaxSize}
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <strong>Cached Models</strong>
-                    <div style="font-size: 18px; color: #333;">
-                        ${stats.totalEntries} / ${stats.maxEntries}
-                    </div>
-                </div>
-                
-                ${renderer && renderer.getCurrentHash ? `
-                <div style="margin-bottom: 15px;">
-                    <strong>Current Model</strong>
-                    <div style="font-size: 14px; color: #666; font-family: monospace;">
-                        ${renderer.getCurrentHash().substring(0, 8)}...
+                    <div>
+                        <div style="font-size: 16px; color: #666;">
+                            ${stats.formattedCurrentSize} / ${stats.formattedMaxSize}
+                        </div>
+                        <div style="font-size: 14px; color: #888; margin-top: 5px;">
+                            ${stats.totalEntries} models stored
+                        </div>
                     </div>
                 </div>
-                ` : ''}
-                
-                <div style="padding: 10px; border-radius: 6px; background: ${stats.needsCleanup ? '#fff3cd' : '#d4edda'}; color: ${stats.needsCleanup ? '#856404' : '#155724'}; font-size: 14px;">
-                    ${stats.needsCleanup ? '⚠️ Cleanup recommended - storage is getting full' : '✅ Storage healthy'}
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <strong>Cached Models</strong>
+                <div style="font-size: 24px; color: #333;">
+                    ${stats.totalEntries} / ${stats.maxEntries}
                 </div>
+            </div>
+            
+            ${renderer && renderer.getCurrentHash ? `
+            <div style="margin-bottom: 15px;">
+                <strong>Current Model</strong>
+                <div style="font-size: 14px; color: #666; font-family: monospace;">
+                    ${renderer.getCurrentHash().substring(0, 8)}...
+                </div>
+            </div>
+            ` : ''}
+            
+            <div style="padding: 10px; border-radius: 6px; background: ${stats.needsCleanup ? '#fff3cd' : '#d4edda'}; color: ${stats.needsCleanup ? '#856404' : '#155724'}; font-size: 14px;">
+                ${stats.needsCleanup ? '⚠️ Cleanup recommended - storage is getting full' : '✅ Storage healthy'}
             </div>
         </div>
         
@@ -120,53 +130,6 @@ export function showStorageStatsWithChart(renderer) {
             overlay.remove();
         }
     });
-}
-
-/**
- * Generate SVG pie chart for storage utilization
- * @param {Object} stats - Storage statistics
- * @returns {string} HTML string with SVG pie chart
- */
-function generatePieChart(stats) {
-    const radius = 60;
-    const center = 70;
-    const strokeWidth = 12;
-    
-    // Calculate pie slice
-    const percentage = Math.min(stats.usagePercent, 100);
-    const angle = (percentage / 100) * 2 * Math.PI;
-    const x = center + radius * Math.sin(angle);
-    const y = center - radius * Math.cos(angle);
-    
-    const largeArcFlag = percentage > 50 ? 1 : 0;
-    
-    // Colors based on usage
-    let color = '#27ae60'; // Green for healthy
-    if (percentage > 80) color = '#e74c3c'; // Red for critical
-    else if (percentage > 60) color = '#f39c12'; // Orange for warning
-    
-    const pathData = percentage === 100 
-        ? `M ${center} ${center - radius} A ${radius} ${radius} 0 1 1 ${center - 0.01} ${center - radius}` // Full circle
-        : `M ${center} ${center - radius} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x} ${y}`;
-    
-    return `
-        <svg width="140" height="140" viewBox="0 0 140 140">
-            <!-- Background circle -->
-            <circle cx="${center}" cy="${center}" r="${radius}" 
-                    fill="none" stroke="#e9ecef" stroke-width="${strokeWidth}"/>
-            
-            <!-- Usage arc -->
-            <path d="${pathData}" 
-                  fill="none" stroke="${color}" stroke-width="${strokeWidth}" 
-                  stroke-linecap="round"/>
-            
-            <!-- Center text -->
-            <text x="${center}" y="${center}" text-anchor="middle" 
-                  font-size="24" font-weight="bold" fill="${color}">
-                ${percentage}%
-            </text>
-        </svg>
-    `;
 }
 
 /**

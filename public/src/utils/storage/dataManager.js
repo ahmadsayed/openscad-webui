@@ -161,3 +161,17 @@ export function clearAllCode() {
         console.warn('Failed to clear stored code:', error);
     }
 }
+
+/**
+ * Get the hash index from localStorage
+ * @returns {Object} The hash index object
+ */
+export function getHashIndex() {
+    try {
+        const indexJson = localStorage.getItem(STORAGE_KEYS.HASH_INDEX);
+        return indexJson ? JSON.parse(indexJson) : {};
+    } catch (error) {
+        console.warn('Failed to get hash index:', error);
+        return {};
+    }
+}

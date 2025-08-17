@@ -558,8 +558,20 @@
                         <i class="bi bi-plus"></i> New
                         <span class="shortcut">Ctrl + N</span>
                     </a>
+                    <input type="file" id="fileInput" style="display:none;">
+                    <a href="#" onclick="openDesign(event)">
+                        <i class="bi bi-folder"></i> Open
+                        <span class="shortcut">Ctrl + O</span>
+                    </a>
+                    <a href="#" onclick="saveDesign(event)">
+                        <i class="bi bi-save"></i> Save
+                        <span class="shortcut">Ctrl + S</span>
+                    </a>
                     <a href="#" onclick="downloadSTL(event)">
                         <i class="bi bi-download"></i> Download STL
+                    </a>
+                    <a href="#" onclick="downloadSCAD(event)">
+                        <i class="bi bi-download"></i> Download SCAD
                     </a>
                 </div>
             </li>
@@ -632,6 +644,7 @@
     <script src="./openscad.fonts.js" type="module"></script>
     <script src="./openscad.mcad.js" type="module"></script>
     <script type="module" src="./src/utils/storage/index.js"></script>
+    <script type="module" src="./src/ui/storageStats.js"></script>
     <script type="module" src="./src/simple.js"></script>
 </body>
 

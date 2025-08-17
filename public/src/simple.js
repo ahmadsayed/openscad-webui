@@ -13,6 +13,7 @@ import {
     getStorageStats, 
     cleanupOldEntries 
 } from './utils/storage/index.js';
+import { showStorageStatsWithChart } from './ui/storageStats.js';
 import { STORAGE_LIMITS } from './utils/storage/constants.js';
 
 // Parameter utilities
@@ -401,28 +402,7 @@ function fallbackCodeGeneration(message, currentCode) {
 window.showStorageStats = function(event) {
     if (event) event.preventDefault();
     const stats = getStorageStats(STORAGE_LIMITS);
-    
-    let message = `📊 Storage Statistics\n\n`;
-    message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\n`;
-    message += `Storage used: ${stats.formattedCurrentSize}/${stats.formattedMaxSize} (${stats.usagePercent}%)\n`;
-    
-    if (renderer && renderer.getCurrentHash) {
-        const currentHash = renderer.getCurrentHash();
-        if (currentHash) {
-            message += `Current model: ${currentHash.substring(0, 8)}...\n`;
-        }
-    }
-    
-    if (stats.needsCleanup) {
-        message += `\n⚠️ Cleanup recommended (${stats.usagePercent}% full)`;
-    } else {
-        message += `\n✅ Storage healthy`;
-    }
-    
-    message += `\n\nThis cache stores 3D models to avoid regeneration.\n`;
-    message += `Each model has a unique hash based on OpenSCAD code.`;
-    
-    alert(message);
+    showStorageStatsWithChart(renderer, stats);
 };
 
 window.clearStorageCache = function(event) {
