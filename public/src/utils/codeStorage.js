@@ -9,8 +9,8 @@ const STORAGE_KEYS = {
 
 // Storage management constants
 const STORAGE_LIMITS = {
-    MAX_TOTAL_SIZE: 50 * 1024 * 1024,  // 8MB total limit (leaving buffer for other data)
-    MAX_ENTRIES: 20,                   // Keep max 20 cached models
+    MAX_TOTAL_SIZE: 100 * 1024 * 1024,  // 199MB total limit (leaving buffer for other data)
+    MAX_ENTRIES: 100,                   // Keep max 100 cached models
     CLEANUP_THRESHOLD: 0.8             // Cleanup when 80% full
 };
 
