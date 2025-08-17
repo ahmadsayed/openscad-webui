@@ -3,7 +3,7 @@
  * Provides enhanced storage stats with visual pie chart representation
  */
 
-import { getStorageStats } from '../utils/storage/index.js';
+import { getStorageStats, STORAGE_LIMITS } from '../utils/storage/index.js';
 import { getHashIndex } from '../utils/storage/dataManager.js';
 
 /**
@@ -11,7 +11,7 @@ import { getHashIndex } from '../utils/storage/dataManager.js';
  * @param {Object} renderer - The OpenSCAD renderer instance (optional)
  */
 export function showStorageStatsWithChart(renderer) {
-    const stats = getStorageStats();
+    const stats = getStorageStats(STORAGE_LIMITS);
     const index = getHashIndex();
     
     // Create modal overlay

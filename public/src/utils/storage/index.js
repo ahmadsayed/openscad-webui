@@ -13,9 +13,6 @@ import {
     clearAllCode 
 } from './dataManager.js';
 
-// Auto-save debouncing
-let autoSaveTimeout = null;
-
 /**
  * Save code to localStorage for a specific mode with optional STL data
  * @param {string} mode - 'main' or 'simple'
@@ -80,23 +77,9 @@ export function getMostRecentCode() {
     }
 }
 
-/**
- * Auto-save code with debouncing to prevent excessive localStorage writes
- * @param {string} mode - 'main' or 'simple'
- * @param {string} code - The code to save
- * @param {Uint8Array} stlData - Optional STL data
- * @param {number} delay - Debounce delay in milliseconds (default: 1000)
- */
-export function autoSaveCode(mode, code, stlData = null, delay = 1000) {
-    // Clear existing timeout
-    if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-    }
-    
-    // Set new timeout for auto-save
-    autoSaveTimeout = setTimeout(async () => {
-        await saveCode(mode, code, stlData);
-    }, delay);
+// Backward compatibility - loadCode is now loadCodeData
+export function loadCode(mode) {
+    return loadCodeData(mode);
 }
 
 // Re-export all functions for backward compatibility
@@ -114,13 +97,5 @@ export {
     
     // Cleanup
     emergencyCleanup,
-    cleanupOldEntries,
-    
-    // Data operations
-    saveCodeWithHash,
-    loadCodeByHash,
-    saveCodeData as saveCode,
-    loadCodeData as loadCode,
-    getLastMode,
-    clearAllCode
+    cleanupOldEntries
 };

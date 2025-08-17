@@ -1,7 +1,7 @@
 // menu.js - Manages menu functionality
 
 import { openDesign } from '../utils/fileUtils.js';
-import { getHashIndex, cleanupOldEntries, getStorageStats } from '../utils/codeStorage.js';
+import { cleanupOldEntries, getStorageStats } from '../utils/codeStorage.js';
 
 /**
  * Initialize the menu functionality

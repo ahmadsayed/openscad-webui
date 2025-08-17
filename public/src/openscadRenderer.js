@@ -1,8 +1,18 @@
 // openscadRenderer.js - Handles OpenSCAD rendering and STL generation
 
+// Core dependencies
 import OpenSCAD from "../openscad.js";
+
+// Utility functions
 import { downloadBinaryAsFile } from './utils/fileUtils.js';
-import { generateCodeHash, saveCodeWithHash, loadCodeByHash, cleanupOldEntries, getHashIndex, getStorageStats } from './utils/codeStorage.js';
+import { 
+    generateCodeHash, 
+    saveCodeWithHash, 
+    loadCodeByHash, 
+    cleanupOldEntries, 
+    getHashIndex, 
+    getStorageStats 
+} from './utils/codeStorage.js';
 
 
 /**

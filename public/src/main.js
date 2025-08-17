@@ -1,13 +1,25 @@
 // main.js - Entry point that initializes all modules
 
+// Core components
 import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
+
+// Editor components
 import { initCodeEditor } from './editor/codeEditor.js';
 import { initChatEditor } from './editor/chatEditor.js';
+
+// UI components
 import { splitScreen, initVerticalResize } from './ui/layout.js';
 import { initMenu } from './ui/menu.js';
+
+// Storage utilities
+import { 
+    saveCode, 
+    loadCode, 
+    getMostRecentCode, 
+    syncCodeBetweenModes 
+} from './utils/storage/index.js';
 import { downloadSCAD } from './utils/fileUtils.js';
-import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes } from './utils/codeStorage.js';
 
 // Global state
 let scene;
@@ -141,18 +153,13 @@ async function init() {
 
 }
 
-// Import shared functions
+// Shared utilities
 import { 
     generateCodeFromMessage as sharedGenerateCodeFromMessage,
     fallbackCodeGeneration as sharedFallbackCodeGeneration,
-    handleModeSwitch as sharedHandleModeSwitch,
-    setupPlaceholder as sharedSetupPlaceholder
+    handleModeSwitch as sharedHandleModeSwitch
 } from './utils/sharedFunctions.js';
-
-// Import shared code generation utilities
 import { generateCodeFromTextInput } from './utils/codeGeneration.js';
-
-// Import test functions for debugging
 import { testCodeEditingHash } from './utils/storageTest.js';
 
 // Use shared generateCodeFromMessage function

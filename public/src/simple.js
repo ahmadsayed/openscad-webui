@@ -1,9 +1,26 @@
 // simple.js - Simplified entry point for non-technical users
 
+// Core components
 import { createScene } from './scene.js';
 import { OpenSCADRenderer } from './openscadRenderer.js';
-import { saveCode, loadCode, getMostRecentCode, autoSaveCode, syncCodeBetweenModes, getStorageStats, cleanupOldEntries } from './utils/codeStorage.js';
-import { extractParameters, updateCodeWithParameters, createParameterForm } from './utils/parameterExtractor.js';
+
+// Storage utilities
+import { 
+    saveCode, 
+    loadCode, 
+    getMostRecentCode, 
+    syncCodeBetweenModes,
+    getStorageStats, 
+    cleanupOldEntries 
+} from './utils/storage/index.js';
+import { STORAGE_LIMITS } from './utils/storage/constants.js';
+
+// Parameter utilities
+import { 
+    extractParameters, 
+    updateCodeWithParameters, 
+    createParameterForm 
+} from './utils/parameterExtractor.js';
 
 // Global state
 let scene;
@@ -361,15 +378,12 @@ async function submitSimpleChat(editor) {
     }
 }
 
-// Import shared functions
+// Shared utilities
 import { 
     generateCodeFromMessage as sharedGenerateCodeFromMessage,
     fallbackCodeGeneration as sharedFallbackCodeGeneration,
-    handleModeSwitch as sharedHandleModeSwitch,
-    setupPlaceholder as sharedSetupPlaceholder
+    handleModeSwitch as sharedHandleModeSwitch
 } from './utils/sharedFunctions.js';
-
-// Import shared code generation utilities
 import { generateCodeFromTextInput } from './utils/codeGeneration.js';
 
 // Use shared generateCodeFromMessage function
@@ -386,7 +400,7 @@ function fallbackCodeGeneration(message, currentCode) {
 // Add storage management functions to window
 window.showStorageStats = function(event) {
     if (event) event.preventDefault();
-    const stats = getStorageStats();
+    const stats = getStorageStats(STORAGE_LIMITS);
     
     let message = `📊 Storage Statistics\n\n`;
     message += `Cached models: ${stats.totalEntries}/${stats.maxEntries}\n`;
