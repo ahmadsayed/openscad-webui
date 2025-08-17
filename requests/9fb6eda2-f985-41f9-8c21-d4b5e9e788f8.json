@@ -1,1 +1,0 @@
-{"status":"done","phase":"","code":"width = 30;\nhole_radius = 7.5; // 1/4 of cube width\nfacets = 16;\ndifference() {\n    cube(width, center=true);\n    cylinder(h=width+1, r=hole_radius, center=true, $fn=facets);\n}","success":true}

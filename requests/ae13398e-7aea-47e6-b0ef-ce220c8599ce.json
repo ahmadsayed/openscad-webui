@@ -1,1 +1,0 @@
-{"status":"done","phase":"","code":"include <module.scad>\nwidth = 30;\nhole_radius = 7.5; // 1/4 of cube width\nfacets = 16;\nradius = hole_radius/2; // Recommended radius based on hole_radius\ndifference() {\n    rounded_cube([width, width, width], radius, facets, center=true);\n    cylinder(h=width+1, r=hole_radius, center=true, $fn=facets);\n}","success":true}
