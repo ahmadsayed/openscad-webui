@@ -42,8 +42,8 @@ async function init() {
     // Create the rendering scene
     scene = await createScene();
 
-    // Initialize the OpenSCAD renderer with simple layout compatibility
-    renderer = new SimpleOpenSCADRenderer(scene);
+    // Initialize the OpenSCAD renderer
+    renderer = new OpenSCADRenderer(scene);
 
     // Initialize the simple chat editor
     initSimpleChatEditor();
@@ -91,40 +91,6 @@ async function init() {
     };
 }
 
-// Extended renderer class for simple layout compatibility
-class SimpleOpenSCADRenderer extends OpenSCADRenderer {
-    /**
-     * Creates the processing indicator element for simple layout
-     * @private
-     */
-    _createProcessingIndicator() {
-        // Check if the indicator already exists
-        if (document.querySelector('.processing-indicator')) {
-            return;
-        }
-        
-        // Create the indicator elements
-        const indicator = document.createElement('div');
-        indicator.className = 'processing-indicator';
-        
-        const spinner = document.createElement('div');
-        spinner.className = 'spinner';
-        
-        const text = document.createElement('div');
-        text.className = 'processing-text';
-        text.textContent = 'Processing OpenSCAD...';
-        
-        // Assemble the indicator
-        indicator.appendChild(spinner);
-        indicator.appendChild(text);
-        
-        // Add to the simple 3D section instead of split__right
-        const container = document.querySelector('.simple-3d-section') || document.querySelector('.split__right');
-        if (container) {
-            container.appendChild(indicator);
-        }
-    }
-}
 
 // Initialize collapsible parameter form
 function initParameterCollapse() {

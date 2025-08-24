@@ -112,8 +112,11 @@ export class OpenSCADRenderer {
         indicator.appendChild(spinner);
         indicator.appendChild(text);
         
-        // Add to the document
-        document.querySelector('.split__right').appendChild(indicator);
+        // Add to the simple 3D section instead of split__right
+        const container = document.querySelector('.simple-3d-section') || document.querySelector('.split__right');
+        if (container) {
+            container.appendChild(indicator);
+        }
     }
     
     /**
