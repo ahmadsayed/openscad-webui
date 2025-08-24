@@ -96,7 +96,7 @@ export async function handleModeSwitch(event, targetMode, currentMode, currentCo
     
     const currentStlData = renderer ? renderer.getCurrentStlData() : null;
     await syncCodeBetweenModes(currentMode, targetMode, currentCode, currentStlData);
-    window.location.href = targetMode === 'simple' ? 'simple.html' : 'main.html';
+    window.location.href = targetMode === 'simple' ? 'simple' : 'main';
 }
 
 /**

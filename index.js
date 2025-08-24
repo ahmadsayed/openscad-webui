@@ -31,6 +31,22 @@ const PORT = 3000;
 app.use(express.urlencoded());
 app.use(express.json());
 
+// Configure PUG template engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'public'));
+
+// Routes for PUG templates
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/main', (req, res) => {
+    res.render('main');
+});
+
+app.get('/simple', (req, res) => {
+    res.render('simple');
+});
 
 let openai;
 let qwenClient;
@@ -250,6 +266,9 @@ export async function processRequest(requestId, message, code) {
     try {
         console.log(requestId);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
+
+        // Ensure REQUEST_DIR exists
+        await fs.mkdir(REQUEST_DIR, { recursive: true });
 
         // Update status to Calculating Geometry
         await fs.writeFile(requestFile, JSON.stringify({
