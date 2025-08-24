@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parameter Alignment Test</title>
+    <link rel="stylesheet" href="public/simple.css">
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #2d2d2d;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #404040;
+        }
+        
+        h2 {
+            color: #e0e0e0;
+            margin-top: 0;
+        }
+        
+        /* Debug styles to see grid structure */
+        .parameter-form {
+            border: 1px dashed #73C48F;
+            padding: 10px;
+        }
+        
+        .parameter-field > .parameter-label {
+            background-color: rgba(115, 196, 143, 0.1);
+        }
+        
+        .parameter-field > .parameter-input {
+            background-color: rgba(115, 196, 143, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2>Parameter Alignment Test</h2>
+        <p>Testing the grid layout for parameter form alignment:</p>
+        
+        <!-- Simulate the parameter form structure -->
+        <div class="parameter-form">
+            <div class="parameter-field">
+                <label class="parameter-label" for="param_0">Width</label>
+                <input type="number" class="parameter-input" id="param_0" value="20" min="0.1" max="500" step="0.1">
+            </div>
+            
+            <div class="parameter-field">
+                <label class="parameter-label" for="param_1">Height</label>
+                <input type="number" class="parameter-input" id="param_1" value="30" min="0.1" max="500" step="0.1">
+            </div>
+            
+            <div class="parameter-field">
+                <label class="parameter-label" for="param_2">Radius</label>
+                <input type="number" class="parameter-input" id="param_2" value="5" min="0.1" max="250" step="0.1">
+            </div>
+            
+            <div class="parameter-field">
+                <label class="parameter-label" for="param_3">Rotation Angle</label>
+                <input type="number" class="parameter-input" id="param_3" value="45" min="-360" max="360" step="1">
+            </div>
+            
+            <div class="parameter-field">
+                <label class="parameter-label" for="param_4">Very Long Parameter Name That Should Wrap</label>
+                <input type="number" class="parameter-input" id="param_4" value="10" min="1" max="100" step="1">
+            </div>
+        </div>
+    </div>
+</body>
+</html>

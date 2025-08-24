@@ -81,23 +81,14 @@ html(lang="en")
                 i.bi.bi-trash
                 | Clear Cache
           li.nav-item
-            a(href="/simple" onclick="handleModeSwitch(event, 'simple')") Simple Mode
+            a(href="/simple.html" onclick="handleModeSwitch(event, 'simple')") Simple Mode
         .flex-spacer
 
     // Main Container
     main.container.with-side-panel(role="main" aria-label="OpenSCAD Editor Interface")
-      // Side Panel - Chat History
-      .side-panel.collapsed#chatHistoryPanel
-        .side-panel-header
-          h3 Chat History
-          button.collapse-toggle#historyCollapseToggle
-            i.bi.bi-chevron-right
-        .side-panel-content
-          ul.chat-history-list
-            li.chat-history-item Create a red cube with rounded corners
-            li.chat-history-item Make it bigger and add a hole
-            li.chat-history-item Add text on the side
-            li.chat-history-item Change to blue color
+      // Side Panel - Chat History (using template)
+      include template/side-panel.pug
+      +side-panel("chatHistoryPanel", "collapsed", null, "Chat History")
 
       .split-container
         // Left Panel - Code Editor and Chat

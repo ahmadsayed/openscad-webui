@@ -54,23 +54,14 @@ html(lang="en")
                 i.bi.bi-trash
                 | Clear Cache
           li.nav-item
-            a(href="/main" onclick="handleModeSwitch(event, 'main')") Advanced Mode
+            a(href="/main.html" onclick="handleModeSwitch(event, 'main')") Advanced Mode
         .flex-spacer
 
     // Main Container
     main.simple-container(role="main" aria-label="Simple 3D Chat Interface")
-      // Side Panel - Chat History
-      .side-panel.collapsed#chatHistoryPanel(style="position: fixed; left: 0; top: 40px; height: calc(100vh - 40px); z-index: 900;")
-        .side-panel-header
-          h3 Chat History
-          button.collapse-toggle#historyCollapseToggle
-            i.bi.bi-chevron-right
-        .side-panel-content
-          ul.chat-history-list
-            li.chat-history-item Create a red cube with rounded corners
-            li.chat-history-item Make it bigger and add a hole
-            li.chat-history-item Add text on the side
-            li.chat-history-item Change to blue color
+      // Side Panel - Chat History (using template)
+      include template/side-panel.pug
+      +side-panel("chatHistoryPanel", "collapsed", "position: fixed; left: 0; top: 40px; height: calc(100vh - 40px); z-index: 900;", "Chat History")
       
       // Main content wrapper with margin for side panel
       div(style="margin-left: 300px; width: calc(100% - 300px);")

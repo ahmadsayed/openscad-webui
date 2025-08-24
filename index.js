@@ -40,11 +40,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/main', (req, res) => {
+app.get('/main.html', (req, res) => {
     res.render('main');
 });
 
-app.get('/simple', (req, res) => {
+app.get('/simple.html', (req, res) => {
     res.render('simple');
 });
 

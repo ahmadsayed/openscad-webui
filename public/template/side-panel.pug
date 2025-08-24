@@ -1,0 +1,21 @@
+//- Side Panel Template
+//- This template can be included in both main.pug and simple.pug
+//- Parameters:
+//-   panelId: ID for the side panel element (default: "chatHistoryPanel")
+//-   panelClass: Additional CSS classes for the side panel (default: "collapsed")
+//-   panelStyle: Inline styles for the side panel
+//-   headerTitle: Title for the panel header (default: "Chat History")
+
+mixin side-panel(panelId = "chatHistoryPanel", panelClass = "collapsed", panelStyle, headerTitle = "Chat History")
+  // Side Panel - Chat History
+  .side-panel(class=panelClass id=panelId style=panelStyle)
+    .side-panel-header
+      h3= headerTitle
+      button.collapse-toggle(id="historyCollapseToggle")
+        i.bi.bi-chevron-right
+    .side-panel-content
+      ul.chat-history-list
+        li.chat-history-item Create a red cube with rounded corners
+        li.chat-history-item Make it bigger and add a hole
+        li.chat-history-item Add text on the side
+        li.chat-history-item Change to blue color
