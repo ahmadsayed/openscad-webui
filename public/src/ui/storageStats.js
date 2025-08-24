@@ -22,7 +22,7 @@ export function showStorageStatsWithChart(renderer) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.8);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -33,14 +33,15 @@ export function showStorageStatsWithChart(renderer) {
     // Create modal content
     const modal = document.createElement('div');
     modal.style.cssText = `
-        background: white;
+        background: #2d2d2d;
         border-radius: 12px;
         padding: 30px;
         max-width: 500px;
         width: 90%;
         max-height: 80vh;
         overflow-y: auto;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        border: 1px solid #404040;
     `;
     
     // Generate recent models list
@@ -48,29 +49,29 @@ export function showStorageStatsWithChart(renderer) {
     
     modal.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #333;">Storage Statistics</h2>
+            <h2 style="margin: 0; color: #e0e0e0;">Storage Statistics</h2>
             <button onclick="this.closest('.storage-stats-overlay').remove()" 
-                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: #aaa;">×</button>
         </div>
         
         <div style="margin-bottom: 25px;">
             <div style="margin-bottom: 15px;">
-                <strong>Storage Usage</strong>
+                <strong style="color: #e0e0e0;">Storage Usage</strong>
                 <div style="display: flex; align-items: center; gap: 20px;">
                     <div style="width: 100px; height: 100px; position: relative;">
                         <svg width="100" height="100" viewBox="0 0 100 100" style="transform: rotate(-90deg)">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="10"/>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#404040" stroke-width="10"/>
                             <circle cx="50" cy="50" r="45" fill="none" 
-                                    stroke="${stats.usagePercent > 80 ? '#e74c3c' : stats.usagePercent > 60 ? '#f39c12' : '#27ae60'}" 
+                                    stroke="${stats.usagePercent > 80 ? '#ff6b6b' : stats.usagePercent > 60 ? '#feca57' : '#73C48F'}" 
                                     stroke-width="10" stroke-dasharray="${Math.PI * 90 * stats.usagePercent/100} ${Math.PI * 90}"/>
                         </svg>
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                                    font-size: 24px; color: ${stats.usagePercent > 80 ? '#e74c3c' : stats.usagePercent > 60 ? '#f39c12' : '#27ae60'};">
+                                    font-size: 24px; color: ${stats.usagePercent > 80 ? '#ff6b6b' : stats.usagePercent > 60 ? '#feca57' : '#73C48F'}; font-weight: bold;">
                             ${stats.usagePercent}%
                         </div>
                     </div>
                     <div>
-                        <div style="font-size: 16px; color: #666;">
+                        <div style="font-size: 16px; color: #aaa;">
                             ${stats.formattedCurrentSize} / ${stats.formattedMaxSize}
                         </div>
                         <div style="font-size: 14px; color: #888; margin-top: 5px;">
@@ -81,22 +82,22 @@ export function showStorageStatsWithChart(renderer) {
             </div>
             
             <div style="margin-bottom: 15px;">
-                <strong>Cached Models</strong>
-                <div style="font-size: 24px; color: #333;">
+                <strong style="color: #e0e0e0;">Cached Models</strong>
+                <div style="font-size: 24px; color: #73C48F; font-weight: bold;">
                     ${stats.totalEntries} / ${stats.maxEntries}
                 </div>
             </div>
             
             ${renderer && renderer.getCurrentHash ? `
             <div style="margin-bottom: 15px;">
-                <strong>Current Model</strong>
-                <div style="font-size: 14px; color: #666; font-family: monospace;">
+                <strong style="color: #e0e0e0;">Current Model</strong>
+                <div style="font-size: 14px; color: #aaa; font-family: monospace;">
                     ${renderer.getCurrentHash().substring(0, 8)}...
                 </div>
             </div>
             ` : ''}
             
-            <div style="padding: 10px; border-radius: 6px; background: ${stats.needsCleanup ? '#fff3cd' : '#d4edda'}; color: ${stats.needsCleanup ? '#856404' : '#155724'}; font-size: 14px;">
+            <div style="padding: 10px; border-radius: 6px; background: ${stats.needsCleanup ? '#ffecb3' : '#d4edda'}; color: ${stats.needsCleanup ? '#856404' : '#155724'}; font-size: 14px;">
                 ${stats.needsCleanup ? '⚠️ Cleanup recommended - storage is getting full' : '✅ Storage healthy'}
             </div>
         </div>
@@ -105,17 +106,17 @@ export function showStorageStatsWithChart(renderer) {
         
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="window.clearStorageCache()" 
-                    style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">
                 Clear Cache
             </button>
             <button onclick="this.closest('.storage-stats-overlay').remove()" 
-                    style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    style="flex: 1; padding: 10px; background: #73C48F; color: #2B2B2B; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">
                 Close
             </button>
         </div>
         
-        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
-            <strong>How it works:</strong> This cache stores 3D models to avoid regeneration. 
+        <div style="margin-top: 15px; padding: 10px; background: #3a3a3a; border-radius: 6px; font-size: 12px; color: #aaa;">
+            <strong style="color: #e0e0e0;">How it works:</strong> This cache stores 3D models to avoid regeneration. 
             Each model has a unique hash based on OpenSCAD code. Cached models are automatically cleaned up when storage gets full.
         </div>
     `;
@@ -143,7 +144,7 @@ function generateRecentModelsList(index) {
         .slice(0, 5); // Show top 5 recent
     
     if (entries.length === 0) {
-        return '<div style="text-align: center; color: #666; padding: 20px;">No cached models yet</div>';
+        return '<div style="text-align: center; color: #aaa; padding: 20px;">No cached models yet</div>';
     }
     
     const modelsList = entries.map(([hash, metadata]) => {
@@ -155,9 +156,9 @@ function generateRecentModelsList(index) {
         
         return `
             <div style="display: flex; justify-content: space-between; align-items: center; 
-                        padding: 8px 12px; border-radius: 6px; background: #f8f9fa; margin-bottom: 5px;">
+                        padding: 8px 12px; border-radius: 6px; background: #3a3a3a; margin-bottom: 5px;">
                 <div>
-                    <div style="font-family: monospace; font-size: 12px; color: #666;">
+                    <div style="font-family: monospace; font-size: 12px; color: #aaa;">
                         ${hash.substring(0, 8)}...
                     </div>
                     <div style="font-size: 11px; color: #888;">
@@ -173,7 +174,7 @@ function generateRecentModelsList(index) {
     
     return `
         <div style="margin-top: 20px;">
-            <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">Recent Models</h3>
+            <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #e0e0e0;">Recent Models</h3>
             ${modelsList}
         </div>
     `;
