@@ -539,6 +539,73 @@ body.resizing-vertical .resize-bar-vertical {
   margin-bottom: 0;
 }
 
+/* Expandable chat history items with 3D preview */
+.chat-history-item {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.chat-history-item .item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.chat-history-item .item-text {
+  flex: 1;
+  padding-right: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.chat-history-item .item-toggle {
+  flex-shrink: 0;
+  color: #aaa;
+  transition: transform 0.3s ease;
+}
+
+.chat-history-item .item-preview {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.chat-history-item.expanded .item-preview {
+  max-height: 200px; /* Adjust based on desired preview size */
+}
+
+.chat-history-item.expanded {
+  background-color: #444;
+  border-left-color: #007bff;
+}
+
+.preview-canvas {
+  width: 100%;
+  height: 180px;
+  background-color: #2d2d2d;
+  border-radius: 4px;
+  margin-top: 8px;
+  display: block;
+}
+
+/* Smooth transitions for expandable items */
+.chat-history-item {
+  transition: background-color 0.2s ease, border-left-color 0.2s ease;
+}
+
+/* Mobile responsiveness for previews */
+@media screen and (max-width: 768px) {
+  .chat-history-item.expanded .item-preview {
+    max-height: 150px;
+  }
+  
+  .preview-canvas {
+    height: 140px;
+  }
+}
+
 /* Main layout adjustments for side panel */
 .container.with-side-panel {
   display: flex;

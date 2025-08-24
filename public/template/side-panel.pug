@@ -15,7 +15,31 @@ mixin side-panel(panelId = "chatHistoryPanel", panelClass = "collapsed", panelSt
         i.bi.bi-chevron-right
     .side-panel-content
       ul.chat-history-list
-        li.chat-history-item Create a red cube with rounded corners
-        li.chat-history-item Make it bigger and add a hole
-        li.chat-history-item Add text on the side
-        li.chat-history-item Change to blue color
+        li.chat-history-item(data-model="cube" data-size="20" data-color="#ff6b6b")
+          .item-header
+            .item-text Create a red cube with rounded corners
+            .item-toggle
+              i.bi.bi-chevron-down
+          .item-preview
+            canvas.preview-canvas(data-preview-id="preview-1")
+        li.chat-history-item(data-model="cube" data-size="25" data-color="#4ecdc4")
+          .item-header
+            .item-text Make it bigger and add a hole
+            .item-toggle
+              i.bi.bi-chevron-down
+          .item-preview
+            canvas.preview-canvas(data-preview-id="preview-2")
+        li.chat-history-item(data-model="cube" data-size="15" data-color="#45b7d1")
+          .item-header
+            .item-text Add text on the side
+            .item-toggle
+              i.bi.bi-chevron-down
+          .item-preview
+            canvas.preview-canvas(data-preview-id="preview-3")
+        li.chat-history-item(data-model="cube" data-size="18" data-color="#96ceb4")
+          .item-header
+            .item-text Change to blue color
+            .item-toggle
+              i.bi.bi-chevron-down
+          .item-preview
+            canvas.preview-canvas(data-preview-id="preview-4")
