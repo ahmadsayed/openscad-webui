@@ -211,6 +211,12 @@ body {
   transition: none; /* Disable transition during resize */
 }
 
+/* Chat editor cursor styling - make it whitish for black background */
+.ace_editor .ace_cursor {
+  color: #ffffff !important;
+  border-left: 2px solid #ffffff !important;
+}
+
 /* Canvas Styles */
 #renderCanvas {
   width: 100%;

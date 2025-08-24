@@ -1,46 +1,16 @@
 doctype html
 html(lang="en")
   head
-    meta(charset="UTF-8")
-    meta(name="viewport" content="width=device-width, initial-scale=1.0")
-    title Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool
-    
-    // SEO Meta Tags
-    meta(name="description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.")
-    meta(name="keywords" content="OpenSCAD editor online, AI CAD assistant, 3D modeling browser, parametric design tool, SCAD code editor, online 3D CAD, AI code generation, STL export, WebGL 3D viewer, free CAD software")
-    meta(name="author" content="PromptSCAD")
-    meta(name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1")
-    meta(name="theme-color" content="#2563eb")
+    include template/head.pug
+    - var title = "Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool"
+    - var description = "Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export."
+    - var keywords = "OpenSCAD editor online, AI CAD assistant, 3D modeling browser, parametric design tool, SCAD code editor, online 3D CAD, AI code generation, STL export, WebGL 3D viewer, free CAD software"
+    - var canonical = "https://promptscad.com/main.html"
+
+    // Additional meta tags specific to main.pug
     meta(name="language" content="en")
     meta(name="geo.region" content="US")
     meta(name="geo.placename" content="Global")
-    link(rel="canonical" href="https://promptscad.com/main.html")
-    
-    // Open Graph / Facebook Meta Tags
-    meta(property="og:type" content="website")
-    meta(property="og:url" content="https://promptscad.com/main.html")
-    meta(property="og:title" content="Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool")
-    meta(property="og:description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.")
-    meta(property="og:image" content="https://promptscad.com/main/sample.png")
-    
-    // Twitter Meta Tags
-    meta(name="twitter:card" content="summary_large_image")
-    meta(name="twitter:url" content="https://promptscad.com/main.html")
-    meta(name="twitter:title" content="Online OpenSCAD Editor with AI Assistant | PromptSCAD - Free 3D CAD Tool")
-    meta(name="twitter:description" content="Professional online OpenSCAD editor with AI-powered code generation. Create, edit, and render 3D models instantly. Free browser-based CAD tool with real-time preview and STL export.")
-    meta(name="twitter:image" content="https://promptscad.com/main/sample.png")
-    
-    // Favicon
-    link(rel="icon" href="/favicon.ico" type="image/x-icon")
-    
-    // Styling
-    link(rel="stylesheet" href="/styles.css")
-    link(href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet")
-    
-    // 3D and Editor Libraries
-    script(src="https://cdn.babylonjs.com/babylon.js")
-    script(src="https://cdn.babylonjs.com/loaders/babylon.stlFileLoader.min.js")
-    script(src="https://cdn.jsdelivr.net/npm/ace-builds@1.28.0/src-min-noconflict/ace.min.js")
 
     script.
       window.ezstandalone = window.ezstandalone || {};

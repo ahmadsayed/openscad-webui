@@ -9,6 +9,12 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Chat editor cursor styling - make it whitish for black background */
+.ace_editor .ace_cursor {
+    color: #ffffff !important;
+    border-left: 2px solid #ffffff !important;
+}
+
 .fixed-header .navbar {
     height: 40px;
     padding: 0 16px;
