@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Don't trigger if clicking on the preview canvas
+            if (e.target.closest('.preview-canvas')) {
+                return;
+            }
+            
             const isExpanded = this.classList.contains('expanded');
             
             // Collapse all other items
@@ -101,6 +106,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const engine = new BABYLON.Engine(canvas, true);
             const scene = new BABYLON.Scene(engine);
             
+            // Use the same dark background color as simple-3d-section (#2d2d2d)
+            scene.clearColor = new BABYLON.Color3(0.176, 0.176, 0.176);
+            
             // Setup camera
             const camera = new BABYLON.ArcRotateCamera(
                 "preview-camera", 
@@ -112,11 +120,11 @@ document.addEventListener('DOMContentLoaded', function() {
             camera.attachControl(canvas, true);
             camera.wheelPrecision = 50; // Slower zoom for better control
             
-            // Setup lighting
+            // Setup lighting - increased intensity for better visibility on dark background
             const light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0));
             const light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(1, 0, 0));
-            light1.intensity = 0.7;
-            light2.intensity = 0.3;
+            light1.intensity = 0.9;
+            light2.intensity = 0.4;
             
             // Create cube geometry
             const cube = BABYLON.MeshBuilder.CreateBox("preview-cube", {
