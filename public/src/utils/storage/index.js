@@ -1,7 +1,7 @@
 // storage/index.js - Main storage API module (replaces codeStorage.js)
 
 import { STORAGE_LIMITS } from './constants.js';
-import { getStorageStats, needsCleanup } from './utils.js';
+import { getStorageStats, needsCleanup, getHashIndex } from './utils.js';
 import { generateCodeHash, findHashForCode } from './hashManager.js';
 import { emergencyCleanup, cleanupOldEntries } from './cleanupManager.js';
 import { 
@@ -90,10 +90,14 @@ export {
     // Utilities
     getStorageStats,
     needsCleanup,
+    getHashIndex,
     
     // Hash management
     generateCodeHash,
     findHashForCode,
+    
+    // Data management
+    loadCodeByHash,
     
     // Cleanup
     emergencyCleanup,

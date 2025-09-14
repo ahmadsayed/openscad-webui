@@ -19,6 +19,7 @@ import {
     getMostRecentCode, 
     syncCodeBetweenModes 
 } from './utils/storage/index.js';
+import { initChatHistory, loadChatHistory } from './ui/chatHistory.js';
 import { downloadSCAD } from './utils/fileUtils.js';
 
 // Global state
@@ -81,6 +82,10 @@ async function init() {
             // Save the generated code immediately
             await saveCode('main', code);
             await renderer.renderOpenSCAD(code);
+            
+            // Reload chat history to show the new model
+            loadChatHistory();
+            
             return true;
         } catch (error) {
             console.error('Error generating code:', error);
@@ -94,6 +99,9 @@ async function init() {
     initMenu(codeEditor, renderer);
 
     // Drawing system removed - no initialization needed
+
+    // Initialize chat history
+    initChatHistory();
 
     // Export necessary functions to window for HTML event handlers
     window.newDesign = async () => {
@@ -150,6 +158,14 @@ async function init() {
     window.handleModeSwitch = async (event, targetMode) => {
         await sharedHandleModeSwitch(event, targetMode, 'main', codeEditor.getValue(), renderer);
     };
+
+    // Listen for history model load events
+    document.addEventListener('historyModelLoad', (event) => {
+        const { code, stlData } = event.detail;
+        codeEditor.setValue(code);
+        renderer.renderOpenSCAD(code);
+        console.log('Model loaded from history');
+    });
 
 }
 

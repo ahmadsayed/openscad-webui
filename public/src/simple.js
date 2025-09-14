@@ -16,6 +16,9 @@ import {
 import { showStorageStatsWithChart } from './ui/storageStats.js';
 import { STORAGE_LIMITS } from './utils/storage/constants.js';
 
+// Chat history
+import { initChatHistory, loadChatHistory } from './ui/chatHistory.js';
+
 // Parameter utilities
 import { 
     extractParameters, 
@@ -62,6 +65,9 @@ async function init() {
 
     // Drawing system removed - no initialization needed
 
+    // Initialize chat history
+    initChatHistory();
+
     // Export necessary functions to window for HTML event handlers
     window.newDesign = async () => {
         const defaultCode = "cube(20, center=true);";
@@ -85,10 +91,19 @@ async function init() {
         await syncCodeBetweenModes('simple', 'main', currentCode, currentStlData);
     });
 
-    // Export mode switch handler to window
-    window.handleModeSwitch = async (event, targetMode) => {
-        await sharedHandleModeSwitch(event, targetMode, 'simple', currentCode, renderer);
-    };
+        // Export mode switch handler to window
+        window.handleModeSwitch = async (event, targetMode) => {
+            await sharedHandleModeSwitch(event, targetMode, 'simple', currentCode, renderer);
+        };
+
+        // Listen for history model load events
+        document.addEventListener('historyModelLoad', (event) => {
+            const { code, stlData } = event.detail;
+            currentCode = code;
+            renderer.renderOpenSCAD(code);
+            updateParameterForm(code);
+            console.log('Model loaded from history');
+        });
 }
 
 
@@ -329,6 +344,9 @@ async function submitSimpleChat(editor) {
         setTimeout(() => {
             textSpan.textContent = originalText;
         }, 1500);
+        
+        // Reload chat history to show the new model
+        loadChatHistory();
         
     } catch (error) {
         console.error('Simple chat submission error:', error);

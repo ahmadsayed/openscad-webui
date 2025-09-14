@@ -14,32 +14,17 @@ mixin side-panel(panelId = "chatHistoryPanel", panelClass = "collapsed", panelSt
       button.collapse-toggle(id="historyCollapseToggle")
         i.bi.bi-chevron-right
     .side-panel-content
-      ul.chat-history-list
-        li.chat-history-item(data-model="cube" data-size="20" data-color="#ff6b6b")
-          .item-header
-            .item-text Create a red cube with rounded corners
-            .item-toggle
-              i.bi.bi-chevron-down
-          .item-preview
-            canvas.preview-canvas(data-preview-id="preview-1")
-        li.chat-history-item(data-model="cube" data-size="25" data-color="#4ecdc4")
-          .item-header
-            .item-text Make it bigger and add a hole
-            .item-toggle
-              i.bi.bi-chevron-down
-          .item-preview
-            canvas.preview-canvas(data-preview-id="preview-2")
-        li.chat-history-item(data-model="cube" data-size="15" data-color="#45b7d1")
-          .item-header
-            .item-text Add text on the side
-            .item-toggle
-              i.bi.bi-chevron-down
-          .item-preview
-            canvas.preview-canvas(data-preview-id="preview-3")
-        li.chat-history-item(data-model="cube" data-size="18" data-color="#96ceb4")
-          .item-header
-            .item-text Change to blue color
-            .item-toggle
-              i.bi.bi-chevron-down
-          .item-preview
-            canvas.preview-canvas(data-preview-id="preview-4")
+      .chat-history-controls
+        button.refresh-history-btn(id="refreshHistoryBtn" title="Refresh history")
+          i.bi.bi-arrow-clockwise
+        button.clear-history-btn(id="clearHistoryBtn" title="Clear all history")
+          i.bi.bi-trash
+      .chat-history-loading#historyLoading(style="display: none;")
+        .loading-spinner
+        span Loading history...
+      .chat-history-empty#historyEmpty(style="display: none;")
+        i.bi.bi-chat-square-text
+        p No chat history yet
+        small Start creating models to see them here
+      ul.chat-history-list#chatHistoryList
+        // History items will be dynamically populated by JavaScript
