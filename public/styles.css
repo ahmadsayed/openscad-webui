@@ -680,6 +680,9 @@ body.resizing-vertical .resize-bar-vertical {
     /* Reset transition for mobile */
     transition: none;
     display: none;
+    /* Remove any margin/padding that creates empty space */
+    margin: 0;
+    padding: 0;
   }
   
   /* Show dropdown on tap for mobile */
@@ -687,6 +690,26 @@ body.resizing-vertical .resize-bar-vertical {
     display: block;
     visibility: visible;
     opacity: 1;
+  }
+  
+  /* Ensure nav items don't have extra spacing in mobile */
+  .nav-item {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-item a {
+    border-bottom: 1px solid #444; /* Add separator between menu items */
+  }
+  
+  /* Remove any extra spacing from dropdown items */
+  .dropdown a {
+    padding: 10px 16px 10px 32px; /* Indent dropdown items */
+    border-bottom: 1px solid #555; /* Separator for dropdown items */
+  }
+  
+  .dropdown a:last-child {
+    border-bottom: none; /* Remove border from last item */
   }
   
   /* Remove the buffer zone on mobile as it's not needed */

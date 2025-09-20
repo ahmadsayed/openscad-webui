@@ -15,6 +15,13 @@ body {
     overflow-x: hidden;
 }
 
+/* Main content wrapper for responsive layout */
+.main-content-wrapper {
+    margin-left: 300px;
+    width: calc(100% - 300px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
 /* Fixed header */
 .fixed-header {
     position: fixed;
@@ -167,6 +174,12 @@ body {
     color: #2c3e50;
 }
 
+.side-panel-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .collapse-toggle {
     background: none;
     border: none;
@@ -178,6 +191,22 @@ body {
 }
 
 .collapse-toggle:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.mobile-close-btn {
+    display: none;
+    background: none;
+    border: none;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.mobile-close-btn:hover {
     background: #e9ecef;
     color: #495057;
 }
@@ -604,41 +633,235 @@ body {
     visibility: visible;
 }
 
-/* Responsive design */
+/* Responsive design - Mobile First Approach */
 @media (max-width: 768px) {
-    .simple-container {
+    .main-content-wrapper {
         margin-left: 0 !important;
         width: 100% !important;
     }
     
     .side-panel {
         transform: translateX(-100%);
+        width: 280px;
+        z-index: 1000;
+        background: white;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     }
     
     .side-panel:not(.collapsed) {
         transform: translateX(0);
     }
     
+    .simple-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-top: 50px;
+    }
+    
+    .fixed-header {
+        height: 50px;
+    }
+    
+    .navbar {
+        padding: 0 15px;
+    }
+    
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+    
+    .nav-list {
+        display: none;
+        position: fixed;
+        top: 50px;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        flex-direction: column;
+        z-index: 999;
+    }
+    
+.nav-list.mobile-menu-active {
+    display: flex;
+    z-index: 1001; /* Higher than header's z-index: 1000 */
+}
+    
+    .nav-item {
+        margin: 5px 0;
+    }
+    
+    .nav-item > a {
+        padding: 12px 15px;
+        font-size: 1rem;
+    }
+    
+    .dropdown {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        margin-top: 5px;
+        padding: 0;
+        min-width: auto;
+    }
+    
+    .dropdown a {
+        padding: 10px 15px 10px 30px;
+        font-size: 0.9rem;
+    }
+    
+    .menu-toggle {
+        display: flex;
+    }
+    
+    .menu-toggle.active .bar:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .menu-toggle.active .bar:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .menu-toggle.active .bar:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+    
     .simple-chat-section {
-        padding: 20px;
+        padding: 20px 15px;
+    }
+    
+    .simple-chat-title {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+    
+    .simple-chat-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+    }
+    
+    .simple-editor-container {
+        margin-bottom: 15px;
+    }
+    
+    #simpleChatEditor {
+        min-height: 100px;
+        font-size: 14px;
+    }
+    
+    .simple-placeholder-text {
+        font-size: 0.9rem;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    
+    .simple-chat-submit {
+        padding: 14px 24px;
+        font-size: 1rem;
+        min-width: 140px;
+    }
+    
+    .parameter-header,
+    #parametersContainer {
+        padding: 15px;
+    }
+    
+    .parameter-header-title {
+        font-size: 1rem;
+    }
+    
+    .simple-3d-section {
+        min-height: 300px;
+        height: 300px;
+    }
+    
+    /* Touch optimization */
+    .nav-item > a,
+    .dropdown a,
+    .simple-chat-submit,
+    .parameter-header,
+    .refresh-history-btn,
+    .clear-history-btn,
+    .item-load-btn,
+    .item-delete-btn {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Mobile side panel enhancements */
+    .mobile-close-btn {
+        display: block;
+    }
+    
+    .side-panel-controls {
+        gap: 4px;
+    }
+    
+    /* Text size optimization for mobile */
+    body {
+        font-size: 14px;
+    }
+    
+    h2, h3 {
+        font-size: 1.2rem;
+    }
+    
+    .side-panel-header h3 {
+        font-size: 1rem;
+    }
+    
+    /* Ensure proper spacing on mobile */
+    .side-panel-content {
+        padding: 12px;
+    }
+    
+    .chat-history-controls {
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .chat-history-item {
+        margin-bottom: 8px;
+    }
+    
+    .item-header {
+        padding: 12px;
+    }
+    
+    .item-actions {
+        padding: 8px 12px;
+    }
+}
+
+/* Tablet responsive adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .main-content-wrapper {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+    
+    .side-panel {
+        width: 250px;
+    }
+    
+    .simple-chat-section {
+        padding: 30px;
     }
     
     .simple-chat-title {
         font-size: 2rem;
     }
-    
-    .parameter-header,
-    #parametersContainer {
-        padding: 20px;
-    }
-    
-    .nav-list {
-        display: none;
-    }
-    
-    .menu-toggle {
-        display: block;
-    }
+}
+
+/* Ensure canvas resizes properly on mobile */
+#renderCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Mobile menu toggle (simplified) */

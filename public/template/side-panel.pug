@@ -11,8 +11,11 @@ mixin side-panel(panelId = "chatHistoryPanel", panelClass = "collapsed", panelSt
   .side-panel(class=panelClass id=panelId style=panelStyle)
     .side-panel-header
       h3= headerTitle
-      button.collapse-toggle(id="historyCollapseToggle")
-        i.bi.bi-chevron-right
+      .side-panel-controls
+        button.collapse-toggle(id="historyCollapseToggle" title="Toggle panel")
+          i.bi.bi-chevron-right
+        button.mobile-close-btn(id="mobileCloseBtn" title="Close panel" style="display: none;")
+          i.bi.bi-x
     .side-panel-content
       .chat-history-controls
         button.refresh-history-btn(id="refreshHistoryBtn" title="Refresh history")

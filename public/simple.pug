@@ -7,6 +7,9 @@ html(lang="en")
     - var keywords = "AI 3D modeling, simple CAD tool, chat 3D design, no-code 3D modeling, AI assistant 3D, beginner 3D design"
     - var canonical = "https://promptscad.com/simple.html"
 
+    // Mobile viewport configuration
+    meta(name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+
     // Simple layout specific styles
     link(rel="stylesheet" href="/simple.css")
 
@@ -63,8 +66,8 @@ html(lang="en")
       include template/side-panel.pug
       +side-panel("chatHistoryPanel", "collapsed", "position: fixed; left: 0; top: 40px; height: calc(100vh - 40px); z-index: 900;", "Chat History")
       
-      // Main content wrapper with margin for side panel
-      div(style="margin-left: 300px; width: calc(100% - 300px);")
+      // Main content wrapper with responsive margin for side panel
+      .main-content-wrapper
         // Chat Section
         .simple-chat-section
           .simple-chat-container

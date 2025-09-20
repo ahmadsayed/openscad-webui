@@ -13,6 +13,7 @@ import {
     getStorageStats, 
     cleanupOldEntries 
 } from './utils/storage/index.js';
+import { downloadSCAD } from './utils/fileUtils.js';
 import { showStorageStatsWithChart } from './ui/storageStats.js';
 import { STORAGE_LIMITS } from './utils/storage/constants.js';
 
@@ -54,6 +55,9 @@ async function init() {
     // Initialize collapsible parameter form
     initParameterCollapse();
 
+    // Initialize mobile menu functionality
+    initMobileMenu();
+
     // Load saved code or use default
     const savedCode = loadCode('simple') || getMostRecentCode();
     const defaultCode = savedCode || "cube(20, center=true);";
@@ -83,6 +87,10 @@ async function init() {
         renderer.downloadSTL().catch(error => {
             console.error("Failed to download STL:", error);
         });
+    };
+
+    window.downloadSCAD = () => {
+        downloadSCAD(currentCode);
     };
 
     // Save code before navigating to advanced mode
@@ -381,6 +389,76 @@ function fallbackCodeGeneration(message, currentCode) {
     return sharedFallbackCodeGeneration(message, currentCode);
 }
 
+// Initialize mobile menu functionality
+function initMobileMenu() {
+    const menuToggle = document.getElementById('mobile-menu');
+    const navList = document.querySelector('.nav-list');
+    
+    console.log('Mobile menu initialization - elements found:', {
+        menuToggle: !!menuToggle,
+        navList: !!navList
+    });
+    
+    if (!menuToggle || !navList) {
+        console.error('Mobile menu elements not found:', {
+            menuToggle: menuToggle,
+            navList: navList
+        });
+        return;
+    }
+    
+    let closeMenuHandler = null;
+    
+    menuToggle.addEventListener('click', function(e) {
+        console.log('Mobile menu toggle clicked');
+        e.stopPropagation(); // Prevent event from bubbling up
+        const isActive = this.classList.toggle('active');
+        navList.classList.toggle('active');
+        
+        console.log('Menu state:', {
+            isActive: isActive,
+            hasActiveClass: this.classList.contains('active'),
+            hasMobileMenuActive: navList.classList.contains('active')
+        });
+        
+        // Close menu when clicking outside
+        if (isActive) {
+            closeMenuHandler = function(e) {
+                if (!navList.contains(e.target) && e.target !== menuToggle && !menuToggle.contains(e.target)) {
+                    menuToggle.classList.remove('active');
+                    navList.classList.remove('active');
+                    document.removeEventListener('click', closeMenuHandler);
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeMenuHandler);
+            }, 100);
+        } else {
+            // Remove any existing close menu listeners
+            if (closeMenuHandler) {
+                document.removeEventListener('click', closeMenuHandler);
+            }
+        }
+    });
+    
+    // Prevent clicks inside the menu from closing it
+    navList.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    console.log('Mobile menu initialized successfully');
+}
+
+// Mobile side panel toggle function
+function toggleSidePanelMobile() {
+    const sidePanel = document.getElementById('chatHistoryPanel');
+    if (sidePanel) {
+        sidePanel.classList.toggle('collapsed');
+    }
+}
+
+// Add mobile side panel toggle to window
+window.toggleSidePanelMobile = toggleSidePanelMobile;
 
 // Add storage management functions to window
 window.showStorageStats = function(event) {
@@ -392,7 +470,7 @@ window.showStorageStats = function(event) {
 window.clearStorageCache = function(event) {
     if (event) event.preventDefault();
     if (confirm('Clear all cached 3D models? This will free up storage but models will need to be regenerated.')) {
-        const deletedCount = cleanupOldEntries(0); // Delete all entries
+        const deletedCount = cleanupOldEntries(0); // Delete all entries;
         alert(`Cleared ${deletedCount} cached models.`);
     }
 };
