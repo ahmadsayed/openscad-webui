@@ -181,34 +181,52 @@ body {
 }
 
 .collapse-toggle {
-    background: none;
-    border: none;
-    padding: 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    color: #6c757d;
-    transition: all 0.2s ease;
+  background: #73C48F;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #2B2B2B;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
 .collapse-toggle:hover {
-    background: #e9ecef;
-    color: #495057;
+  background: #5DAF7B;
+  transform: translateY(-1px);
+}
+
+.collapse-toggle:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .mobile-close-btn {
     display: none;
-    background: none;
+    background: #73C48F;
     border: none;
-    padding: 4px;
+    padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
-    color: #6c757d;
-    transition: all 0.2s ease;
+    color: #2B2B2B;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }
 
 .mobile-close-btn:hover {
-    background: #e9ecef;
-    color: #495057;
+    background: #5DAF7B;
+    transform: translateY(-1px);
+}
+
+.mobile-close-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .side-panel-content {
@@ -228,20 +246,31 @@ body {
 
 .refresh-history-btn,
 .clear-history-btn {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 8px;
+    background: #73C48F;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 16px;
     cursor: pointer;
-    color: #6c757d;
-    transition: all 0.2s ease;
+    color: #2B2B2B;
+    transition: background-color 0.3s;
     font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .refresh-history-btn:hover,
 .clear-history-btn:hover {
-    background: #e9ecef;
-    color: #495057;
+    background: #5DAF7B;
+    transform: translateY(-1px);
+}
+
+.refresh-history-btn:active,
+.clear-history-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Loading and empty states */
@@ -428,17 +457,19 @@ body {
 }
 
 .item-load-btn {
-    background: #007bff;
-    color: white;
+    background: #73C48F;
+    color: #2B2B2B;
+    font-weight: bold;
 }
 
 .item-load-btn:hover {
-    background: #0056b3;
+    background: #5DAF7B;
 }
 
 .item-delete-btn {
     background: #dc3545;
     color: white;
+    font-weight: bold;
 }
 
 .item-delete-btn:hover {

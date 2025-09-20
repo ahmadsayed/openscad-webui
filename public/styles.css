@@ -481,18 +481,72 @@ body.resizing-vertical .resize-bar-vertical {
 }
 
 .collapse-toggle {
-  background: none;
+  background: #73C48F;
   border: none;
-  color: #e0e0e0;
+  color: #2B2B2B;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px 8px;
   border-radius: 4px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
 .collapse-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #5DAF7B;
+  transform: translateY(-1px);
+}
+
+.mobile-close-btn {
+  background: #73C48F;
+  border: none;
+  color: #2B2B2B;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.mobile-close-btn:hover {
+  background-color: #5DAF7B;
+  transform: translateY(-1px);
+}
+
+.refresh-history-btn,
+.clear-history-btn {
+  background: #73C48F;
+  border: none;
+  color: #2B2B2B;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.refresh-history-btn:hover,
+.clear-history-btn:hover {
+  background-color: #5DAF7B;
+  transform: translateY(-1px);
+}
+
+.refresh-history-btn:active,
+.clear-history-btn:active,
+.collapse-toggle:active,
+.mobile-close-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .side-panel.collapsed .side-panel-header h3 {
@@ -588,6 +642,49 @@ body.resizing-vertical .resize-bar-vertical {
   border-radius: 4px;
   margin-top: 8px;
   display: block;
+}
+
+/* Chat history item action buttons */
+.item-actions {
+  padding: 12px 16px;
+  background: #333;
+  border-top: 1px solid #404040;
+  display: flex;
+  gap: 8px;
+}
+
+.item-load-btn,
+.item-delete-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: bold;
+}
+
+.item-load-btn {
+  background: #73C48F;
+  color: #2B2B2B;
+}
+
+.item-load-btn:hover {
+  background: #5DAF7B;
+}
+
+.item-delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.item-delete-btn:hover {
+  background: #c82333;
 }
 
 /* Smooth transitions for expandable items */
