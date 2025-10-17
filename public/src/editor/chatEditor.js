@@ -1,5 +1,8 @@
 // chatEditor.js - Manages the chat interface for code generation
 
+// Global variable to track current request
+let currentRequestController = null;
+
 /**
  * Initialize the chat editor
  * @param {Function} onSubmitCallback - Callback function to execute when chat is submitted
@@ -18,7 +21,14 @@ export function initChatEditor(onSubmitCallback) {
         getValue: () => chatEditor.getValue(),
         setValue: (value) => chatEditor.setValue(value),
         setReadOnly: (value) => chatEditor.setReadOnly(value),
-        getEditor: () => chatEditor
+        getEditor: () => chatEditor,
+        cancelCurrentRequest: () => {
+            if (currentRequestController) {
+                currentRequestController.abort();
+                currentRequestController = null;
+                console.log('🛑 Current chat request cancelled');
+            }
+        }
     };
 }
 
@@ -61,6 +71,27 @@ function setupEventHandlers(chatEditor, onSubmitCallback) {
     document.getElementById('chatSubmit').addEventListener('click', () => {
         submitChat(chatEditor, onSubmitCallback);
     });
+}
+
+/**
+ * Restore UI state to normal
+ * @param {Object} chatContainer - The chat container element
+ * @param {Object} submitButton - The submit button element
+ * @param {Object} chatEditor - The Ace editor instance
+ * @param {string} originalText - The original button text
+ */
+function restoreUIState(chatContainer, submitButton, chatEditor, originalText) {
+    chatContainer.classList.remove('thinking');
+    submitButton.classList.remove('processing');
+    submitButton.disabled = false;
+    chatEditor.setReadOnly(false);
+    
+    const textSpan = submitButton.querySelector('.button-text');
+    if (textSpan) {
+        textSpan.textContent = originalText;
+    }
+    
+    console.log('🔄 UI state restored to normal');
 }
 
 /**
@@ -107,6 +138,15 @@ async function submitChat(chatEditor, onSubmitCallback) {
     }
 
     try {
+        // Cancel any existing request before starting a new one
+        if (currentRequestController) {
+            currentRequestController.abort();
+            console.log('🛑 Cancelled previous chat request');
+        }
+        
+        // Create new AbortController for this request
+        currentRequestController = new AbortController();
+        
         // Show initial thinking state
         chatContainer.classList.add('thinking');
         chatEditor.setReadOnly(true);
@@ -118,44 +158,38 @@ async function submitChat(chatEditor, onSubmitCallback) {
         // Process the message with the provided callback
         const success = await onSubmitCallback(message);
         
+        // Clear the request controller on completion
+        currentRequestController = null;
+        
         if (success) {
             // Clear the input on success
             chatEditor.setValue("");
             
-            submitButton.textContent = "Send";
-            // Immediately enable button functionality while keeping visual feedback
-            submitButton.disabled = false;
-            chatEditor.setReadOnly(false);
+            // Restore all UI states immediately and consistently
+            restoreUIState(chatContainer, submitButton, chatEditor, originalText);
             
-            // Remove processing state after short delay for visual feedback
-            chatContainer.classList.remove('thinking');
-             submitButton.classList.remove('processing');
-
-            
+            console.log('✅ Chat processing completed successfully');
             
         } else {
             // Show error message and restore button state together
             textSpan.textContent = 'Failed!';
             
             setTimeout(() => {
-                chatContainer.classList.remove('thinking');
-                submitButton.classList.remove('processing');
-                submitButton.disabled = false;
-                textSpan.textContent = originalText;
-                chatEditor.setReadOnly(false);
+                restoreUIState(chatContainer, submitButton, chatEditor, originalText);
+                console.log('❌ Chat processing failed - UI state restored');
             }, 1800); // Wait for error message display
         }
     } catch (error) {
         console.error('Chat submission error:', error);
         textSpan.textContent = 'Error!';
         
+        // Clear the request controller on error
+        currentRequestController = null;
+        
         // Restore button state after showing error message
         setTimeout(() => {
-            chatContainer.classList.remove('thinking');
-            submitButton.classList.remove('processing');
-            submitButton.disabled = false;
-            textSpan.textContent = originalText;
-            chatEditor.setReadOnly(false);
+            restoreUIState(chatContainer, submitButton, chatEditor, originalText);
+            console.log('💥 Chat submission error - UI state restored');
         }, 2200); // Wait for error message display
     }
 }
