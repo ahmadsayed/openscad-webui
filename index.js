@@ -308,16 +308,25 @@ export async function processVisualInput(imageData, prompt = "Describe this imag
 
 export async function processRequest(requestId, message, code) {
     try {
-        console.log(requestId);
+        console.log(`🔄 Starting request processing: ${requestId}`);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
 
         // Ensure REQUEST_DIR exists
         await fs.mkdir(REQUEST_DIR, { recursive: true });
 
-        // Update status to Calculating Geometry
+        // Update status to Initial Processing
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'working',
-            phase: 'Calculating Geometry',
+            phase: 'Initial Processing',
+            progress: 10,
+            success: true
+        }));
+
+        // Update status to Analyzing Geometry
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'working',
+            phase: 'Analyzing Geometry',
+            progress: 30,
             success: true
         }));
 
@@ -327,24 +336,37 @@ export async function processRequest(requestId, message, code) {
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'working',
             phase: 'Generating Code',
+            progress: 70,
             success: true
         }));
 
         let openscadeCode = await generateOpenscad(message, code, specs_and_math);
         console.log(openscadeCode);
+        
+        // Update status to Final Processing
+        await fs.writeFile(requestFile, JSON.stringify({
+            status: 'working',
+            phase: 'Final Processing',
+            progress: 90,
+            success: true
+        }));
+
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'done',
-            phase: '',
+            phase: 'Complete',
+            progress: 100,
             code: openscadeCode,
             success: true
         }));
-        console.log(requestFile);
+        
+        console.log(`✅ Request ${requestId} completed successfully`);
     } catch (error) {
-        console.log(error);
+        console.log(`❌ Request ${requestId} failed:`, error);
         const requestFile = path.join(REQUEST_DIR, `${requestId}.json`);
         await fs.writeFile(requestFile, JSON.stringify({
             status: 'error',
             phase: 'Error',
+            progress: 0,
             error: error.message,
             success: false
         }));
@@ -361,6 +383,7 @@ app.get('/status/:requestId', async (req, res) => {
         res.json({
             status: result.status,
             phase: result.phase || 'working',
+            progress: result.progress || 0,
             ...(result.status === 'done' && { code: result.code }),
             ...(result.status === 'error' && { error: result.error }),
             success: result.success !== false

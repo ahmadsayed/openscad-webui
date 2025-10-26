@@ -327,10 +327,12 @@ async function submitSimpleChat(editor) {
     }
 
     try {
-        // Show processing state
+        // Show processing state with spinner animation
         editor.setReadOnly(true);
         submitButton.classList.add('processing');
-        textSpan.textContent = 'Creating...';
+        const buttonIcon = submitButton.querySelector('.button-icon');
+        buttonIcon.className = 'bi bi-arrow-repeat button-icon';
+        textSpan.textContent = 'Generating...';
 
         // Generate code from message using current code for incremental building
         const code = await generateCodeFromMessage(message, currentCode);
@@ -347,9 +349,15 @@ async function submitSimpleChat(editor) {
         // Clear the input on success
         editor.setValue("");
         
-        // Show success message briefly
+        // Show success state briefly
+        submitButton.classList.remove('processing');
+        submitButton.classList.add('success');
+        buttonIcon.className = 'bi bi-check button-icon';
         textSpan.textContent = 'Created!';
+        
         setTimeout(() => {
+            submitButton.classList.remove('success');
+            buttonIcon.className = 'bi bi-magic button-icon';
             textSpan.textContent = originalText;
         }, 1500);
         
@@ -358,14 +366,20 @@ async function submitSimpleChat(editor) {
         
     } catch (error) {
         console.error('Simple chat submission error:', error);
+        submitButton.classList.remove('processing');
+        submitButton.classList.add('error');
+        const buttonIcon = submitButton.querySelector('.button-icon');
+        buttonIcon.className = 'bi bi-exclamation-triangle button-icon';
         textSpan.textContent = 'Error!';
+        
         setTimeout(() => {
+            submitButton.classList.remove('error');
+            buttonIcon.className = 'bi bi-magic button-icon';
             textSpan.textContent = originalText;
         }, 2000);
     } finally {
         // Restore editor state
         setTimeout(() => {
-            submitButton.classList.remove('processing');
             editor.setReadOnly(false);
         }, 1000);
     }

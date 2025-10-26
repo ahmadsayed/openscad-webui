@@ -19,18 +19,25 @@ export function checkCanvasHasDrawing(canvas) {
 }
 
 /**
- * Polls for request completion
+ * Polls for request completion with adaptive intervals for faster updates
  * @param {string} requestId 
- * @param {number} interval 
+ * @param {number} initialInterval 
  * @param {number} maxAttempts 
  * @returns {Promise<string>}
  */
-export async function pollForCompletion(requestId, interval = 500, maxAttempts = 400) {
-    console.log(`🔄 Polling for completion of request: ${requestId}`);
+export async function pollForCompletion(requestId, initialInterval = 200, maxAttempts = 400) {
+    console.log(`🔄 Polling for completion of request: ${requestId} with adaptive intervals`);
+    
+    const startTime = Date.now();
+    let lastPhase = '';
+    let consecutiveSamePhase = 0;
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
-            console.log(`📡 Polling attempt ${attempt + 1}/${maxAttempts} for request ${requestId}`);
+            const elapsedTime = Date.now() - startTime;
+            const currentInterval = getAdaptiveInterval(elapsedTime, attempt);
+            
+            console.log(`📡 Polling attempt ${attempt + 1}/${maxAttempts} for request ${requestId} (elapsed: ${Math.round(elapsedTime/1000)}s, interval: ${currentInterval}ms)`);
             
             const statusResponse = await fetch(`/status/${requestId}`);
             if (!statusResponse.ok) {
@@ -43,7 +50,7 @@ export async function pollForCompletion(requestId, interval = 500, maxAttempts =
             
             // Check for completion
             if (statusData.status === 'done' && statusData.success && statusData.code) {
-                console.log(`✅ Request ${requestId} completed successfully`);
+                console.log(`✅ Request ${requestId} completed successfully in ${Math.round(elapsedTime/1000)}s`);
                 return statusData.code;
             }
             
@@ -54,11 +61,20 @@ export async function pollForCompletion(requestId, interval = 500, maxAttempts =
                 throw new Error(errorMsg);
             }
             
-            // Still working, wait before next poll
-            console.log(`⏳ Request ${requestId} still working... (${statusData.phase || 'processing'})`);
+            // Track phase changes for adaptive behavior
+            const currentPhase = statusData.phase || 'processing';
+            if (currentPhase === lastPhase) {
+                consecutiveSamePhase++;
+            } else {
+                consecutiveSamePhase = 0;
+                lastPhase = currentPhase;
+            }
             
-            // Simple delay using setTimeout
-            await new Promise(resolve => setTimeout(resolve, interval));
+            // Still working, wait before next poll with adaptive interval
+            console.log(`⏳ Request ${requestId} still working... (${currentPhase}, same phase: ${consecutiveSamePhase} times)`);
+            
+            // Use adaptive delay based on elapsed time and phase stability
+            await new Promise(resolve => setTimeout(resolve, currentInterval));
             
         } catch (error) {
             console.error(`💥 Error polling request ${requestId}:`, error);
@@ -71,12 +87,46 @@ export async function pollForCompletion(requestId, interval = 500, maxAttempts =
                 throw error;
             }
             console.log(`🔄 Retrying after error (attempt ${attempt + 1})...`);
-            await new Promise(resolve => setTimeout(resolve, interval));
+            await new Promise(resolve => setTimeout(resolve, initialInterval));
         }
     }
     
-    console.error(`⏰ Request ${requestId} timed out after ${maxAttempts} attempts`);
-    throw new Error(`Request timed out after ${maxAttempts} polling attempts`);
+    const totalTime = Date.now() - startTime;
+    console.error(`⏰ Request ${requestId} timed out after ${maxAttempts} attempts (${Math.round(totalTime/1000)}s)`);
+    throw new Error(`Request timed out after ${Math.round(totalTime/1000)} seconds`);
+}
+
+/**
+ * Calculate adaptive polling interval based on elapsed time and attempt count
+ * @param {number} elapsedTime - Time elapsed in milliseconds
+ * @param {number} attempt - Current attempt number
+ * @returns {number} - Polling interval in milliseconds
+ */
+function getAdaptiveInterval(elapsedTime, attempt) {
+    const elapsedSeconds = elapsedTime / 1000;
+    
+    // Phase 1: Fast polling for first 10 seconds
+    if (elapsedSeconds < 10) {
+        return 200; // Fast polling for quick completion detection
+    }
+    
+    // Phase 2: Moderate polling for next 30 seconds
+    if (elapsedSeconds < 40) {
+        return 500; // Balance between responsiveness and server load
+    }
+    
+    // Phase 3: Slower polling for next 80 seconds
+    if (elapsedSeconds < 120) {
+        return 1000; // Reduce frequency for long-running requests
+    }
+    
+    // Phase 4: Progressive backoff after 2 minutes
+    if (elapsedSeconds < 180) {
+        return 2000; // Even slower for very long requests
+    }
+    
+    // Phase 5: Final phase before timeout
+    return 3000; // Minimal polling near timeout
 }
 
 /**
