@@ -80,9 +80,51 @@ if (process.env.NODE_ENV !== 'test') {
 
 
 export function validateOpenSCADSyntax(code) {
+    const errors = [];
+    
+    // Basic validation checks
+    if (code.length < 5) {
+        errors.push("Code too short");
+        return { valid: false, errors: errors.join(", ") };
+    }
+    
+    // Check for balanced brackets and parentheses
+    const bracketStack = [];
+    const parenStack = [];
+    
+    for (let i = 0; i < code.length; i++) {
+        const char = code[i];
+        if (char === '{') bracketStack.push('{');
+        if (char === '}') {
+            if (bracketStack.length === 0) errors.push("Unmatched closing brace");
+            else bracketStack.pop();
+        }
+        if (char === '(') parenStack.push('(');
+        if (char === ')') {
+            if (parenStack.length === 0) errors.push("Unmatched closing parenthesis");
+            else parenStack.pop();
+        }
+    }
+    
+    if (bracketStack.length > 0) errors.push("Unmatched opening brace");
+    if (parenStack.length > 0) errors.push("Unmatched opening parenthesis");
+    
+    // Check for common OpenSCAD syntax patterns
+    const validPatterns = [
+        /include|module|function|cube|cylinder|sphere|rotate|translate|scale|union|difference|intersection/i,
+        /;[\s]*$/m, // Ends with semicolon
+        /^[\s]*[a-zA-Z_]/m // Starts with valid identifier
+    ];
+    
+    validPatterns.forEach(pattern => {
+        if (!pattern.test(code)) {
+            errors.push("Invalid OpenSCAD syntax pattern");
+        }
+    });
+    
     return {
-        valid: code.length > 5,
-        errors: "",
+        valid: errors.length === 0,
+        errors: errors.join(", ")
     };
 }
 
@@ -93,19 +135,21 @@ export async function verifyTheMath(existing_code, changes) {
     const userPrompt = promptData.verifyTheMath.userTemplate
         .replace('{existing_code}', existing_code)
         .replace('{changes}', changes);
-    const completion = await openai.chat.completions.create({
-        model: "deepseek-chat",
-        messages: [
-            {
-                role: "system",
-                content: systemPrompt
-            },
-            {
-                role: "user",
-                content: userPrompt
-            }
-        ]
-    });
+        const completion = await openai.chat.completions.create({
+            model: "deepseek-chat",
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt
+                },
+                {
+                    role: "user",
+                    content: userPrompt
+                }
+            ],
+            max_tokens: 800,
+            temperature: 0.1
+        });
 
     const generatedText = completion.choices[0].message.content;
     console.log(generatedText);
@@ -132,7 +176,6 @@ export async function generateOpenscad(message, code, specs_and_math) {
             {
                 role: "assistant",
                 content: `Reference these specs: ${specs_and_math}`
-
             },
             systemRole,
             {
@@ -140,7 +183,8 @@ export async function generateOpenscad(message, code, specs_and_math) {
                 content: prompt
             }
         ],
-        temperature: 0.3
+        temperature: 0.1,
+        max_tokens: 1500
     });
 
     const generatedText = completion.choices[0].message.content;
