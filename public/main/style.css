@@ -63,6 +63,36 @@ h1 {
     background-color: #5DAF7B;
 }
 
+.launch-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem auto;
+    max-width: 420px;
+}
+
+.launch-button.secondary {
+    background-color: #454545;
+    color: #D4D4D4;
+}
+
+.launch-button.secondary:hover {
+    background-color: #5A5A5A;
+}
+
+/* Responsive adjustments for launch buttons */
+@media (max-width: 480px) {
+    .launch-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .launch-button {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
 /* Pre-alpha notice styling */
 .pre-alpha-notice {
     background-color: #8B3A3A;

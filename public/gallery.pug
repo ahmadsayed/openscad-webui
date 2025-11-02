@@ -1,0 +1,48 @@
+doctype html
+html(lang="en")
+  head
+    script(data-cfasync="false" type="text/javascript" src="monetag.js")
+    include template/head.pug
+    - var title = "3D Model Gallery | PromptSCAD - Browse AI-Generated Designs"
+    - var description = "Browse our collection of AI-generated 3D models. View, explore, and download STL files created with PromptSCAD's AI-powered OpenSCAD generator."
+    - var keywords = "3D model gallery, STL files, AI-generated designs, OpenSCAD models, 3D printing gallery, CAD model showcase"
+    - var canonical = "https://promptscad.com/gallery.html"
+
+    // Mobile viewport configuration
+    meta(name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+
+    // Gallery specific styles
+    link(rel="stylesheet" href="/gallery.css")
+
+  body
+    // Main Container - Full Screen Gallery
+    main.gallery-container(role="main" aria-label="3D Model Gallery")
+      // Gallery Header
+      .gallery-header
+        h1.gallery-title 3D Model Gallery
+        p.gallery-subtitle Browse and explore AI-generated 3D models created with PromptSCAD
+
+      // Gallery Content Container
+      .gallery-content
+        // Gallery Grid
+        .gallery-grid
+          // Gallery items will be dynamically populated
+          .gallery-empty-state
+            i.bi.bi-collection
+            h3 No Models Yet
+            p Create your first 3D model to see it appear here
+            a(href="/simple.html" class="gallery-create-btn")
+              i.bi.bi-magic
+              | Create Your First Model
+
+    // Side Panel JavaScript
+    script(src="/simple-panel.js")
+
+    // App Scripts
+    script(src="/openscad.js" type="module")
+    script(src="/openscad.fonts.js" type="module")
+    script(src="/openscad.mcad.js" type="module")
+    script(type="module" src="/src/utils/storage/index.js")
+    script(type="module" src="/src/ui/storageStats.js")
+    script(type="module" src="/src/simple.js")
+    script(type="module" src="/src/gallery.js")

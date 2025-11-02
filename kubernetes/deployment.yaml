@@ -41,7 +41,7 @@ spec:
             secretKeyRef:
               key: QWEN_API_KEY
               name: qwen-api-key
-        image: ahmadsayed/promptscad:10261427
+        image: ahmadsayed/promptscad:10261508
         imagePullPolicy: IfNotPresent
         name: promptscad
         ports:

@@ -48,6 +48,10 @@ app.get('/simple.html', (req, res) => {
     res.render('simple');
 });
 
+app.get('/gallery.html', (req, res) => {
+    res.render('gallery');
+});
+
 let openai;
 let qwenClient;
 
