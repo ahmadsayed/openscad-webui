@@ -20,7 +20,7 @@ html(lang="en")
       // Gallery Header
       .gallery-header
         h1.gallery-title 3D Model Gallery
-        p.gallery-subtitle Browse and explore AI-generated 3D models created with PromptSCAD
+        p.gallery-subtitle Browse and explore sample 3D models with STL preview
 
       // Gallery Content Container
       .gallery-content
@@ -34,15 +34,64 @@ html(lang="en")
             a(href="/simple.html" class="gallery-create-btn")
               i.bi.bi-magic
               | Create Your First Model
-
-    // Side Panel JavaScript
-    script(src="/simple-panel.js")
+        
+        // 3D Preview Section
+        .gallery-preview-section
+          #loadingScreen.gallery-loading-screen
+            .loading-spinner
+            p Loading 3D Preview...
+          canvas#renderCanvas.gallery-render-canvas
 
     // App Scripts
+    script.
+      // Global source map error suppression
+      (function() {
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        // Suppress source map errors globally
+        console.warn = function(...args) {
+          const message = args[0];
+          if (typeof message === 'string' && 
+              (message.includes('Source map error') || 
+               message.includes('source map') ||
+               message.includes('WebAssembly.Module') ||
+               message.includes('WEBGL_debug_renderer_info'))) {
+            return;
+          }
+          originalWarn.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+          const message = args[0];
+          if (typeof message === 'string' && 
+              (message.includes('Source map error') || 
+               message.includes('source map') ||
+               message.includes('WebAssembly.Module') ||
+               message.includes('WEBGL_debug_renderer_info'))) {
+            return;
+          }
+          originalError.apply(console, args);
+        };
+        
+        // Also suppress warnings from browser extensions
+        window.addEventListener('error', function(e) {
+          if (e.message && (
+              e.message.includes('Source map error') ||
+              e.message.includes('WebAssembly.Module') ||
+              e.message.includes('moz-extension')
+          )) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
+      })();
+    
+    // Load Babylon.js for STL rendering (same as simple.pug)
+    script(src="https://cdn.babylonjs.com/babylon.js")
+    script(src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js")
+    
     script(src="/openscad.js" type="module")
     script(src="/openscad.fonts.js" type="module")
     script(src="/openscad.mcad.js" type="module")
-    script(type="module" src="/src/utils/storage/index.js")
-    script(type="module" src="/src/ui/storageStats.js")
-    script(type="module" src="/src/simple.js")
     script(type="module" src="/src/gallery.js")

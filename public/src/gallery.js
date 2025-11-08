@@ -1,4 +1,8 @@
-// gallery.js - Gallery functionality for PromptSCAD
+// gallery.js - Simplified STL-only gallery for PromptSCAD
+
+// Core components
+import { createScene } from './scene.js';
+import { OpenSCADRenderer } from './openscadRenderer.js';
 
 class GalleryManager {
     constructor() {
@@ -6,14 +10,32 @@ class GalleryManager {
         this.renderCanvas = document.getElementById('renderCanvas');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.selectedItem = null;
+        this.scene = null;
+        this.renderer = null;
+        this.samples = [];
         
         this.init();
     }
 
-    init() {
-        console.log('Initializing Gallery Manager');
-        this.loadGalleryItems();
+    async init() {
+        console.log('Initializing STL Gallery Manager');
+        await this.initRenderer();
+        await this.loadGalleryItems();
         this.setupEventListeners();
+    }
+
+    async initRenderer() {
+        try {
+            // Create the rendering scene
+            this.scene = await createScene();
+            
+            // Initialize the OpenSCAD renderer
+            this.renderer = new OpenSCADRenderer(this.scene);
+            
+            console.log('Gallery renderer initialized successfully');
+        } catch (error) {
+            console.error('Error initializing gallery renderer:', error);
+        }
     }
 
     setupEventListeners() {
@@ -25,69 +47,74 @@ class GalleryManager {
 
     async loadGalleryItems() {
         try {
-            // For now, we'll create some sample items
-            // In a real implementation, this would load from storage or API
-            const sampleItems = this.createSampleItems();
-            this.renderGalleryItems(sampleItems);
+            // Load STL samples from the samples directory
+            this.samples = await this.loadSTLSamples();
+            this.renderGalleryItems(this.samples);
         } catch (error) {
             console.error('Error loading gallery items:', error);
             this.showErrorState('Failed to load gallery items');
         }
     }
 
-    createSampleItems() {
-        return [
-            {
-                id: 'sample-1',
-                title: 'Geometric Cube',
-                description: 'A simple cube with rounded corners and cutouts',
-                timestamp: new Date().toISOString(),
-                hasSTL: true,
-                scadCode: `cube([20, 20, 20], center=true);`
-            },
-            {
-                id: 'sample-2',
-                title: 'Spiral Vase',
-                description: 'Elegant spiral vase design with parametric twist',
-                timestamp: new Date(Date.now() - 86400000).toISOString(),
-                hasSTL: true,
-                scadCode: `difference() {
-    cylinder(h=40, r1=15, r2=25, $fn=60);
-    cylinder(h=38, r1=13, r2=23, $fn=60);
-}`
-            },
-            {
-                id: 'sample-3',
-                title: 'Gear Mechanism',
-                description: 'Precision gear design for mechanical applications',
-                timestamp: new Date(Date.now() - 172800000).toISOString(),
-                hasSTL: false,
-                scadCode: `module gear(teeth=20, height=10) {
-    angle = 360 / teeth;
-    for (i = [0:teeth-1]) {
-        rotate([0, 0, i * angle])
-        translate([15, 0, 0])
-        cube([5, 2, height]);
-    }
-    cylinder(h=height, r=10, $fn=teeth);
-}
-gear();`
-            }
+    async loadSTLSamples() {
+        const samples = [];
+        
+        // Define sample metadata - we'll scan the samples directory for STL files
+        const sampleDirs = [
+            { id: 'example-1', title: 'Cube with Holes', description: 'A cube with cylindrical cutouts' },
+            { id: 'example-2', title: 'Sample Model 2', description: 'Second sample model' },
+            { id: 'example-3', title: 'Sample Model 3', description: 'Third sample model' }
         ];
+        
+        console.log('🔍 Starting to load STL samples...');
+        
+        for (const sample of sampleDirs) {
+            try {
+                const stlUrl = `/samples/${sample.id}/${sample.id}.stl`;
+                console.log(`🔍 Checking STL file: ${stlUrl}`);
+                
+                // Check if STL file exists
+                const stlResponse = await fetch(stlUrl);
+                const hasSTL = stlResponse.ok;
+                
+                console.log(`🔍 STL file ${stlUrl}: ${hasSTL ? 'FOUND' : 'NOT FOUND'}`);
+                
+                if (hasSTL) {
+                    samples.push({
+                        id: sample.id,
+                        title: sample.title,
+                        description: sample.description,
+                        stlPath: stlUrl
+                    });
+                    console.log(`✅ Added sample: ${sample.title}`);
+                }
+            } catch (error) {
+                console.warn(`❌ Failed to load sample ${sample.id}:`, error);
+            }
+        }
+        
+        console.log(`📊 Total samples loaded: ${samples.length}`);
+        return samples;
     }
 
     renderGalleryItems(items) {
+        console.log(`🎨 Rendering ${items.length} gallery items`);
+        
         if (!items || items.length === 0) {
+            console.log('📭 No items to render, showing empty state');
             this.showEmptyState();
             return;
         }
 
         this.galleryGrid.innerHTML = '';
         
-        items.forEach(item => {
+        items.forEach((item, index) => {
+            console.log(`🎨 Creating gallery item ${index + 1}: ${item.title}`);
             const galleryItem = this.createGalleryItem(item);
             this.galleryGrid.appendChild(galleryItem);
         });
+        
+        console.log('✅ Gallery items rendered successfully');
     }
 
     createGalleryItem(item) {
@@ -97,19 +124,16 @@ gear();`
         
         itemElement.innerHTML = `
             <div class="gallery-item-thumbnail">
-                <div class="thumbnail-loading">
-                    <div class="loading-spinner"></div>
-                    <span>Loading Preview...</span>
+                <div class="thumbnail-placeholder">
+                    <i class="bi bi-cube"></i>
+                    <span>3D Model</span>
                 </div>
-                <canvas class="thumbnail-canvas" width="300" height="300"></canvas>
             </div>
             <div class="gallery-item-content">
                 <h3 class="gallery-item-title">${this.escapeHtml(item.title)}</h3>
+                <p class="gallery-item-description">${this.escapeHtml(item.description)}</p>
             </div>
         `;
-
-        // Load thumbnail preview
-        this.loadThumbnail(itemElement, item);
 
         // Add click handler for the entire item
         itemElement.addEventListener('click', () => {
@@ -117,142 +141,6 @@ gear();`
         });
 
         return itemElement;
-    }
-
-    async loadThumbnail(itemElement, item) {
-        const thumbnailCanvas = itemElement.querySelector('.thumbnail-canvas');
-        const loadingElement = itemElement.querySelector('.thumbnail-loading');
-        
-        try {
-            // For now, we'll just show a placeholder
-            // In a real implementation, this would render the SCAD code to the thumbnail canvas
-            setTimeout(() => {
-                loadingElement.style.display = 'none';
-                this.drawPlaceholderThumbnail(thumbnailCanvas, item);
-            }, 1000);
-        } catch (error) {
-            console.error('Error loading thumbnail:', error);
-            loadingElement.innerHTML = '<span>Preview Unavailable</span>';
-        }
-    }
-
-    drawPlaceholderThumbnail(canvas, item) {
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // Clear canvas
-        ctx.fillStyle = '#2d2d2d';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Draw placeholder geometry based on item type
-        ctx.fillStyle = '#73C48F';
-        ctx.strokeStyle = '#5DAF7B';
-        ctx.lineWidth = 2;
-        
-        // Simple geometric representation
-        if (item.title.includes('Cube')) {
-            this.drawCube(ctx, width, height);
-        } else if (item.title.includes('Vase')) {
-            this.drawVase(ctx, width, height);
-        } else if (item.title.includes('Gear')) {
-            this.drawGear(ctx, width, height);
-        } else {
-            this.drawGenericShape(ctx, width, height);
-        }
-    }
-
-    drawCube(ctx, width, height) {
-        const size = Math.min(width, height) * 0.3;
-        const x = width / 2;
-        const y = height / 2;
-        
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(Math.PI / 4);
-        
-        ctx.fillRect(-size/2, -size/2, size, size);
-        ctx.strokeRect(-size/2, -size/2, size, size);
-        
-        ctx.restore();
-    }
-
-    drawVase(ctx, width, height) {
-        const centerX = width / 2;
-        const baseWidth = width * 0.3;
-        const topWidth = width * 0.2;
-        const vaseHeight = height * 0.6;
-        
-        ctx.beginPath();
-        ctx.moveTo(centerX - baseWidth/2, height * 0.7);
-        ctx.bezierCurveTo(
-            centerX - baseWidth/2, height * 0.3,
-            centerX - topWidth/2, height * 0.2,
-            centerX, height * 0.1
-        );
-        ctx.bezierCurveTo(
-            centerX + topWidth/2, height * 0.2,
-            centerX + baseWidth/2, height * 0.3,
-            centerX + baseWidth/2, height * 0.7
-        );
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-    }
-
-    drawGear(ctx, width, height) {
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const radius = Math.min(width, height) * 0.2;
-        const teeth = 8;
-        
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        
-        // Draw gear body
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Draw teeth
-        for (let i = 0; i < teeth; i++) {
-            const angle = (i / teeth) * Math.PI * 2;
-            ctx.save();
-            ctx.rotate(angle);
-            ctx.translate(radius, 0);
-            
-            ctx.beginPath();
-            ctx.moveTo(-5, -8);
-            ctx.lineTo(5, -8);
-            ctx.lineTo(5, 8);
-            ctx.lineTo(-5, 8);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            ctx.restore();
-        }
-        
-        ctx.restore();
-    }
-
-    drawGenericShape(ctx, width, height) {
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const size = Math.min(width, height) * 0.25;
-        
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - size);
-        for (let i = 1; i <= 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-            const x = centerX + Math.sin(angle) * size;
-            const y = centerY - Math.cos(angle) * size;
-            ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
     }
 
     selectItem(itemId) {
@@ -269,45 +157,69 @@ gear();`
         if (itemElement) {
             itemElement.classList.add('selected');
             this.selectedItem = itemId;
+            
+            // Load and display the STL file
+            this.loadSTLPreview(itemId);
         }
     }
 
-    async previewItem(itemId) {
-        this.selectItem(itemId);
-        
+    async loadSTLPreview(itemId) {
+        const sample = this.samples.find(s => s.id === itemId);
+        if (!sample) {
+            console.warn(`Sample not found: ${itemId}`);
+            return;
+        }
+
         // Show loading screen
         this.showLoadingScreen();
         
         try {
-            // In a real implementation, this would render the actual SCAD code
-            // For now, we'll simulate loading
-            setTimeout(() => {
-                this.hideLoadingScreen();
-                // Here you would initialize the 3D renderer with the actual SCAD code
-                console.log(`Previewing item: ${itemId}`);
-            }, 1500);
+            console.log(`Loading STL preview for: ${sample.title}`);
+            
+            // Load STL file directly using the same approach as simple.pug
+            await this.loadSTLFile(sample.stlPath);
+            console.log(`STL preview loaded successfully for: ${sample.title}`);
+            
         } catch (error) {
-            console.error('Error previewing item:', error);
+            console.error('Error loading STL preview:', error);
+            this.showError('Failed to load 3D preview');
+        } finally {
             this.hideLoadingScreen();
-            this.showError('Failed to load preview');
         }
     }
 
-    async downloadItem(itemId) {
-        try {
-            // In a real implementation, this would download the actual STL file
-            console.log(`Downloading item: ${itemId}`);
+    async loadSTLFile(stlPath) {
+        return new Promise((resolve, reject) => {
+            // Clear the scene first
+            this._clearScene();
             
-            // Simulate download
-            const link = document.createElement('a');
-            link.href = '#'; // Would be actual STL file URL
-            link.download = `model-${itemId}.stl`;
-            link.click();
-            
-        } catch (error) {
-            console.error('Error downloading item:', error);
-            this.showError('Failed to download file');
+            // Load STL file directly using Babylon.js SceneLoader
+            BABYLON.SceneLoader.Append("", stlPath, this.scene, (scene) => {
+                // Create material for the model
+                const material = new BABYLON.StandardMaterial("stlMaterial", scene);
+                material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0);
+                material.alpha = 1;
+
+                // Apply material to all meshes
+                scene.meshes.forEach(mesh => {
+                    if (mesh !== scene.activeCamera) {
+                        mesh.material = material;
+                    }
+                });
+
+                resolve();
+            }, null, (scene, message, exception) => {
+                console.error('Error loading STL file:', message, exception);
+                reject(new Error(`Failed to load STL: ${message}`));
+            }, ".stl");
+        });
+    }
+
+    _clearScene() {
+        for (let i = 0; i < this.scene.meshes.length; i++) {
+            this.scene.meshes[i].dispose();
         }
+        this.scene.meshes = [];
     }
 
     showLoadingScreen() {
@@ -376,15 +288,6 @@ gear();`
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    formatDate(isoString) {
-        const date = new Date(isoString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
     }
 }
 
