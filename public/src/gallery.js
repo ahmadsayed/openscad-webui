@@ -1,41 +1,17 @@
-// gallery.js - Simplified STL-only gallery for PromptSCAD
-
-// Core components
-import { createScene } from './scene.js';
-import { OpenSCADRenderer } from './openscadRenderer.js';
+// gallery.js - Simplified STL-only gallery for PromptSCAD - Thumbnails Only
 
 class GalleryManager {
     constructor() {
         this.galleryGrid = document.querySelector('.gallery-grid');
-        this.renderCanvas = document.getElementById('renderCanvas');
-        this.loadingScreen = document.getElementById('loadingScreen');
-        this.selectedItem = null;
-        this.scene = null;
-        this.renderer = null;
         this.samples = [];
         
         this.init();
     }
 
     async init() {
-        console.log('Initializing STL Gallery Manager');
-        await this.initRenderer();
+        console.log('Initializing STL Gallery Manager - Thumbnails Only');
         await this.loadGalleryItems();
         this.setupEventListeners();
-    }
-
-    async initRenderer() {
-        try {
-            // Create the rendering scene
-            this.scene = await createScene();
-            
-            // Initialize the OpenSCAD renderer
-            this.renderer = new OpenSCADRenderer(this.scene);
-            
-            console.log('Gallery renderer initialized successfully');
-        } catch (error) {
-            console.error('Error initializing gallery renderer:', error);
-        }
     }
 
     setupEventListeners() {
@@ -124,9 +100,9 @@ class GalleryManager {
         
         itemElement.innerHTML = `
             <div class="gallery-item-thumbnail">
-                <div class="thumbnail-placeholder">
-                    <i class="bi bi-cube"></i>
-                    <span>3D Model</span>
+                <canvas class="thumbnail-canvas" data-item-id="${item.id}" width="250" height="250"></canvas>
+                <div class="thumbnail-loading">
+                    <div class="loading-spinner"></div>
                 </div>
             </div>
             <div class="gallery-item-content">
@@ -140,6 +116,11 @@ class GalleryManager {
             this.selectItem(item.id);
         });
 
+        // Render thumbnail after element is created
+        setTimeout(() => {
+            this.renderThumbnail(item);
+        }, 100);
+
         return itemElement;
     }
 
@@ -152,85 +133,12 @@ class GalleryManager {
             }
         }
         
-        // Select new item
+        // Select new item (thumbnails only - no preview)
         const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
         if (itemElement) {
             itemElement.classList.add('selected');
             this.selectedItem = itemId;
-            
-            // Load and display the STL file
-            this.loadSTLPreview(itemId);
-        }
-    }
-
-    async loadSTLPreview(itemId) {
-        const sample = this.samples.find(s => s.id === itemId);
-        if (!sample) {
-            console.warn(`Sample not found: ${itemId}`);
-            return;
-        }
-
-        // Show loading screen
-        this.showLoadingScreen();
-        
-        try {
-            console.log(`Loading STL preview for: ${sample.title}`);
-            
-            // Load STL file directly using the same approach as simple.pug
-            await this.loadSTLFile(sample.stlPath);
-            console.log(`STL preview loaded successfully for: ${sample.title}`);
-            
-        } catch (error) {
-            console.error('Error loading STL preview:', error);
-            this.showError('Failed to load 3D preview');
-        } finally {
-            this.hideLoadingScreen();
-        }
-    }
-
-    async loadSTLFile(stlPath) {
-        return new Promise((resolve, reject) => {
-            // Clear the scene first
-            this._clearScene();
-            
-            // Load STL file directly using Babylon.js SceneLoader
-            BABYLON.SceneLoader.Append("", stlPath, this.scene, (scene) => {
-                // Create material for the model
-                const material = new BABYLON.StandardMaterial("stlMaterial", scene);
-                material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0);
-                material.alpha = 1;
-
-                // Apply material to all meshes
-                scene.meshes.forEach(mesh => {
-                    if (mesh !== scene.activeCamera) {
-                        mesh.material = material;
-                    }
-                });
-
-                resolve();
-            }, null, (scene, message, exception) => {
-                console.error('Error loading STL file:', message, exception);
-                reject(new Error(`Failed to load STL: ${message}`));
-            }, ".stl");
-        });
-    }
-
-    _clearScene() {
-        for (let i = 0; i < this.scene.meshes.length; i++) {
-            this.scene.meshes[i].dispose();
-        }
-        this.scene.meshes = [];
-    }
-
-    showLoadingScreen() {
-        if (this.loadingScreen) {
-            this.loadingScreen.classList.add('visible');
-        }
-    }
-
-    hideLoadingScreen() {
-        if (this.loadingScreen) {
-            this.loadingScreen.classList.remove('visible');
+            console.log(`Selected item: ${itemId} (thumbnails only mode)`);
         }
     }
 
@@ -268,12 +176,7 @@ class GalleryManager {
     }
 
     handleResize() {
-        // Handle canvas and layout resizing
-        if (this.renderCanvas) {
-            // Reset canvas size - actual rendering would be handled by the 3D engine
-            this.renderCanvas.style.width = '100%';
-            this.renderCanvas.style.height = '100%';
-        }
+        // No longer needed - thumbnails only
     }
 
     handleKeyboardNavigation(e) {
@@ -288,6 +191,108 @@ class GalleryManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    async renderThumbnail(item) {
+        const canvas = document.querySelector(`.thumbnail-canvas[data-item-id="${item.id}"]`);
+        const loadingElement = canvas?.parentElement.querySelector('.thumbnail-loading');
+        
+        if (!canvas) {
+            console.warn(`Canvas not found for item: ${item.id}`);
+            return;
+        }
+
+        try {
+            console.log(`🎨 Rendering thumbnail for: ${item.title}`);
+            
+            // Show loading state
+            if (loadingElement) {
+                loadingElement.style.display = 'flex';
+            }
+
+            // Create mini scene for thumbnail
+            const engine = new BABYLON.Engine(canvas, true);
+            const scene = new BABYLON.Scene(engine);
+            
+            // Set background color to match gallery theme
+            scene.clearColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+            
+            // Setup camera for thumbnail view with mouse controls
+            const camera = new BABYLON.ArcRotateCamera(
+                "thumbCamera", 
+                -Math.PI / 2, 
+                Math.PI / 3, 
+                50, 
+                new BABYLON.Vector3(0, 0, 0)
+            );
+            
+            // Enable mouse controls for rotation and zoom
+            camera.attachControl(canvas, true);
+            camera.wheelPrecision = 50; // Make zoom smoother
+            camera.pinchPrecision = 50; // Make pinch zoom smoother on mobile
+            
+            // Setup lighting
+            const light1 = new BABYLON.HemisphericLight("thumbLight1", new BABYLON.Vector3(0, 1, 0));
+            const light2 = new BABYLON.HemisphericLight("thumbLight2", new BABYLON.Vector3(1, 0, 0));
+            light1.intensity = 0.8;
+            light2.intensity = 0.4;
+
+            // Load STL file
+            await this.loadSTLToThumbnail(item.stlPath, scene);
+            
+            // Start render loop
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+
+            // Hide loading state
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+
+            console.log(`✅ Thumbnail rendered for: ${item.title}`);
+
+        } catch (error) {
+            console.error(`❌ Error rendering thumbnail for ${item.title}:`, error);
+            
+            // Hide loading and show error state
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            
+            // Show placeholder on error
+            const placeholder = document.createElement('div');
+            placeholder.className = 'thumbnail-placeholder';
+            placeholder.innerHTML = `
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Failed to load</span>
+            `;
+            canvas.parentElement.appendChild(placeholder);
+        }
+    }
+
+    async loadSTLToThumbnail(stlPath, scene) {
+        return new Promise((resolve, reject) => {
+            // Load STL file using Babylon.js SceneLoader
+            BABYLON.SceneLoader.Append("", stlPath, scene, (scene) => {
+                // Create material for the model
+                const material = new BABYLON.StandardMaterial("thumbMaterial", scene);
+                material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0);
+                material.alpha = 1;
+
+                // Apply material to all meshes
+                scene.meshes.forEach(mesh => {
+                    if (mesh !== scene.activeCamera) {
+                        mesh.material = material;
+                    }
+                });
+
+                resolve();
+            }, null, (scene, message, exception) => {
+                console.error('Error loading STL for thumbnail:', message, exception);
+                reject(new Error(`Failed to load STL for thumbnail: ${message}`));
+            }, ".stl");
+        });
     }
 }
 

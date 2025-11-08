@@ -24,7 +24,7 @@ html(lang="en")
 
       // Gallery Content Container
       .gallery-content
-        // Gallery Grid
+        // Gallery Grid - Full width thumbnails only
         .gallery-grid
           // Gallery items will be dynamically populated
           .gallery-empty-state
@@ -34,13 +34,6 @@ html(lang="en")
             a(href="/simple.html" class="gallery-create-btn")
               i.bi.bi-magic
               | Create Your First Model
-        
-        // 3D Preview Section
-        .gallery-preview-section
-          #loadingScreen.gallery-loading-screen
-            .loading-spinner
-            p Loading 3D Preview...
-          canvas#renderCanvas.gallery-render-canvas
 
     // App Scripts
     script.
