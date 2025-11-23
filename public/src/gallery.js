@@ -58,14 +58,17 @@ class GalleryManager {
                 console.log(`🔍 STL file ${stlUrl}: ${hasSTL ? 'FOUND' : 'NOT FOUND'}`);
                 
                 if (hasSTL) {
-                    // Extract description from SCAD file comment
+                    // Extract description and full SCAD code from SCAD file
                     let description = await this.extractDescriptionFromSCAD(scadUrl);
+                    let scadCode = await this.loadSCADCode(scadUrl);
                     
                     samples.push({
                         id: sample.id,
                         title: this.generateFallbackTitle(scadUrl),
                         description: description,
-                        stlPath: stlUrl
+                        stlPath: stlUrl,
+                        scadPath: scadUrl,
+                        scadCode: scadCode
                     });
                     console.log(`✅ Added sample: ${description}`);
                 }
@@ -132,6 +135,49 @@ class GalleryManager {
         return cleanedTitle;
     }
 
+    async loadSCADCode(scadUrl) {
+        try {
+            console.log(`🔍 Loading SCAD code from: ${scadUrl}`);
+            
+            const response = await fetch(scadUrl);
+            if (!response.ok) {
+                console.warn(`❌ SCAD file not found: ${scadUrl}`);
+                return "cube(20, center=true);"; // Return default code
+            }
+            
+            const scadContent = await response.text();
+            console.log(`✅ Loaded SCAD code (${scadContent.length} characters)`);
+            return scadContent;
+            
+        } catch (error) {
+            console.error(`❌ Error loading SCAD code from: ${scadUrl}`, error);
+            return "cube(20, center=true);"; // Return default code on error
+        }
+    }
+
+    // Save gallery code to localStorage and redirect to simple editor
+    async editInSimpleEditor(item) {
+        try {
+            console.log(`🎯 Editing item in simple editor: ${item.title}`);
+            
+            // Save the SCAD code to localStorage for the simple editor
+            // This creates a local copy for the user only - original samples remain unchanged
+            localStorage.setItem('gallery_loaded_code', item.scadCode);
+            localStorage.setItem('gallery_loaded_title', item.title);
+            localStorage.setItem('gallery_loaded_description', item.description);
+            
+            console.log(`✅ Saved gallery code to localStorage (${item.scadCode.length} characters)`);
+            console.log(`🔄 Redirecting to simple editor...`);
+            
+            // Redirect to simple editor
+            window.location.href = '/simple.html';
+            
+        } catch (error) {
+            console.error('❌ Error editing in simple editor:', error);
+            this.showError('Failed to open model in editor. Please try again.');
+        }
+    }
+
     renderGalleryItems(items) {
         console.log(`🎨 Rendering ${items.length} gallery items`);
         
@@ -156,6 +202,8 @@ class GalleryManager {
         const itemElement = document.createElement('div');
         itemElement.className = 'gallery-item';
         itemElement.setAttribute('data-item-id', item.id);
+        itemElement.style.cursor = 'pointer'; // Add pointer cursor to indicate clickability
+        itemElement.title = 'Click to edit in Simple Editor'; // Add tooltip
         
         itemElement.innerHTML = `
             <div class="gallery-item-thumbnail">
@@ -167,12 +215,15 @@ class GalleryManager {
             <div class="gallery-item-content">
                 <h3 class="gallery-item-title">${this.escapeHtml(item.title)}</h3>
                 <p class="gallery-item-description">${this.escapeHtml(item.description)}</p>
+                <div class="gallery-item-edit-hint">
+                    <i class="bi bi-pencil"></i> Click to edit
+                </div>
             </div>
         `;
 
-        // Add click handler for the entire item
+        // Add click handler for the entire item - now redirects to simple editor
         itemElement.addEventListener('click', () => {
-            this.selectItem(item.id);
+            this.editInSimpleEditor(item);
         });
 
         // Render thumbnail after element is created

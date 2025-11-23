@@ -58,14 +58,33 @@ async function init() {
     // Initialize mobile menu functionality
     initMobileMenu();
 
-    // Load saved code or use default
-    const savedCode = loadCode('simple') || getMostRecentCode();
-    const defaultCode = savedCode || "cube(20, center=true);";
-    currentCode = defaultCode; // Initialize current code tracking
-    renderer.renderOpenSCAD(defaultCode);
+    // Check for gallery-loaded code first (from gallery click-to-edit)
+    const galleryCode = localStorage.getItem('gallery_loaded_code');
+    const galleryTitle = localStorage.getItem('gallery_loaded_title');
+    const galleryDescription = localStorage.getItem('gallery_loaded_description');
+    
+    let initialCode;
+    if (galleryCode) {
+        console.log(`🎯 Loading gallery code: ${galleryTitle} - ${galleryDescription}`);
+        initialCode = galleryCode;
+        
+        // Clear the gallery-loaded code after use to prevent persistence
+        localStorage.removeItem('gallery_loaded_code');
+        localStorage.removeItem('gallery_loaded_title');
+        localStorage.removeItem('gallery_loaded_description');
+        
+        console.log('🧹 Cleared gallery-loaded code from localStorage');
+    } else {
+        // Load saved code or use default
+        const savedCode = loadCode('simple') || getMostRecentCode();
+        initialCode = savedCode || "cube(20, center=true);";
+    }
+    
+    currentCode = initialCode; // Initialize current code tracking
+    renderer.renderOpenSCAD(initialCode);
 
     // Extract and display parameters for the initial code
-    updateParameterForm(defaultCode);
+    updateParameterForm(initialCode);
 
     // Drawing system removed - no initialization needed
 

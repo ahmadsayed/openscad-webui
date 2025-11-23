@@ -300,3 +300,23 @@
         transform: none;
     }
 }
+
+/* Gallery item edit hint - shows on hover */
+.gallery-item-edit-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #73C48F;
+    font-size: 0.8rem;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.gallery-item:hover .gallery-item-edit-hint {
+    opacity: 1;
+}
+
+.gallery-item-edit-hint i {
+    font-size: 0.9rem;
+}
