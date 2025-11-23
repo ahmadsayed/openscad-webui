@@ -1,1 +1,0 @@
-{"status":"done","phase":"Complete","progress":100,"code":"include <module.scad>\ngear_teeth = 17;\ngear_pitch = 1;\ngear_height = 1.5;\nlinear_extrude(height = gear_height, center = true)\n    gear(number_of_teeth = gear_teeth, diametral_pitch = gear_pitch);","success":true}
