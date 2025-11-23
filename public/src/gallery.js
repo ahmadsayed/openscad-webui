@@ -35,11 +35,11 @@ class GalleryManager {
     async loadSTLSamples() {
         const samples = [];
         
-        // Define sample metadata - we'll scan the samples directory for STL files
+        // Define sample directories - descriptions will be extracted from SCAD file comments
         const sampleDirs = [
-            { id: 'example-1', title: 'Cube with Holes', description: 'A cube with cylindrical cutouts' },
-            { id: 'example-2', title: 'Sample Model 2', description: 'Second sample model' },
-            { id: 'example-3', title: 'Sample Model 3', description: 'Third sample model' }
+            { id: 'example-1' },
+            { id: 'example-2' },
+            { id: 'example-3' }
         ];
         
         console.log('🔍 Starting to load STL samples...');
@@ -47,7 +47,9 @@ class GalleryManager {
         for (const sample of sampleDirs) {
             try {
                 const stlUrl = `/samples/${sample.id}/${sample.id}.stl`;
+                const scadUrl = `/samples/${sample.id}/${sample.id}.scad`;
                 console.log(`🔍 Checking STL file: ${stlUrl}`);
+                console.log(`🔍 Checking SCAD file: ${scadUrl}`);
                 
                 // Check if STL file exists
                 const stlResponse = await fetch(stlUrl);
@@ -56,13 +58,16 @@ class GalleryManager {
                 console.log(`🔍 STL file ${stlUrl}: ${hasSTL ? 'FOUND' : 'NOT FOUND'}`);
                 
                 if (hasSTL) {
+                    // Extract description from SCAD file comment
+                    let description = await this.extractDescriptionFromSCAD(scadUrl);
+                    
                     samples.push({
                         id: sample.id,
-                        title: sample.title,
-                        description: sample.description,
+                        title: this.generateFallbackTitle(scadUrl),
+                        description: description,
                         stlPath: stlUrl
                     });
-                    console.log(`✅ Added sample: ${sample.title}`);
+                    console.log(`✅ Added sample: ${description}`);
                 }
             } catch (error) {
                 console.warn(`❌ Failed to load sample ${sample.id}:`, error);
@@ -71,6 +76,60 @@ class GalleryManager {
         
         console.log(`📊 Total samples loaded: ${samples.length}`);
         return samples;
+    }
+
+    async extractDescriptionFromSCAD(scadUrl) {
+        try {
+            console.log(`🔍 Extracting description from SCAD file: ${scadUrl}`);
+            
+            const response = await fetch(scadUrl);
+            if (!response.ok) {
+                console.warn(`❌ SCAD file not found: ${scadUrl}`);
+                return this.generateFallbackDescription(scadUrl);
+            }
+            
+            const scadContent = await response.text();
+            
+            // Extract comment from top of file using /* */ pattern
+            const commentMatch = scadContent.match(/^\/\*\s*([\s\S]*?)\s*\*\/\s*/);
+            
+            if (commentMatch && commentMatch[1]) {
+                const extractedDescription = commentMatch[1].trim();
+                console.log(`✅ Extracted description: "${extractedDescription}"`);
+                return extractedDescription;
+            } else {
+                console.warn(`⚠️ No comment found in SCAD file: ${scadUrl}`);
+                return this.generateFallbackDescription(scadUrl);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error extracting description from SCAD file: ${scadUrl}`, error);
+            return this.generateFallbackDescription(scadUrl);
+        }
+    }
+
+    generateFallbackDescription(scadUrl) {
+        // Extract filename from URL and clean it up as a fallback description
+        const filename = scadUrl.split('/').pop().replace('.scad', '');
+        const cleanedDescription = filename
+            .replace(/-/g, ' ')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+        
+        console.log(`📝 Generated fallback description: "${cleanedDescription}"`);
+        return cleanedDescription;
+    }
+
+    generateFallbackTitle(scadUrl) {
+        // Extract filename from URL and clean it up
+        const filename = scadUrl.split('/').pop().replace('.scad', '');
+        const cleanedTitle = filename
+            .replace(/-/g, ' ')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+        
+        console.log(`📝 Generated fallback title: "${cleanedTitle}"`);
+        return cleanedTitle;
     }
 
     renderGalleryItems(items) {

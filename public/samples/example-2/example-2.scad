@@ -1,3 +1,6 @@
+/*
+    Cube with holes
+*/
 cube_size = 20;
 hole_radius = 5;
 hole_height = 21;
