@@ -629,3 +629,279 @@ module living_hinge(length, width, thickness=0.8, cut_width=0.4, cut_spacing=1.2
         }
     }
 }
+
+
+
+gridfinity_pitch = 42;
+gridfinity_zpitch = 7;
+gridfinity_clearance = 0.5;  // each bin is undersize by this much
+
+// set this to produce sharp corners on baseplates and bins
+// not for general use (breaks compatibility) but may be useful for special cases
+sharp_corners = 0;
+
+
+// basic block with cutout in top to be stackable, optional holes in bottom
+// start with this and begin 'carving'
+module grid_block(num_x=1, num_y=1, num_z=2, magnet_diameter=6.5, screw_depth=6, center=false, hole_overhang_remedy=false, half_pitch=false, box_corner_attachments_only = false) {
+  corner_radius = 3.75;
+  outer_size = gridfinity_pitch - gridfinity_clearance;  // typically 41.5
+  block_corner_position = outer_size/2 - corner_radius;  // need not match center of pad corners
+  magnet_thickness = 2.4;
+  magnet_position = min(gridfinity_pitch/2-8, gridfinity_pitch/2-4-magnet_diameter/2);
+  screw_hole_diam = 3;
+  gp = gridfinity_pitch;
+  
+  suppress_holes = num_x < 1 || num_y < 1;
+  
+  emd = suppress_holes ? 0 : magnet_diameter; // effective magnet diameter after override
+  esd = suppress_holes ? 0 : screw_depth;     // effective screw depth after override
+  
+  overhang_fix = hole_overhang_remedy && emd > 0 && esd > 0;
+  overhang_fix_depth = 0.3;  // assume this is enough
+  
+  totalht=gridfinity_zpitch*num_z+3.75;
+  translate( center ? [-(num_x-1)*gridfinity_pitch/2, -(num_y-1)*gridfinity_pitch/2, 0] : [0, 0, 0] )
+  difference() {
+    intersection() {
+      union() {
+        // logic for constructing odd-size grids of possibly half-pitch pads
+        pad_grid(num_x, num_y, half_pitch);
+        // main body will be cut down afterward
+        translate([-gridfinity_pitch/2, -gridfinity_pitch/2, 5]) 
+        cube([gridfinity_pitch*num_x, gridfinity_pitch*num_y, totalht-5]);
+      }
+      
+      // crop with outer cylinders
+      translate([0, 0, -0.1])
+      hull() 
+      cornercopy(block_corner_position, num_x, num_y) 
+      cylinder(r=corner_radius, h=totalht+0.2);
+    }
+    
+    // remove top so XxY can fit on top
+      color("blue") 
+      translate([0, 0, gridfinity_zpitch*num_z]) 
+      pad_oversize(num_x, num_y, 1);
+    
+    if (esd > 0) {  // add pockets for screws if requested
+      gridcopycorners(ceil(num_x), ceil(num_y), magnet_position, box_corner_attachments_only)
+      translate([0, 0, -0.1]) cylinder(d=screw_hole_diam, h=esd+0.1);
+    }
+    
+    if (emd > 0) {  // add pockets for magnets if requested
+      gridcopycorners(ceil(num_x), ceil(num_y), magnet_position, box_corner_attachments_only)
+      translate([0, 0, -0.1]) cylinder(d=emd, h=magnet_thickness+0.1);
+    }
+    
+    if (overhang_fix) {  // people seem to really like this overhang fix
+      gridcopycorners(ceil(num_x), ceil(num_y), magnet_position, box_corner_attachments_only)
+      translate([0, 0, magnet_thickness-0.1]) 
+      render() intersection() {  // for some reason OpenSCAD blows up if I don't render here
+        translate([-emd/2, -screw_hole_diam/2, 0]) cube([emd, screw_hole_diam, overhang_fix_depth+0.1]);
+        cylinder(d=emd, h=1);
+      }
+    }
+  }
+}
+
+
+module pad_grid(num_x, num_y, half_pitch=false) {
+  // if num_x (or num_y) is less than 1 (or less than 0.5 if half_pitch is enabled) then round over the far side
+  cut_far_x = (num_x < 1 && !half_pitch) || (num_x < 0.5);
+  cut_far_y = (num_y < 1 && !half_pitch) || (num_y < 0.5);
+  
+  if (half_pitch) {
+    gridcopy(ceil(num_x), ceil(num_y)) intersection() {
+      pad_halfsize();
+      if (cut_far_x) {
+        translate([gridfinity_pitch*(-0.5+num_x), 0, 0]) pad_halfsize();
+      }
+      if (cut_far_y) {
+        translate([0, gridfinity_pitch*(-0.5+num_y), 0]) pad_halfsize();
+      }
+      if (cut_far_x && cut_far_y) {
+        // without this the far corner would be rectangular
+        translate([gridfinity_pitch*(-0.5+num_x), gridfinity_pitch*(-0.5+num_y), 0]) pad_halfsize();
+      }
+    }
+  }
+  else {
+    gridcopy(ceil(num_x), ceil(num_y)) intersection() {
+      pad_oversize();
+      if (cut_far_x) {
+        translate([gridfinity_pitch*(-1+num_x), 0, 0]) pad_oversize();
+      }
+      if (cut_far_y) {
+        translate([0, gridfinity_pitch*(-1+num_y), 0]) pad_oversize();
+      }
+      if (cut_far_x && cut_far_y) {
+        // without this the far corner would be rectangular
+        translate([gridfinity_pitch*(-1+num_x), gridfinity_pitch*(-1+num_y), 0]) pad_oversize();
+      }
+    }
+  }
+}
+
+
+module pad_halfsize() {
+  render()  // render here to keep tree from blowing up
+  for (xi=[0:1]) for (yi=[0:1]) translate([xi*gridfinity_pitch/2, yi*gridfinity_pitch/2, 0])
+  intersection() {
+    pad_oversize();
+    translate([-gridfinity_pitch/2, 0, 0]) pad_oversize();
+    translate([0, -gridfinity_pitch/2, 0]) pad_oversize();
+    translate([-gridfinity_pitch/2, -gridfinity_pitch/2, 0]) pad_oversize();
+  }
+}
+
+// like a cylinder but produces a square solid instead of a round one
+// specified 'diameter' is the side length of the square, not the diagonal diameter
+module cylsq(d, h) {
+  translate([-d/2, -d/2, 0]) cube([d, d, h]);
+}
+
+// like a tapered cylinder with two diameters, but square instead of round
+module cylsq2(d1, d2, h) {
+  linear_extrude(height=h, scale=d2/d1)
+  square([d1, d1], center=true);
+}
+
+// unit pad slightly oversize at the top to be trimmed or joined with other feet or the rest of the model
+// also useful as cutouts for stacking
+module pad_oversize(num_x=1, num_y=1, margins=0) {
+  pad_corner_position = gridfinity_pitch/2 - 4; // must be 17 to be compatible
+  bevel1_top = 0.8;     // z of top of bottom-most bevel (bottom of bevel is at z=0)
+  bevel2_bottom = 2.6;  // z of bottom of second bevel
+  bevel2_top = 5;       // z of top of second bevel
+  bonus_ht = 0.2;       // extra height (and radius) on second bevel
+  
+  // female parts are a bit oversize for a nicer fit
+  radialgap = margins ? 0.25 : 0;  // oversize cylinders for a bit of clearance
+  axialdown = margins ? 0.1 : 0;   // a tiny bit of axial clearance present in Zack's design
+  
+  translate([0, 0, -axialdown])
+  difference() {
+    union() {
+      hull() cornercopy(pad_corner_position, num_x, num_y) {
+        if (sharp_corners) {
+          cylsq(d=1.6+2*radialgap, h=0.1);
+          translate([0, 0, bevel1_top]) cylsq(d=3.2+2*radialgap, h=1.9);
+        }
+        else {
+          cylinder(d=1.6+2*radialgap, h=0.1);
+          translate([0, 0, bevel1_top]) cylinder(d=3.2+2*radialgap, h=1.9);
+        }
+      }
+      
+      hull() cornercopy(pad_corner_position, num_x, num_y) {
+        if (sharp_corners) {
+          translate([0, 0, bevel2_bottom]) 
+          cylsq2(d1=3.2+2*radialgap, d2=7.5+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht);
+        }
+        else {
+          translate([0, 0, bevel2_bottom]) 
+          cylinder(d1=3.2+2*radialgap, d2=7.5+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht);
+        }
+      }
+    }
+    
+    // cut off bottom if we're going to go negative
+    if (margins) {
+      translate([-gridfinity_pitch/2, -gridfinity_pitch/2, 0])
+      cube([gridfinity_pitch*num_x, gridfinity_pitch*num_y, axialdown]);
+    }
+  }
+}
+
+// similar to cornercopy, can only copy to box corners
+module gridcopycorners(num_x, num_y, r, onlyBoxCorners = false) {
+  for (xi=[1:num_x]) for (yi=[1:num_y]) 
+    for (xx=[-1, 1]) for (yy=[-1, 1]) 
+      if(!onlyBoxCorners || 
+        (xi == 1 && yi == 1 && xx == -1 && yy == -1) ||
+        (xi == num_x && yi == num_y && xx == 1 && yy == 1) ||
+        (xi == 1 && yi == num_y && xx == -1 && yy == 1) ||
+        (xi == num_x && yi == 1 && xx == 1 && yy == -1))  
+        translate([gridfinity_pitch*(xi-1), gridfinity_pitch*(yi-1), 0]) 
+        translate([xx*r, yy*r, 0]) children();
+}
+
+// similar to quadtranslate but expands to extremities of a block
+module cornercopy(r, num_x=1, num_y=1) {
+  for (xx=[-r, gridfinity_pitch*(num_x-1)+r]) for (yy=[-r, gridfinity_pitch*(num_y-1)+r]) 
+    translate([xx, yy, 0]) children();
+}
+
+
+// make repeated copies of something(s) at the gridfinity spacing of 42mm
+module gridcopy(num_x, num_y) {
+  for (xi=[1:num_x]) for (yi=[1:num_y]) translate([gridfinity_pitch*(xi-1), gridfinity_pitch*(yi-1), 0]) children();
+}
+
+
+
+
+// Create a lid for Gridfinity system - use: base_lid(num_x, num_y);
+module base_lid(num_x, num_y) {
+  magnet_od = 6.5;
+  magnet_position = min(gridfinity_pitch/2-8, gridfinity_pitch/2-4-magnet_od/2);
+  magnet_thickness = 2.4;
+  eps = 0.1;
+  
+  translate([0, 0, 7]) frame_plain(xsize, ysize, trim=0.25);
+  difference() {
+    grid_block(xsize, ysize, 1, magnet_diameter=0, screw_depth=0);
+    gridcopy(num_x, num_y) {
+      cornercopy(magnet_position) {
+        translate([0, 0, 7-magnet_thickness])
+        cylinder(d=magnet_od, h=magnet_thickness+eps);
+      }
+    }
+  }
+}
+
+
+// Create a weighted baseplate with magnet and screw holes - use: weighted_baseplate(num_x, num_y);
+module weighted_baseplate(num_x, num_y) {
+  magnet_od = 6.5;
+  magnet_position = min(gridfinity_pitch/2-8, gridfinity_pitch/2-4-magnet_od/2);
+  magnet_thickness = 2.4;
+  eps = 0.1;
+  
+  difference() {
+    frame_plain(num_x, num_y, 6.4);
+    
+    gridcopy(num_x, num_y) {
+      cornercopy(magnet_position) {
+        translate([0, 0, -magnet_thickness])
+        cylinder(d=magnet_od, h=magnet_thickness+eps);
+        
+        translate([0, 0, -6.4]) cylinder(d=3.5, h=6.4);
+        
+        // counter-sunk holes in the bottom
+        translate([0, 0, -6.41]) cylinder(d1=8.5, d2=3.5, h=2.5);
+      }
+      
+      translate([-10.7, -10.7, -6.41]) cube([21.4, 21.4, 4.01]);
+      
+      for (a2=[0,90]) rotate([0, 0, a2])
+      hull() for (a=[0, 180]) rotate([0, 0, a])
+      translate([-14.9519, 0, -6.41]) cylinder(d=8.5, h=2.01);
+    }
+  }
+}
+
+
+// Create a plain frame for Gridfinity system - use: frame_plain(num_x, num_y, extra_down=0, trim=0);
+module frame_plain(num_x, num_y, extra_down=0, trim=0) {
+  ht = extra_down > 0 ? 4.4 : 5;
+  corner_radius = 3.75;
+  corner_position = gridfinity_pitch/2-corner_radius-trim;
+  difference() {
+    hull() cornercopy(corner_position, num_x, num_y) 
+    translate([0, 0, -extra_down]) cylinder(r=corner_radius, h=ht+extra_down);
+    translate([0, 0, trim ? 0 : -0.01]) 
+    render() gridcopy(num_x, num_y) pad_oversize(margins=1);
+  }
+}
