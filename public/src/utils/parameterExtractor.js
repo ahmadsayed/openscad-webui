@@ -4,7 +4,7 @@
  */
 
 /**
- * Extract parameters from OpenSCAD variable definitions at the top of the file
+ * Extract parameters from OpenSCAD variable definitions anywhere in the file
  * @param {string} code - The OpenSCAD code to analyze
  * @returns {Array} Array of parameter objects
  */
@@ -12,28 +12,55 @@ export function extractParameters(code) {
     const parameters = [];
     const lines = code.split('\n');
     
-    // Look for variable definitions at the top of the file
-    // Stop when we encounter non-variable, non-comment, non-empty lines
     let paramIndex = 0;
-    let inParameterSection = true;
+    let inMultiLineComment = false;
     
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        let line = lines[i];
         
-        // Skip empty lines and comments
-        if (line === '' || line.startsWith('//') || line.startsWith('/*')) {
+        // Handle multi-line comments
+        if (inMultiLineComment) {
+            if (line.includes('*/')) {
+                inMultiLineComment = false;
+                // Process the part of the line after the comment ends
+                line = line.substring(line.indexOf('*/') + 2);
+            } else {
+                continue; // Skip entire line if still in multi-line comment
+            }
+        }
+        
+        if (line.includes('/*')) {
+            if (line.includes('*/')) {
+                // Single line multi-line comment - remove it
+                const beforeComment = line.substring(0, line.indexOf('/*'));
+                const afterComment = line.substring(line.indexOf('*/') + 2);
+                line = beforeComment + afterComment;
+            } else {
+                // Start of multi-line comment
+                inMultiLineComment = true;
+                line = line.substring(0, line.indexOf('/*'));
+            }
+        }
+        
+        const trimmedLine = line.trim();
+        
+        // Skip empty lines and single-line comments
+        if (trimmedLine === '' || trimmedLine.startsWith('//')) {
             continue;
         }
         
-        // Skip include and use statements - these are allowed at the top
-        if (line.startsWith('include') || line.startsWith('use')) {
+        // Skip include and use statements
+        if (trimmedLine.startsWith('include') || trimmedLine.startsWith('use')) {
             continue;
         }
         
-        // Check if this line is a variable definition
-        const variableMatch = line.match(/^(\w+)\s*=\s*([^;]+);?\s*(?:\/\/.*)?$/);
+        // Improved regex to match variable assignments including $fn and other special variables
+        // Matches: variable_name = value; // optional comment
+        // or: variable_name = value; /* optional comment */
+        // or: variable_name = value
+        const variableMatch = line.match(/([a-zA-Z_$][a-zA-Z0-9_]*)\s*=\s*([^;]+)(?:;|$)/);
         
-        if (variableMatch && inParameterSection) {
+        if (variableMatch) {
             const [, varName, varValue] = variableMatch;
             const cleanValue = varValue.trim().replace(/;$/, '');
             
@@ -57,11 +84,6 @@ export function extractParameters(code) {
                     variableName: varName
                 });
             }
-        } else if (line !== '' && !line.startsWith('//') && !line.startsWith('/*') && 
-                   !line.startsWith('include') && !line.startsWith('use')) {
-            // We've reached the actual OpenSCAD code, stop looking for parameters
-            inParameterSection = false;
-            break;
         }
     }
     
