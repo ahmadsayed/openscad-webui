@@ -38,8 +38,7 @@ class GalleryManager {
         // Define sample directories - descriptions will be extracted from SCAD file comments
         const sampleDirs = [
             { id: 'example-1' },
-            { id: 'example-2' },
-            { id: 'example-3' }
+            { id: 'gridfinity-base' }
         ];
         
         console.log('🔍 Starting to load STL samples...');
