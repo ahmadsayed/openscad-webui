@@ -1,6 +1,10 @@
 /*
     2x2 Parametrised Gridfinity base
 */
+
+/*
+    Modules used: https://github.com/vector76/gridfinity_openscad
+*/
 include <module.scad>
 rows = 2;
 columns = 2;
