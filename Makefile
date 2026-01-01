@@ -27,6 +27,8 @@ help:
 	@echo "  build-only     - Build and push Docker image only"
 	@echo "  update-k8s     - Update Kubernetes deployment (interactive)"
 	@echo "  deploy         - Build and deploy to K8s cluster via SSH (optional)"
+	@echo "  clean          - Clean up generated test files and directories"
+	@echo "  clean-all      - Deep clean - removes all generated files including logs"
 	@echo "  help           - Show this help message"
 	@echo ""
 	@echo "Configuration:"
@@ -40,6 +42,8 @@ help:
 	@echo "  make build-only              # Build only"
 	@echo "  make update-k8s              # Update K8s deployment"
 	@echo "  make deploy                   # Build and deploy to K8s cluster"
+	@echo "  make clean                    # Clean up test files"
+	@echo "  make clean-all               # Deep clean everything"
 
 # Build and push Docker image, then update Kubernetes deployment
 build:
@@ -114,6 +118,40 @@ deploy:
 	@echo ""
 	@echo "💡 To check deployment status, run:"
 	@echo "   ssh adam@192.168.68.60 'kubectl get pods -l app=promptscad'"
+
+# Clean up generated test files and directories
+clean:
+	@echo "🧹 Cleaning up generated test files and directories..."
+	@echo "📁 Removing module_test_output directory..."
+	@rm -rf module_test_output/
+	@echo "📁 Removing demo_output directory..."
+	@rm -rf demo_output/
+	@echo "📁 Removing test_output directory..."
+	@rm -rf test_output/
+	@echo "🗑️  Removing generated .scad files..."
+	@rm -f *.scad
+	@echo "🗑️  Removing sample test files..."
+	@rm -f sample-*.scad
+	@echo "🗑️  Removing improved test files..."
+	@rm -f improved-*.scad
+	@echo "🗑️  Removing module.scad copy..."
+	@rm -f module.scad
+	@echo "🗑️  Removing validation images..."
+	@rm -f /tmp/validation*.png
+	@echo ""
+	@echo "✅ Cleanup completed successfully!"
+	@echo "💡 All generated test files have been removed."
+
+# Deep clean - removes all generated files including logs
+clean-all: clean
+	@echo "🧹 Performing deep clean..."
+	@echo "📁 Removing log files..."
+	@rm -f *.log
+	@echo "🗑️  Removing temporary files..."
+	@rm -f /tmp/*.png
+	@echo ""
+	@echo "✅ Deep clean completed!"
+	@echo "💡 All generated files and logs have been removed."
 
 # Show current configuration
 info:
