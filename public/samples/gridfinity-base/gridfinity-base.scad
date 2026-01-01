@@ -6,6 +6,7 @@
     Modules used: https://github.com/vector76/gridfinity_openscad
 */
 include <module.scad>
+$fn=16;
 rows = 2;
 columns = 2;
 frame_width = columns * 42;
