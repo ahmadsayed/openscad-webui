@@ -25,7 +25,7 @@ export function checkCanvasHasDrawing(canvas) {
  * @param {number} maxAttempts 
  * @returns {Promise<string>}
  */
-export async function pollForCompletion(requestId, initialInterval = 100, maxAttempts = 200) {
+export async function pollForCompletion(requestId, initialInterval = 100, maxAttempts = 400) {
     console.log(`🔄 Fast polling for completion of request: ${requestId}`);
     
     const startTime = Date.now();
