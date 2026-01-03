@@ -4,25 +4,29 @@ const modules = {
     "signature": "rounded_cube([width,depth,height], radius, facets)",
     "description": "Create a cube with rounded edges",
     "example": "facets=16; rounded_cube([8,8,8],1,facets);",
-    "category": "basic"
+    "category": "basic",
+    "priority": "Low"
   },
   "base_lid": {
     "signature": "base_lid(num_x, num_y)",
     "description": "Create lid for Gridfinity base with magnet pockets",
     "example": "base_lid(3, 3);",
-    "category": "gridfinity"
+    "category": "gridfinity",
+    "priority": "Low"
   },
   "weighted_baseplate": {
     "signature": "weighted_baseplate(num_x, num_y)",
     "description": "Create weighted baseplate with magnet and screw holes",
     "example": "weighted_baseplate(4, 2);",
-    "category": "gridfinity"
+    "category": "gridfinity",
+    "priority": "Medium"
   },
   "frame_plain": {
     "signature": "frame_plain(num_x, num_y, extra_down=0, trim=0)",
     "description": "Create plain frame for Gridfinity system",
     "example": "frame_plain(3, 3);",
-    "category": "gridfinity"
+    "category": "gridfinity",
+    "priority": "High"
   }
 };
 
@@ -34,29 +38,29 @@ function formatModulesForPrompt(context = 'default') {
     case 'detailed':
       // Full detailed format for main prompts
       return moduleList.map(mod => 
-        `${mod.signature}\n   // ${mod.example}`
+        `${mod.signature}\n   // ${mod.example}\n   // Priority: ${mod.priority}`
       ).join('\n\n');
       
     case 'gridfinity':
       // Gridfinity-specific modules only
       return moduleList
         .filter(mod => mod.category === 'gridfinity')
-        .map(mod => `${mod.signature} - ${mod.description}`)
+        .map(mod => `${mod.signature} - ${mod.description} (Priority: ${mod.priority})`)
         .join('\n');
         
     case 'basic':
       // Basic modules only
       return moduleList
         .filter(mod => mod.category === 'basic')
-        .map(mod => `${mod.signature}\n   // ${mod.example}`)
+        .map(mod => `${mod.signature}\n   // ${mod.example}\n   // Priority: ${mod.priority}`)
         .join('\n\n');
         
     case 'list':
-      // Simple list format
-      return moduleList.map(mod => mod.signature).join(', ');
+      // Simple list format with priorities
+      return moduleList.map(mod => `${mod.signature} (P${mod.priority})`).join(', ');
       
     default:
-      // Default format with categories
+      // Default format with categories and priorities
       let output = '';
       const categories = [...new Set(moduleList.map(mod => mod.category))];
       
@@ -65,7 +69,7 @@ function formatModulesForPrompt(context = 'default') {
         if (categoryModules.length > 0) {
           output += `${category.charAt(0).toUpperCase() + category.slice(1)} Modules:\n`;
           categoryModules.forEach(mod => {
-            output += `${mod.signature} - ${mod.description}\n   // ${mod.example}\n\n`;
+            output += `${mod.signature} - ${mod.description} (Priority: ${mod.priority})\n   // ${mod.example}\n\n`;
           });
         }
       });
@@ -74,4 +78,29 @@ function formatModulesForPrompt(context = 'default') {
   }
 }
 
-export { modules, formatModulesForPrompt };
+// Priority order mapping for descriptive priorities
+const PRIORITY_ORDER = {
+  "High": 1,
+  "Medium": 2,
+  "Low": 3
+};
+
+// Helper function to get modules sorted by priority (High -> Medium -> Low)
+function getModulesByPriority(category = null) {
+  const moduleList = Object.values(modules);
+  let filteredModules = category ? moduleList.filter(mod => mod.category === category) : moduleList;
+  
+  return filteredModules.sort((a, b) => {
+    const priorityA = PRIORITY_ORDER[a.priority] || 999;
+    const priorityB = PRIORITY_ORDER[b.priority] || 999;
+    return priorityA - priorityB;
+  });
+}
+
+// Helper function to get the highest priority module for a given category
+function getHighestPriorityModule(category = null) {
+  const sortedModules = getModulesByPriority(category);
+  return sortedModules.length > 0 ? sortedModules[0] : null;
+}
+
+export { modules, formatModulesForPrompt, getModulesByPriority, getHighestPriorityModule };

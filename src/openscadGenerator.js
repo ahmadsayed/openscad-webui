@@ -1,4 +1,5 @@
 import { prompts } from '../prompts.js';
+import { modules, formatModulesForPrompt } from '../modules.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -51,8 +52,16 @@ export function validateOpenSCADSyntax(code) {
     };
 }
 
-export async function verifyTheMath(existing_code, changes, openai) {
-    const systemPrompt = prompts.verifyTheMath.system.replace('{modules}', prompts.modules.content);
+export async function verifyTheMath(existing_code, changes, openai, filteredModules = null) {
+    // Format modules for the prompt
+    const modulesContent = filteredModules || formatModulesForPrompt('list');
+    const availableModuleNames = filteredModules ? 
+        Object.keys(JSON.parse(filteredModules).filtered_modules || {}).join(', ') : 
+        Object.keys(modules).join(', ');
+    
+    const systemPrompt = prompts.verifyTheMath.system
+        .replace('{filtered_modules}', modulesContent)
+        .replace('{modules}', prompts.modules.content);
     const userPrompt = prompts.verifyTheMath.userTemplate
         .replace('{existing_code}', existing_code)
         .replace('{changes}', changes);
@@ -83,8 +92,93 @@ export async function verifyTheMath(existing_code, changes, openai) {
     return generatedText;
 }
 
+export async function filterModulesByRequirements(userPrompt, existingCode, openai) {
+    const systemPrompt = prompts.filterModules.system;
+    const userPromptTemplate = prompts.filterModules.userTemplate
+        .replace('{user_prompt}', userPrompt)
+        .replace('{existing_code}', existingCode || '// No existing code');
+    
+    const requestPayload = {
+        model: "deepseek-chat",
+        messages: [
+            {
+                role: "system",
+                content: systemPrompt
+            },
+            {
+                role: "user",
+                content: userPromptTemplate
+            }
+        ],
+        temperature: 0.1,
+        max_tokens: 1000
+    };
+    
+    console.log('🔍 filterModulesByRequirements - Sending to LLM:', JSON.stringify(requestPayload, null, 2));
+    
+    const completion = await openai.chat.completions.create(requestPayload);
+    const responseText = completion.choices[0].message.content;
+    
+    console.log('🔍 filterModulesByRequirements - Received response:', responseText);
+    
+    try {
+        // Remove markdown code blocks if present
+        let cleanResponse = responseText.trim();
+        if (cleanResponse.startsWith('```json')) {
+            cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanResponse.startsWith('```')) {
+            cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        // Parse the JSON response
+        const filteredResult = JSON.parse(cleanResponse);
+        
+        // Validate the structure
+        if (!filteredResult.filtered_modules || !filteredResult.analysis) {
+            throw new Error('Invalid response structure from module filtering');
+        }
+        
+        return filteredResult;
+    } catch (error) {
+        console.error('❌ Module filtering failed:', error);
+        // Fallback to empty modules if filtering fails
+        return {
+            filtered_modules: {},
+            analysis: {
+                keywords_found: ['error'],
+                primary_category: 'unknown',
+                confidence: 'Low'
+            }
+        };
+    }
+}
+
 export async function generateOpenscad(message, code, specs_and_math, openai) {
-    const systemRoleContent = prompts.generateOpenscad.systemRole.replace('{modules}', prompts.modules.content);
+    // First, filter modules based on requirements
+    let filteredModulesContent = prompts.modules.content;
+    let filteredModulesJson = null;
+    let availableModuleNames = Object.keys(modules).join(', ');
+    
+    try {
+        const filterResult = await filterModulesByRequirements(message, code, openai);
+        if (filterResult.filtered_modules && Object.keys(filterResult.filtered_modules).length > 0) {
+            // Format filtered modules for the prompt
+            const moduleList = Object.values(filterResult.filtered_modules);
+            filteredModulesContent = moduleList.map(mod => 
+                `${mod.signature}\n   // ${mod.example}\n   // Priority: ${mod.priority} (Relevance: ${mod.relevance_score}%)`
+            ).join('\n\n');
+            filteredModulesJson = JSON.stringify(filterResult);
+            availableModuleNames = Object.keys(filterResult.filtered_modules).join(', ');
+            console.log(`✅ Using ${Object.keys(filterResult.filtered_modules).length} filtered modules`);
+        }
+    } catch (error) {
+        console.warn('⚠️ Module filtering failed, using all modules:', error);
+    }
+    
+    const systemRoleContent = prompts.generateOpenscad.systemRole
+        .replace('{filtered_modules}', filteredModulesContent)
+        .replace('{available_module_names}', availableModuleNames)
+        .replace('{modules}', filteredModulesContent);
     const systemRole = {
         role: "system",
         content: systemRoleContent
@@ -216,7 +310,19 @@ export async function processRequest(requestId, message, code, openai, REQUEST_D
             success: true
         }));
 
-        let specs_and_math = await verifyTheMath(code, message, openai);
+        // First filter modules based on requirements
+        let filteredModulesJson = null;
+        try {
+            const filterResult = await filterModulesByRequirements(message, code, openai);
+            if (filterResult.filtered_modules && Object.keys(filterResult.filtered_modules).length > 0) {
+                filteredModulesJson = JSON.stringify(filterResult);
+                console.log(`✅ Filtered to ${Object.keys(filterResult.filtered_modules).length} modules for request ${requestId}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Module filtering failed for request ${requestId}:`, error);
+        }
+
+        let specs_and_math = await verifyTheMath(code, message, openai, filteredModulesJson);
 
         // Update status to Generating Code
         await fs.writeFile(requestFile, JSON.stringify({
