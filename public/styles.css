@@ -353,6 +353,21 @@ body {
   background: #c82333;
 }
 
+/* Ensure specific button colors - force red for delete */
+.refresh-history-btn {
+  background: #73C48F !important;
+  color: #2B2B2B !important;
+}
+
+.clear-history-btn {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* Override general button styling with specific colors - ensure red for delete */
+.refresh-history-btn:active,
+.clear-history-btn:active;
+
 /* Button text */
 .button-text {
   font-size: 0.9rem;
@@ -380,6 +395,71 @@ body {
   .button-text {
     font-size: 0.825rem;
     padding-left: 1px;
+  }
+}
+
+@media (max-width: 320px) {
+  .button-text {
+    display: none;
+  }
+
+  .refresh-history-btn,
+  .clear-history-btn {
+    min-width: 40px;
+    height: 36px;
+    padding: 6px 6px;
+    gap: 2px;
+  }
+}
+
+/* OVERRIDE: Force delete button to be red in main.pug */
+.refresh-history-btn {
+  background: #73C48F !important; /* Clean green for reload */
+  color: #2B2B2B !important;
+}
+
+.clear-history-btn {
+  background: #dc3545 !important; /* Deep red for delete */
+  color: white !important;
+}
+
+.refresh-history-btn:hover {
+  background: #5DAF7B !important;
+}
+
+.clear-history-btn:hover {
+  background: #c82333 !important;
+}
+  .chat-history-controls {
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .refresh-history-btn,
+  .clear-history-btn {
+    min-width: 60px;
+    height: 40px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  .button-text {
+    font-size: 0.825rem;
+    padding-left: 1px;
+  }
+}
+
+@media (max-width: 320px) {
+  .button-text {
+    display: none;
+  }
+
+  .refresh-history-btn,
+  .clear-history-btn {
+    min-width: 40px;
+    height: 36px;
+    padding: 6px 6px;
+    gap: 2px;
   }
 }
 
