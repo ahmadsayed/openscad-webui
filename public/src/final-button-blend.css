@@ -1,0 +1,142 @@
+/* FINAL: Clean button styling that blends perfectly */
+
+/* Main container - matches the page exactly */
+.chat-history-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent; /* No background - let the page show through */
+    border: none;            /* No borders that create box effects */
+    border-radius: 0;         /* Match container's natural curves */
+}
+
+/* Clean button styling */
+.refresh-history-btn,
+.clear-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 42px;            /* Slightly shorter for subtle feel */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+
+    /* Clean background - faint tint */
+    background: rgba(248, 249, 250, 0.3); /* 30% opacity of page color */
+    color: #495057;
+}
+
+/* Green reload button */
+.refresh-history-btn {
+    background: rgba(115, 196, 143, 0.15); /* 15% opacity green */
+    color: #2B2B2B;
+}
+
+.refresh-history-btn:hover {
+    background: #73C48F; /* Full green color on hover */
+    color: #2B2B2B;
+}
+
+/* Red delete button */
+.clear-history-btn {
+    background: rgba(220, 53, 69, 0.15); /* 15% opacity red */
+    color: #495057;
+}
+
+.clear-history-btn:hover {
+    background: #dc3545; /* Full red color on hover */
+    color: white;
+}
+
+/* Button text - same style as elsewhere */
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding-left: 2px; /* Slight space after icon */
+}
+
+/* Mobile responsive - keep buttons readable */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 6px;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 60px;
+        height: 38px;
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    .button-text {
+        font-size: 0.8rem;
+        padding-left: 1px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+    .button-text {
+        display: none; /* Hide text but keep buttons */
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 40px;
+        height: 36px;
+        padding: 6px 6px;
+        gap: 2px;
+    }
+}
+
+/* With enhancements - more elegant styling */
+body[style*="background:"] .chat-history-controls,
+.main-content-wrapper[style*="background:"] .chat-history-controls {
+    /* When side-panel has its translucent style, use that \"parent\" background */
+    background: inherit;
+}
+
+body[style*="background:"] .refresh-history-btn,
+body[style*="background:"] .clear-history-btn {
+    background: rgba(255, 255, 255, 0.15); /* Glass effect */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body[style*="background:"] .refresh-history-btn:hover {
+    background: rgba(115, 196, 143, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body[style*="background:"] .clear-history-btn:hover {
+    background: rgba(220, 53, 69, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Results:
+- Transparent container blends with page background
+- Subtle button backgrounds visible only when not hovered
+- Clean, professional appearance
+- No boxy or square effects
+- Maintains clear red/green distinction
+- Matches Load button color intensity when hovered */

@@ -238,13 +238,16 @@ body {
 /* Chat history controls */
 .chat-history-controls {
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 8px;
     margin-bottom: 16px;
-    padding-bottom: 16px;
+    padding: 12px 16px;
     background: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
     border-radius: 6px;
-    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .refresh-history-btn,
@@ -259,10 +262,44 @@ body {
     font-size: 0.9rem;
     font-weight: bold;
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    flex: 1;
+    gap: 6px;
+    min-width: 60px;
+    height: 36px;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 4px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Anti-stacking rules */
+.refresh-history-btn,
+.clear-history-btn {
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+/* Make clear button red */
+.clear-history-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.clear-history-btn:hover {
+    background: #c82333;
+}
+
+.refresh-history-btn:hover {
+    background: #5DAF7B;
 }
 
 .refresh-history-btn:hover,
@@ -841,27 +878,64 @@ body {
     body {
         font-size: 14px;
     }
-    
+
     h2, h3 {
         font-size: 1.2rem;
     }
-    
+
     .side-panel-header h3 {
         font-size: 1rem;
     }
-    
+
     /* Ensure proper spacing on mobile */
     .side-panel-content {
         padding: 12px;
     }
-    
+
     .chat-history-controls {
         padding-bottom: 12px;
         margin-bottom: 12px;
     }
-    
+
     .chat-history-item {
         margin-bottom: 8px;
+    }
+
+    /* Compact button text on mobile */
+    .button-text {
+        font-size: 0.825rem;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        padding: 7px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Adjust gap for mobile */
+    .chat-history-controls {
+        gap: 6px;
+        min-height: 60px; /* Ensure minimum space for buttons */
+        align-items: center; /* Vertically center buttons */
+    }
+
+    /* Ensure buttons stay side by side on mobile */
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-height: 44px;
+        justify-content: flex-start;
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+
+    /* Shrink gap for very small screens */
+    @media (max-width: 320px) {
+        .chat-history-controls {
+            gap: 4px;
+        }
+        .button-text {
+            display: none;
+        }
     }
     
     .item-header {

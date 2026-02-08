@@ -1,7 +1,9 @@
 doctype html
 html(lang="en")
   head
-    script(data-cfasync="false" type="text/javascript" src="monetag.js")
+    //- Load advertisements script unless disabled
+    if hasAds
+      script(data-cfasync="false" type="text/javascript" src="monetag.js")
     include template/head.pug
     - var title = "3D Model Gallery | PromptSCAD - Browse AI-Generated Designs"
     - var description = "Browse our collection of AI-generated 3D models. View, explore, and download STL files created with PromptSCAD's AI-powered OpenSCAD generator."
@@ -13,6 +15,8 @@ html(lang="en")
 
     // Gallery specific styles
     link(rel="stylesheet" href="/gallery.css")
+    // SOLID FIX: Vibrant colors without fading
+    link(rel="stylesheet" href="/src/history-solid-fix.css")
 
   body
     // Main Container - Full Screen Gallery
