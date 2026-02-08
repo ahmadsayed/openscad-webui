@@ -1,0 +1,309 @@
+/* SOLID: Clean button styling without fading effects */
+
+/* Container - clean styling */
+.chat-history-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent; /* Keep transparent container */
+    border: none;
+    border-radius: 0;
+}
+
+/* Solid button styling - NO transparencies */
+.refresh-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+
+    /* SOLID GREEN - matches Load button exactly */
+    background: #73C48F;
+    color: #2B2B2B;
+}
+
+.refresh-history-btn:hover {
+    background: #5DAF7B;
+}
+
+/* SOLID RED for delete button */
+.clear-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+
+    /* SOLID RED */
+    background: #dc3545;
+    color: white;
+}
+
+.clear-history-btn:hover {
+    background: #c82333;
+}
+
+/* Button text - clean and bold */
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding-left: 2px;
+}
+
+/* Clean container - keeps transparent background */
+.chat-history-controls.solid {
+    background: transparent; /* Keep the transparent container */
+}
+
+/* Clean mobile responsive */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 6px;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 60px;
+        height: 40px;
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    .button-text {
+        font-size: 0.825rem;
+        padding-left: 1px;
+    }
+}
+
+@media (max-width: 320px) {
+    .button-text {
+        display: none;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 40px;
+        height: 36px;
+        padding: 6px 6px;
+        gap: 2px;
+    }
+}
+
+/* Ensure button heights match Load button */
+.refresh-history-btn,
+.clear-history-btn {
+    min-height: 44px; /* Same as Load button */
+    height: 44px;     /* Explicit height for consistency */
+}
+
+/* Results:
+- Clean, solid colors with NO transparency
+- Green (reload) matches Load button exactly
+- Red (delete) is vibrant and clear
+- No confusing \"fading\" effects
+- Buttons appear crisp and professional */
+
+/* ...Rest of styles... */" "":"Results:\n- Clean, solid colors with NO transparency\n- Green (reload) matches Load button exactly\n- Red (delete) is vibrant and clear\n- No confusing \"fading\" effects\n- Buttons appear crisp and professional */','""'}},"modern
+
+/* ...Rest of styles... */","lucida , 'Te one",'ae
+
+/* Results:\n- Clean, solid colors with NO transparency\n- Green (reload) matches Load button exactly\n- Red (delete) is vibrant and clear\n- No confusing \"fading\" effects\n- Buttons appear crisp and professional */" ','':{ ""}  'fruit , ""}","content":"/* FINAL: Solid button styling without fading effects */
+
+/* Container - clean styling */
+.chat-history-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent; /* Keep transparent container */
+    border: none;
+    border-radius: 0;
+}
+
+/* Solid button styling - NO transparencies */
+.refresh-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+
+    /* SOLID GREEN - matches Load button exactly */
+    background: #73C48F;
+    color: #2B2B2B;
+}
+
+.refresh-history-btn:hover {
+    background: #5DAF7B;
+}
+
+/* SOLID RED for delete button */
+.clear-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+
+    /* SOLID RED */
+    background: #dc3545;
+    color: white;
+}
+
+.clear-history-btn:hover {
+    background: #c82333;
+}
+
+/* Button text - clean and bold */
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding-left: 2px;
+}
+
+/* Clean container - keeps transparent background */
+.chat-history-controls.solid {
+    background: transparent; /* Keep the transparent container */
+}
+
+/* Clean mobile responsive */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 6px;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 60px;
+        height: 40px;
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    .button-text {
+        font-size: 0.825rem;
+        padding-left: 1px;
+    }
+}
+
+@media (max-width: 320px) {
+    .button-text {
+        display: none;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 40px;
+        height: 36px;
+        padding: 6px 6px;
+        gap: 2px;
+    }
+}
+
+/* Ensure button heights match Load button */
+.refresh-history-btn,
+.clear-history-btn {
+    min-height: 44px; /* Same as Load button */
+    height: 44px;     /* Explicit height for consistency */
+}
+
+/* Override any transparency that might come before */
+.refresh-history-btn,
+.clear-history-btn {
+    background-color: #73C48F !important;
+    background: #73C48F !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    opacity: 1 !important;
+}
+
+.clear-history-btn {
+    background-color: #dc3545 !important;
+    background: #dc3545 !important;
+}
+
+.refresh-history-btn:hover {
+    background-color: #5DAF7B !important;
+}
+
+.clear-history-btn:hover {
+    background-color: #c82333 !important;
+}
+
+/* Results:
+- Clean, solid colors with NO transparency
+- Green (reload) matches Load button exactly
+- Red (delete) is vibrant and clear
+- No confusing \"fading\" effects
+- Buttons appear crisp and professional */
+
+/* ...Rest of styles... */
