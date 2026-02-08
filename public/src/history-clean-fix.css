@@ -13,9 +13,12 @@
     box-sizing: border-box;
     align-items: center;
     justify-content: space-between;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    border-radius: 6px;
+    /* Remove any contrasting background - match page */
+    background: transparent;
+    /* Remove borders that create box effect */
+    border: none;
+    border-radius: 0;
+    /* Background will blend with page because page is #f8f9fa */
 }
 
 /* Buttons - prevent stacking */
@@ -32,7 +35,7 @@
     height: auto;
     min-height: 44px;
     border: none;
-    border-radius: 6px;
+    border-radius: 6px; /* Restored - matches Load button */
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
@@ -62,8 +65,38 @@
     background: #c82333 !important;
 }
 
+/* SUBTLEVERSION - Minimal background, then becomes opaque on hover *//*
+.chat-history-controls.subtle {
+    background: rgba(248, 249, 250, 0.1);
+    border: none;
+    padding: 0;
+    gap: 6px;
+}
+
+.chat-history-controls.subtle .refresh-history-btn {
+    background: transparent;
+    color: #495057;
+    border: none;
+}
+
+.chat-history-controls.subtle .refresh-history-btn:hover {
+    background: #73C48F;
+    color: #2B2B2B;
+}
+
+.chat-history-controls.subtle .clear-history-btn {
+    background: transparent;
+    color: #495057;
+    border: none;
+}
+
+.chat-history-controls.subtle .clear-history-btn:hover {
+    background: #dc3545;
+    color: white;
+}
+*/
+
 /* Button text styling */
-.button-text {
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;

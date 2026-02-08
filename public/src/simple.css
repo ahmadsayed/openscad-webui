@@ -298,6 +298,10 @@ body {
     background: #c82333;
 }
 
+.refresh-history-btn:hover {
+    background: #5DAF7B;
+}
+
 .refresh-history-btn:hover,
 .clear-history-btn:hover {
     background: #5DAF7B;
