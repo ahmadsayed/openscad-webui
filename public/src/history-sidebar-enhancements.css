@@ -72,11 +72,18 @@
 
 /* Enhanced history controls with glass effect */
 .chat-history-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 20px;
     background: rgba(248, 249, 250, 0.6);
     border: 1px solid rgba(233, 236, 239, 0.3);
     border-radius: 12px;
     backdrop-filter: blur(5px);
-    margin-bottom: 20px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .refresh-history-btn,
@@ -86,10 +93,20 @@
     backdrop-filter: blur(5px);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     gap: 10px;
     padding: 10px 14px;
+    height: 44px;
     min-width: 80px;
-    justify-content: flex-start;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
 }
 
 .refresh-history-btn::before,
@@ -135,9 +152,15 @@
     z-index: -1;
 }
 
-.clear-history-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.4);
+/* Style clear button as red */
+.clear-history-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border-color: rgba(220, 53, 69, 0.3);
+    position: relative;
+}
+
+.clear-history-btn::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 }
 
 /* Enhanced history items with card design */
@@ -443,6 +466,40 @@
     }
 }
 
+/* Mobile-responsive button layout */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        padding: 8px 12px;
+        height: 40px;
+        min-width: 70px;
+        font-size: 0.8rem;
+    }
+
+    .button-text {
+        font-size: 0.8rem;
+        margin-left: 3px;
+    }
+
+    /* Hide text on very small screens */
+    @media (max-width: 320px) {
+        .button-text {
+            display: none;
+        }
+
+        .refresh-history-btn,
+        .clear-history-btn {
+            padding: 8px;
+            min-width: 50px;
+        }
+    }
+}
+
 /* Side panel overlay gradient */
 .side-panel-content {
     flex: 1;
@@ -471,28 +528,4 @@
 
 .side-panel-content::-webkit-scrollbar-thumb:hover {
     background: rgba(102, 126, 234, 0.6);
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .side-panel {
-        background: rgba(30, 30, 40, 0.85);
-    }
-
-    .chat-history-item {
-        background: rgba(45, 45, 55, 0.8);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .item-header {
-        background: linear-gradient(135deg, rgba(45, 45, 55, 0.95) 0%, rgba(30, 30, 40, 0.95) 100%);
-    }
-
-    .item-text {
-        color: #e9ecef;
-    }
-
-    .side-panel-header {
-        background: linear-gradient(135deg, #0f1849 0%, #2d1a73 100%);
-    }
 }
