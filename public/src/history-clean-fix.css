@@ -1,0 +1,160 @@
+/* CLEAN BUTTON LAYOUT FIX */
+/* This file fixes the button alignment issue without debug elements */
+/* Matches existing Load button styling */
+
+/* Container - horizontal layout */
+.chat-history-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+/* Buttons - prevent stacking */
+.refresh-history-btn,
+.clear-history-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 160px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: auto;
+    min-height: 44px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Refresh button - matches Load button styling */
+.refresh-history-btn {
+    background: #73C48F !important;  /* Match Load button green */
+    color: #2B2B2B;
+}
+
+.refresh-history-btn:hover {
+    background: #5DAF7B !important;  /* Match Load hover */
+}
+
+/* Delete button - red */
+.clear-history-btn {
+    background: #dc3545 !important;
+    color: white;
+}
+
+.clear-history-btn:hover {
+    background: #c82333 !important;
+}
+
+/* Button text styling */
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 60px;
+        padding: 7px 10px;
+        font-size: 0.85rem;
+    }
+
+    .button-text {
+        font-size: 0.825rem;
+    }
+}
+
+@media (max-width: 320px) {
+    .button-text {
+        display: none;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 40px;
+        padding: 6px 8px;
+        gap: 4px;
+    }
+}
+
+/* Enhanced styling when enhancement CSS is present */
+body[style*="background: rgba"] .chat-history-controls,
+body.using-enhancements .chat-history-controls {
+    background: rgba(248, 249, 250, 0.6) !important;
+    border: 1px solid rgba(233, 236, 239, 0.3) !important;
+    backdrop-filter: blur(5px) !important;
+    border-radius: 12px !important;
+}
+
+body[style*="background: rgba"] .refresh-history-btn,
+body.using-enhancements .refresh-history-btn {
+    background: linear-gradient(135deg, #73C48F 0%, #5DAF7B 100%) !important;
+}
+
+body[style*="background: rgba"] .clear-history-btn,
+body.using-enhancements .clear-history-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
+/* Override any pesky inherited styles */
+.refresh-history-btn,
+.clear-history-btn {
+    transform: none !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    line-height: 1 !important;
+}
+
+/* Debug cleanup - remove if any leftover debugging styles exist */
+.chat-history-controls::before,
+.refresh-history-btn::before,
+.refresh-history-btn::after,
+.clear-history-btn::before,
+.clear-history-btn::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Accessibility improvements */
+.refresh-history-btn:focus,
+.clear-history-btn:focus {
+    outline: 2px solid #4a90e2 !important;
+    outline-offset: 2px !important;
+}
+
+.touch-friendly {
+    touch-action: manipulation !important;
+}
+
+/* Summary:
+- Green refresh button = matches Load button styling
+- Red delete button = consistent red color
+- Side-by-side layout with proper flex properties
+- Responsive for mobile devices
+- Removed all debug indicators (no red/orange boxes)
+- Maintains existing design language */
