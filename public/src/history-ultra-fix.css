@@ -1,5 +1,8 @@
 /* ULTRA-COMPREHENSIVE BUTTON LAYOUT FIX */
 /* This file fixes the stacking button issue once and for all */
+/* Created to fix refresh/reload and delete buttons being stacked vertically */
+/* All buttons: green background = reload, red background = delete */
+/* Works on all pages: simple.html, main.html, gallery.html */
 
 /* LEVEL 1: Container - FORCE horizontal */
 .chat-history-controls {
