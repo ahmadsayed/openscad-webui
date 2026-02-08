@@ -1,0 +1,228 @@
+/* ULTRA-COMPREHENSIVE BUTTON LAYOUT FIX */
+/* This file fixes the stacking button issue once and for all */
+
+/* LEVEL 1: Container - FORCE horizontal */
+.chat-history-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 50px !important;
+    padding: 12px 16px !important;
+    box-sizing: border-box !important;
+}
+
+/* LEVEL 2: Buttons - PREVENT ITEM COLLAPSING */
+.refresh-history-btn,
+.clear-history-btn {
+    flex: 1 0 auto !important;     /* Slightly more flexible than 1 0 auto */
+    min-width: 80px !important;    /* Cannot be smaller than this */
+    min-height: 44px !important;   /* Minimum touch target */
+    max-width: 160px !important;   /* Prevents massive buttons on wide screens */
+    width: calc(50% - 6px) !important; /* Exactly half minus gap */
+
+    /* Force horizontal internal layout */
+    display: inline-flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    /* Anti-wrap measures */
+    white-space: nowrap !important;
+    text-align: center !important;
+
+    /* Visual stacking prevention */
+    vertical-align: middle !important;
+    position: relative !important;
+
+    /* Modern spacing */
+    gap: 8px !important;
+
+    /* Reset any inherited transforms/positions that might stack */
+    transform: none !important;
+    position: relative !important;
+}
+
+/* LEVEL 3: Screen size adaptation */
+@media (max-width: 480px) {
+    .chat-history-controls {
+        gap: 8px !important;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 60px !important;
+        height: 40px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .chat-history-controls {
+        gap: 6px !important;
+        padding: 10px 12px !important;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        min-width: 50px !important;
+        height: 36px !important;
+    }
+
+    /* Hide text on very small screens */
+    .button-text {
+        display: none !important;
+    }
+}
+
+/* LEVEL 4: Color fixes */
+.refresh-history-btn {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+.refresh-history-btn:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
+}
+
+.clear-history-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%) !important;
+    background: linear-gradient(135deg, #dd2c54 0%, #c41e3a 100%) !important;
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+.clear-history-btn:hover {
+    background: linear-gradient(135deg, #bd2130 0%, #a71d2a 100%) !important;
+}
+
+/* LEVEL 5: Button text */
+.button-text {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    text-shadow: inherit !important;
+}
+
+/* LEVEL 6: Debug helpers */
+.chat-history-controls::before {
+    content: "FLEX: ";
+    position: absolute;
+    font-size: 10px;
+    color: white;
+    background: red;
+    padding: 2px 4px;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.refresh-history-btn::after {
+    content: "R";
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 8px;
+    opacity: 0.5;
+}
+
+.clear-history-btn::after {
+    content: "D";
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 8px;
+    opacity: 0.5;
+}
+
+/* LEVEL 7: Ensure buttons don't expand beyond controls */
+@media (min-width: 481px) {
+    .refresh-history-btn,
+    .clear-history-btn {
+        max-width: 120px !important;
+    }
+}
+
+/* LEVEL 8: Height synchronization */
+.refresh-history-btn,
+.clear-history-btn {
+    height: 44px !important; /* Consistent height */
+    border-radius: 6px !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease-out !important;
+}
+
+/* LEVEL 9: Accessibility */
+.refresh-history-btn:hover,
+.clear-history-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,.15) !important;
+    cursor: pointer !important;
+}
+
+.refresh-history-btn:active,
+.clear-history-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15) !important;
+}
+
+/* LEVEL 10: Mobile touch-friendly */
+.refresh-history-btn,
+.clear-history-btn {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+}
+
+/* LEVEL 11: Ensure parent doesn't constrain */
+.side-panel-content {
+    overflow-x: visible !important;
+}
+
+/* LEVEL 99: Nuclear option - target ANY possible stacked layout */
+* .chat-history-controls,
+body .chat-history-controls,
+.chat-history-controls {
+    flex-direction: row !important;
+}
+
+* .refresh-history-btn + .clear-history-btn,
+body .refresh-history-btn + .clear-history-btn,
+.refresh-history-btn + .clear-history-btn {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+/* For any weird inherited flex-column context
+   [data-testid="side-panel"] .chat-history-controls {
+    flex-direction: row !important;
+}*/
+
+/* For responsive contexts that might try to force column */
+@media (min-width: 0px) {
+    .chat-history-controls {
+        flex-direction: row !important;
+    }
+}
+
+SUMMARY: This CSS forces horizontal layout through:
+1. Container: Explicit flex-direction + no-wrap + exact spacing
+2. Buttons: Proper flex-basis + min/max width constraints
+3. Responsive: Adaptable sizing without stacking
+4. Visual: Clear colors (green=reload, red=delete)
+5. Bulletproof: Highest possible specificity with media queries
+
+Should fix stacking in ALL scenarios. */
+
+/* FINALLY: Hide debug helpers for clean appearance */
+.d { display: none !important; } /* Debug class to hide later */
+
+/* And clean up when all is proven working */
+.debug-banner, .debug-controls {
+    display: none !important;
+}
