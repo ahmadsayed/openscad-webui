@@ -117,6 +117,11 @@ export async function filterModulesByRequirements(userPrompt, existingCode, open
     console.log('🔍 filterModulesByRequirements - Sending to LLM:', JSON.stringify(requestPayload, null, 2));
     
     const completion = await openai.chat.completions.create(requestPayload);
+
+    if (!completion.choices || !completion.choices[0] || !completion.choices[0].message || !completion.choices[0].message.content) {
+        throw new Error('Invalid response format from OpenAI API');
+    }
+
     const responseText = completion.choices[0].message.content;
     
     console.log('🔍 filterModulesByRequirements - Received response:', responseText);

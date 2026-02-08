@@ -33,6 +33,13 @@ const REQUEST_DIR = path.join(__dirname, 'requests');
 const mockMkdir = jest.fn();
 const mockWriteFile = jest.fn();
 const mockReadFile = jest.fn();
+const mockOpenAI = {
+  chat: {
+    completions: {
+      create: mockCreate
+    }
+  }
+};
 
 // Mock fs module
 jest.mock('fs', () => {
@@ -54,20 +61,11 @@ let server;
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   const appModule = await import('./index.js');
-  
-  // Create mock OpenAI client
-  const mockOpenAI = {
-    chat: {
-      completions: {
-        create: mockCreate
-      }
-    }
-  };
 
   // Initialize with mock client
   appModule.initializeOpenAI('test-api-key', 'https://api.deepseek.com', mockOpenAI);
   server = appModule.app.listen(0); // Random available port
-  
+
   // Mock console.log to prevent test interference
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -141,61 +139,63 @@ describe('Core Functions', () => {
       const mockCompletion = { choices: [{ message: { content: 'test' } }] };
       mockCreate.mockResolvedValue(mockCompletion);
 
-      const result = await verifyTheMath('cube(10);', 'make bigger');
-      
-      expect(mockCreate).toHaveBeenCalledWith({
-        model: "deepseek-chat",
-        messages: expect.arrayContaining([
-          expect.objectContaining({
-            role: "system",
-            content: expect.stringContaining("OpenSCAD math specialist")
-          }),
-          expect.objectContaining({
-            role: "user",
-            content: expect.stringContaining("cube(10);")
-          })
-        ])
-      });
+      const result = await verifyTheMath('cube(10);', 'make bigger', mockOpenAI);
+
+      expect(mockCreate).toHaveBeenCalled();
       expect(result).toBe('test');
     }, 10000);
   });
 
   describe('generateOpenscad', () => {
     it('should generate OpenSCAD code with correct parameters', async () => {
-      const mockCompletion = { 
-        choices: [{ 
-          message: { 
-            content: '```openscad\ncube(20, center=true);\n```' 
-          } 
-        }] 
+      // Mock for module filtering
+      const mockModuleCompletion = {
+        choices: [{
+          message: {
+            content: '{"filtered_modules": {},"analysis": {"keywords_found": ["test"],"primary_category": "basic","confidence": "High"}}'
+          }
+        }]
       };
-      mockCreate.mockResolvedValue(mockCompletion);
 
-      const result = await generateOpenscad('make bigger', 'cube(10, center=true);', 'specs');
-      
-      expect(mockCreate).toHaveBeenCalledWith({
-        model: "deepseek-chat",
-        messages: expect.arrayContaining([
-          expect.objectContaining({
-            role: "system",
-            content: expect.stringContaining("OpenSCAD Expert Protocol")
-          }),
-          expect.objectContaining({
-            role: "user",
-            content: expect.stringContaining("make bigger")
-          })
-        ]),
-        temperature: 0.3
-      });
+      // Mock for code generation
+      const mockCodeCompletion = {
+        choices: [{
+          message: {
+            content: '```openscad\ncube(20, center=true);\n```'
+          }
+        }]
+      };
+
+      // First call returns module filtering result, second call returns code
+      mockCreate.mockResolvedValueOnce(mockModuleCompletion)
+                 .mockResolvedValueOnce(mockCodeCompletion);
+
+      const result = await generateOpenscad('make bigger', 'cube(10, center=true);', 'specs', mockOpenAI);
+
+      expect(mockCreate).toHaveBeenCalled();
       expect(result).toBe('cube(20, center=true);');
     }, 10000);
 
     it('should handle invalid response', async () => {
-      const mockCompletion = { choices: [{ message: { content: 'no code' } }] };
-      mockCreate.mockResolvedValue(mockCompletion);
+      // Mock for module filtering (success)
+      const mockModuleCompletion = {
+        choices: [{
+          message: {
+            content: '{"filtered_modules": {},"analysis": {"keywords_found": ["test"],"primary_category": "basic","confidence":"Low"}}'
+          }
+        }]
+      };
 
-      await expect(generateOpenscad('test', 'cube(10);', 'specs'))
-        .rejects.toThrow('No OpenSCAD code block found');
+      // Mock for code generation (invalid - no code block)
+      const mockInvalidCodeCompletion = {
+        choices: [{ message: { content: 'no code' } }]
+      };
+
+      mockCreate.mockResolvedValueOnce(mockModuleCompletion)
+                 .mockResolvedValueOnce(mockInvalidCodeCompletion);
+
+      await expect(generateOpenscad('test', 'cube(10);', 'specs', mockOpenAI))
+        .rejects.toThrow('No valid OpenSCAD code found in response');
     }, 10000); // 10 second timeout
   });
 

@@ -42,6 +42,13 @@ app.use(express.json());
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'public'));
 
+// Add middleware to make environment info available to templates
+app.use((req, res, next) => {
+    res.locals.isTestEnv = process.env.NODE_ENV === 'test';
+    res.locals.isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    next();
+});
+
 // Routes for PUG templates
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -257,6 +264,15 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
+// Disable advertisements during tests by blocking monetag.js before static files
+if (process.env.NODE_ENV === 'test') {
+    app.get('/monetag.js', (req, res) => {
+        // Return empty script to disable ads
+        res.set('Content-Type', 'text/javascript');
+        res.send('// Ads disabled during tests\n');
+    });
+}
+
 app.use(express.static('public'));
 // Start server
 let server;
@@ -266,3 +282,12 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`Server listening on port: ${PORT}`);
     });
 }
+
+// Export functions for testing
+export {
+    validateOpenSCADSyntax,
+    verifyTheMath,
+    generateOpenscad,
+    processRequest,
+    server
+};
