@@ -261,8 +261,25 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
+    white-space: nowrap;
+}
+
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+/* Make clear button red */
+.clear-history-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.clear-history-btn:hover {
+    background: #c82333;
 }
 
 .refresh-history-btn:hover,
@@ -841,27 +858,43 @@ body {
     body {
         font-size: 14px;
     }
-    
+
     h2, h3 {
         font-size: 1.2rem;
     }
-    
+
     .side-panel-header h3 {
         font-size: 1rem;
     }
-    
+
     /* Ensure proper spacing on mobile */
     .side-panel-content {
         padding: 12px;
     }
-    
+
     .chat-history-controls {
         padding-bottom: 12px;
         margin-bottom: 12px;
     }
-    
+
     .chat-history-item {
         margin-bottom: 8px;
+    }
+
+    /* Compact button text on mobile */
+    .button-text {
+        font-size: 0.825rem;
+    }
+
+    .refresh-history-btn,
+    .clear-history-btn {
+        padding: 7px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Adjust gap for mobile */
+    .chat-history-controls {
+        gap: 6px;
     }
     
     .item-header {

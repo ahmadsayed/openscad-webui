@@ -86,6 +86,10 @@
     backdrop-filter: blur(5px);
     position: relative;
     overflow: hidden;
+    gap: 10px;
+    padding: 10px 14px;
+    min-width: 80px;
+    justify-content: flex-start;
 }
 
 .refresh-history-btn::before,
@@ -105,11 +109,35 @@
     left: 100%;
 }
 
-.refresh-history-btn:hover,
+.button-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 4px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Make clear button red in enhanced mode */
+.clear-history-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.clear-history-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    z-index: -1;
+}
+
 .clear-history-btn:hover {
-    background: rgba(93, 175, 123, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(115, 196, 143, 0.3);
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.4);
 }
 
 /* Enhanced history items with card design */

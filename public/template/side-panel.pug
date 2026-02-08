@@ -20,8 +20,10 @@ mixin side-panel(panelId = "chatHistoryPanel", panelClass = "collapsed", panelSt
       .chat-history-controls
         button.refresh-history-btn(id="refreshHistoryBtn" title="Refresh history")
           i.bi.bi-arrow-clockwise
+          span.button-text Reload
         button.clear-history-btn(id="clearHistoryBtn" title="Clear all history")
           i.bi.bi-trash
+          span.button-text Delete
       .chat-history-loading#historyLoading(style="display: none;")
         .loading-spinner
         span Loading history...
