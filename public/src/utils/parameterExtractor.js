@@ -58,11 +58,17 @@ export function extractParameters(code) {
         // Matches: variable_name = value; // optional comment
         // or: variable_name = value; /* optional comment */
         // or: variable_name = value
+        // BUT NOT: function(param=value) - avoid parsing function parameters as variables
         const variableMatch = line.match(/([a-zA-Z_$][a-zA-Z0-9_]*)\s*=\s*([^;]+)(?:;|$)/);
         
         if (variableMatch) {
             const [, varName, varValue] = variableMatch;
             const cleanValue = varValue.trim().replace(/;$/, '');
+            
+            // Skip if this looks like a function parameter (contains commas or other function syntax)
+            if (cleanValue.includes(',') || cleanValue.includes('(') || cleanValue.includes(')')) {
+                continue; // This is likely a function parameter, not a variable assignment
+            }
             
             // Try to parse the value as a number
             const numericValue = parseFloat(cleanValue);

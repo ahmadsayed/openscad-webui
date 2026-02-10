@@ -1,0 +1,1 @@
+{"status":"done","phase":"Complete","progress":100,"code":"include <module.scad>\nfacet = 32;\nradius = 2;\ndifference() {\n    rounded_cube([20, 20, 20], radius, facets=facet);\n    cylinder(h=30, r=5, center=true, $fn=facet);\n}","success":true}

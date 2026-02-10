@@ -1,0 +1,1 @@
+{"status":"done","phase":"Complete","progress":100,"code":"include <module.scad>\nfacet = 16;\ndifference() {\n    cube(20, center=true);\n    cylinder(h=30, r=5, center=true, $fn=facet);\n}","success":true}
