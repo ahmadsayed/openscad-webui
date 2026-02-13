@@ -144,8 +144,6 @@ async function init() {
         downloadSCAD(code);
     };
     
-    // Export test function for debugging
-    window.testCodeEditingHash = testCodeEditingHash;
 
     // Save code before navigating to simple mode
     window.addEventListener('beforeunload', async () => {
@@ -176,7 +174,6 @@ import {
     handleModeSwitch as sharedHandleModeSwitch
 } from './utils/sharedFunctions.js';
 import { generateCodeFromTextInput } from './utils/codeGeneration.js';
-import { testCodeEditingHash } from './utils/storageTest.js';
 
 // Use shared generateCodeFromMessage function
 async function generateCodeFromMessage(message, currentCode) {
