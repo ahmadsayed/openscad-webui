@@ -43,7 +43,7 @@ echo "========================================"
 echo ""
 
 # Run the server
-node index.js
+node server/server.js
 
 # Clean up on exit
 cleanup() {
