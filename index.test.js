@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { promises as fs } from 'fs';
 
 // Mock OpenAI module at the very top before any imports
 const mockCreate = jest.fn();
@@ -14,17 +15,16 @@ jest.mock('openai', () => {
 
 import request from 'supertest';
 import express from 'express';
-import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { 
-  app, 
   validateOpenSCADSyntax, 
   verifyTheMath, 
   generateOpenscad, 
   processRequest 
-} from './index.js';
+} from './server/controllers/openscad.js';
+import { app } from './server/app.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REQUEST_DIR = path.join(__dirname, 'requests');
@@ -60,19 +60,40 @@ let server;
 
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
-  const appModule = await import('./index.js');
+
+  // Import the new server structure
+  const { initializeOpenAI } = await import('./server/services/ai/openai.js');
+  const serverModule = await import('./server/server.js');
 
   // Initialize with mock client
-  appModule.initializeOpenAI('test-api-key', 'https://api.deepseek.com', mockOpenAI);
-  server = appModule.app.listen(0); // Random available port
+  initializeOpenAI('test-api-key', 'https://api.deepseek.com', mockOpenAI);
+
+  // Create server instance for testing (it's not automatically created in test env)
+  const app = (await import('./server/app.js')).default;
+  server = app.listen(3002); // Use different port for tests
 
   // Mock console.log to prevent test interference
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-afterAll((done) => {
-  server.close(done);
+afterAll(async () => {
+  await new Promise(resolve => server.close(resolve));
   jest.restoreAllMocks();
+
+  // Clean up request files created during tests quietly
+  try {
+    const files = await fs.readdir(REQUEST_DIR);
+
+    // Delete all request files that start with UUID pattern
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.json$/i;
+    const deletePromises = files
+      .filter(file => uuidPattern.test(file))
+      .map(file => fs.unlink(path.join(REQUEST_DIR, file)).catch(() => {}));
+
+    await Promise.all(deletePromises);
+  } catch {
+    // Ignore errors during cleanup
+  }
 });
 
 describe('API Endpoints', () => {

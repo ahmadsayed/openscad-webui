@@ -9,7 +9,6 @@ ENV NODE_ENV=production
 
 # Copy package files for better caching
 COPY package*.json ./
-COPY prompts.js /app/
 
 # Install dependencies with exact versions from package-lock.json
 # Use npm ci instead of npm install for faster, more reliable builds
@@ -30,9 +29,7 @@ ENV NODE_ENV=production
 # Copy only necessary files from build stage
 COPY --from=build /app/node_modules ./node_modules
 COPY --chown=appuser:appgroup package.json ./
-COPY --chown=appuser:appgroup index.js ./
-COPY --chown=appuser:appgroup prompts.js ./
-COPY --chown=appuser:appgroup modules.js ./
+COPY --chown=appuser:appgroup server ./server
 COPY --chown=appuser:appgroup src ./src
 COPY --chown=appuser:appgroup public ./public
 
@@ -58,4 +55,4 @@ LABEL org.opencontainers.image.description="OpenSCAD Web UI"
 LABEL org.opencontainers.image.licenses="ISC"
 
 # Command to run the application
-CMD ["node", "index.js"]
+CMD ["node", "server/server.js"]
