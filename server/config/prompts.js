@@ -136,7 +136,16 @@ Prioritize use of existing modules if suitable (High priority > Medium priority 
     `    - Exceptions: Unique mechanics get individual params\\n` +
     `8. TOLERANCE HANDLING:\\n` +
     `    - Single clearance parameter for all fits\\n` +
-    `    - Apply as: hole_dim = base_dim + 2*clearance`
+    `    - Apply as: hole_dim = base_dim + 2*clearance\\n` +
+    `9. 2D TO 3D CONVERSION:\\n` +
+    `    - gear() creates 2D shape - wrap with linear_extrude(height=10, center=true, convexity=10) for 3D\\n` +
+    `    - honeycomb() creates 2D pattern - wrap with linear_extrude() for 3D\\n` +
+    `    - text() creates 2D text - wrap with linear_extrude() for 3D\\n` +
+    `10. GEAR PARAMETER SCALING:\\n` +
+    `    - circular_pitch: Use values like 200-400 (not radians like 3.14)\\n` +
+    `    - diametral_pitch: Use values like 1-10 (teeth per unit length)\\n` +
+    `    - For 20mm diameter gear with 20 teeth: circular_pitch ≈ 200\\n` +
+    `    - Avoid calculating circular_pitch from PI - use empirical values instead`
   },
   "processVisualInput": {
     "description": "Visual analysis system prompt for CAD model modifications",

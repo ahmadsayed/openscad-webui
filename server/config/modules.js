@@ -63,8 +63,8 @@ const modules = {
   // Mechanical Components (High Priority)
   "gear": {
     "signature": "gear(number_of_teeth, circular_pitch=false, diametral_pitch=false, pressure_angle=20, clearance=0)",
-    "description": "Create an involute gear with specified parameters",
-    "example": "gear(20, circular_pitch=15, pressure_angle=20);",
+    "description": "Create an involute gear with specified parameters (2D shape - use linear_extrude for 3D)",
+    "example": "linear_extrude(height=10, center=true, convexity=10) gear(20, circular_pitch=200, pressure_angle=20);",
     "category": "mechanical",
     "priority": "High"
   },
