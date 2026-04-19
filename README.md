@@ -2,6 +2,14 @@
 
 An AI-powered web-based OpenSCAD code generator that converts natural language prompts into 3D model code. Features an interactive editor with syntax highlighting, live preview, WebAssembly integration for running OpenSCAD directly in the browser, and a comprehensive library of 70+ pre-defined OpenSCAD modules.
 
+## 📋 Recent Updates
+
+### April 2026 - Side Panel Consistency Fix ✅
+- **Fixed**: History sidebar positioning inconsistency between main and simple interfaces
+- **Issue**: Panel appeared in middle of screen in simple.html instead of proper sidebar positioning
+- **Solution**: Updated CSS with proper flexbox layout and fixed positioning
+- **Result**: Both interfaces now have consistent, functional side panel behavior
+
 ## 🚀 Features
 
 - **AI-Powered Generation**: Convert natural language descriptions into OpenSCAD code using DeepSeek AI models
