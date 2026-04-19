@@ -43,7 +43,7 @@ spec:
               name: qwen-api-key
         - name: AD_ENV
           value: quiet
-        image: ahmadsayed/promptscad:02152024
+        image: ahmadsayed/promptscad:04192041
         imagePullPolicy: IfNotPresent
         name: promptscad
         ports:

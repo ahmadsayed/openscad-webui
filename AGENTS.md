@@ -1,5 +1,10 @@
 # PromptSCAD - AI-Powered OpenSCAD Web UI
 
+## Project Status ✅
+**Last Updated**: April 2026  
+**Status**: Fully Operational  
+**Latest Fix**: Side panel consistency between main and simple interfaces resolved
+
 ## Project Overview
 
 PromptSCAD is a web-based AI-powered OpenSCAD code generator that converts natural language prompts into 3D model code. The project can also be packaged as a VSCode extension. It features an interactive editor with syntax highlighting, live preview, WebAssembly integration for running OpenSCAD directly in the browser, and a comprehensive library of 70+ pre-defined OpenSCAD modules organized by category.
@@ -148,6 +153,20 @@ The project includes comprehensive Jest tests:
    ```
 4. **Access UI**: Visit `http://localhost:3000/main` for full editor or `http://localhost:3000/simple` for simplified version
 
+### Interface Testing
+**Main Interface (`/main.html`)**:
+- Full-featured editor with split-pane layout
+- Side panel with chat history (collapsible)
+- Real-time 3D preview with STL export
+- Advanced parameter editing
+
+**Simple Interface (`/simple.html`)**:
+- Streamlined, user-friendly design
+- Chat-based AI interaction
+- Collapsible history sidebar (now consistent with main interface)
+- Parameter editing with visual feedback
+- Mobile-optimized layout
+
 ### Writing Tests
 Tests are located in the `/tests` directory. When adding new features:
 1. Create corresponding test files following existing patterns
@@ -243,3 +262,13 @@ The project includes 70+ pre-defined OpenSCAD modules organized by categories:
 - **Text**: Text rendering and manipulation
 
 Modules are automatically filtered based on user requirements using AI analysis to improve code generation relevance and accuracy.
+
+## Recent Updates & Fixes
+
+### Side Panel Consistency Fix ✅ (April 2026)
+- **Issue**: History sidebar positioning was inconsistent between main.html and simple.html interfaces
+- **Problem**: Panel appeared in middle of screen in simple.html instead of proper sidebar positioning
+- **Solution**: Updated simple.css with proper flexbox layout, fixed positioning, and responsive design
+- **Result**: Both interfaces now have identical, functional side panel behavior with proper collapse/expand functionality
+- **Files Modified**: `public/simple.css`
+- **Status**: RESOLVED - Side panel now works consistently across both interfaces

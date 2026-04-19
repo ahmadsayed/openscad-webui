@@ -77,7 +77,7 @@ html(lang="en")
     main.simple-container(role="main" aria-label="Simple 3D Chat Interface")
       // Side Panel - Chat History (using template)
       include template/side-panel.pug
-      +side-panel("chatHistoryPanel", "collapsed", "position: fixed; left: 0; top: 40px; height: calc(100vh - 40px); z-index: 900;", "Chat History")
+      +side-panel("chatHistoryPanel", "collapsed", null, "Chat History")
       
       // Main content wrapper with responsive margin for side panel
       .main-content-wrapper

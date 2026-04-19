@@ -140,7 +140,8 @@ body {
 }
 
 /* Side panel styles */
-.side-panel {
+/* Simple interface specific side panel styles */
+.simple-container .side-panel {
     position: fixed;
     left: 0;
     top: 60px;
@@ -148,17 +149,36 @@ body {
     height: calc(100vh - 60px);
     background: white;
     border-right: 1px solid #e9ecef;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 900;
     display: flex;
     flex-direction: column;
+    will-change: transform;
 }
 
-.side-panel.collapsed {
+/* Simple interface specific side panel styles */
+.simple-container .side-panel.collapsed {
     transform: translateX(-280px);
 }
 
-.side-panel-header {
+/* Desktop behavior - panel behaves like proper sidebar */
+@media (min-width: 769px) {
+    .simple-container {
+        margin-left: 300px;
+        transition: margin-left 0.3s ease;
+    }
+    
+    .simple-container .side-panel.collapsed ~ .main-content-wrapper {
+        margin-left: 20px;
+    }
+    
+    /* When panel is collapsed, reduce container margin */
+    .simple-container:has(.side-panel.collapsed) {
+        margin-left: 20px;
+    }
+}
+
+.simple-container .side-panel-header {
     padding: 16px 20px;
     border-bottom: 1px solid #e9ecef;
     background: #f8f9fa;
@@ -167,14 +187,14 @@ body {
     justify-content: space-between;
 }
 
-.side-panel-header h3 {
+.simple-container .side-panel-header h3 {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
     color: #2c3e50;
 }
 
-.side-panel-controls {
+.simple-container .side-panel-controls {
     display: flex;
     gap: 8px;
     align-items: center;
@@ -229,7 +249,7 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.side-panel-content {
+.simple-container .side-panel-content {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
@@ -708,11 +728,18 @@ body {
 /* Responsive design - Mobile First Approach */
 @media (max-width: 768px) {
     .main-content-wrapper {
-        margin-left: 0 !important;
-        width: 100% !important;
+        margin-left: 0;
+        width: 100%;
+        transition: margin-left 0.3s ease;
     }
     
-    .side-panel {
+    /* When panel is expanded on mobile, shift content */
+    .simple-container .side-panel:not(.collapsed) ~ .main-content-wrapper {
+        margin-left: 280px;
+        width: calc(100% - 280px);
+    }
+    
+    .simple-container .side-panel {
         transform: translateX(-100%);
         width: 280px;
         z-index: 1000;
@@ -720,14 +747,25 @@ body {
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     }
     
-    .side-panel:not(.collapsed) {
+    .simple-container .side-panel:not(.collapsed) {
         transform: translateX(0);
     }
     
+    /* Ensure proper sidebar behavior on mobile */
+    .simple-container .side-panel.collapsed {
+        transform: translateX(-100%);
+    }
+    
     .simple-container {
-        margin-left: 0 !important;
-        width: 100% !important;
+        margin-left: 0;
+        width: 100%;
         padding-top: 50px;
+        transition: margin-left 0.3s ease;
+    }
+    
+    /* Add margin when panel is expanded on mobile */
+    .simple-container:has(.side-panel:not(.collapsed)) {
+        margin-left: 280px;
     }
     
     .fixed-header {
@@ -870,7 +908,7 @@ body {
         display: block;
     }
     
-    .side-panel-controls {
+    .simple-container .side-panel-controls {
         gap: 4px;
     }
     
@@ -883,12 +921,12 @@ body {
         font-size: 1.2rem;
     }
 
-    .side-panel-header h3 {
+    .simple-container .side-panel-header h3 {
         font-size: 1rem;
     }
 
     /* Ensure proper spacing on mobile */
-    .side-panel-content {
+    .simple-container .side-panel-content {
         padding: 12px;
     }
 
@@ -954,7 +992,7 @@ body {
         width: calc(100% - 250px);
     }
     
-    .side-panel {
+    .simple-container .side-panel {
         width: 250px;
     }
     
@@ -1014,7 +1052,7 @@ textarea:focus {
         border: 2px solid #000;
     }
     
-    .side-panel {
+    .simple-container .side-panel {
         border-right: 2px solid #000;
     }
 }
