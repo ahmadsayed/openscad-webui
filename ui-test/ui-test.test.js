@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer';
 import { promises as fs } from 'fs';
-import '../test-setup.js';  // Start server before tests run
 
 // Helper function to replace waitForTimeout
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

@@ -16,5 +16,6 @@ export const STORAGE_LIMITS = {
 export const STORAGE_PREFIXES = {
     CODE: 'openscad_code_',
     STL: 'openscad_stl_',
+    OFF: 'openscad_off_',
     META: 'openscad_meta_'
 };

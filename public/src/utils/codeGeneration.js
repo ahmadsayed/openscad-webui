@@ -19,14 +19,14 @@ export function checkCanvasHasDrawing(canvas) {
 }
 
 /**
- * Polls for request completion with optimized intervals for faster UI updates
+ * Polls for request completion with constant 5-second intervals
  * @param {string} requestId 
- * @param {number} initialInterval 
+ * @param {number} initialInterval (ignored - uses constant 5s)
  * @param {number} maxAttempts 
  * @returns {Promise<string>}
  */
-export async function pollForCompletion(requestId, initialInterval = 100, maxAttempts = 400) {
-    console.log(`🔄 Fast polling for completion of request: ${requestId}`);
+export async function pollForCompletion(requestId, initialInterval = 5000, maxAttempts = 400) {
+    console.log(`🔄 Polling for completion of request: ${requestId} (5-second intervals)`);
     
     const startTime = Date.now();
     let lastPhase = '';
@@ -38,7 +38,7 @@ export async function pollForCompletion(requestId, initialInterval = 100, maxAtt
             const elapsedTime = Date.now() - startTime;
             const currentInterval = getOptimizedInterval(elapsedTime, attempt, consecutiveSamePhase, phaseProgress);
             
-            console.log(`📡 Fast poll ${attempt + 1}/${maxAttempts} for ${requestId} (elapsed: ${Math.round(elapsedTime/1000)}s, interval: ${currentInterval}ms, phase: ${lastPhase})`);
+            console.log(`📡 Poll ${attempt + 1}/${maxAttempts} for ${requestId} (elapsed: ${Math.round(elapsedTime/1000)}s, interval: 5s, phase: ${lastPhase})`);
             
             const statusResponse = await fetch(`/status/${requestId}`);
             if (!statusResponse.ok) {
@@ -55,23 +55,26 @@ export async function pollForCompletion(requestId, initialInterval = 100, maxAtt
             const statusData = await statusResponse.json();
             console.log(`📊 Request ${requestId} status:`, statusData);
             
+            // Extract the actual status data (handle both old and new API formats)
+            const actualStatus = statusData.data || statusData;
+            
             // Check for completion
-            if (statusData.status === 'done' && statusData.success && statusData.code) {
+            if ((actualStatus.status === 'done' || actualStatus.status === 'complete') && actualStatus.code) {
                 const totalTime = Date.now() - startTime;
                 console.log(`✅ Request ${requestId} completed successfully in ${Math.round(totalTime/1000)}s (${attempt + 1} polls)`);
-                return statusData.code;
+                return actualStatus.code;
             }
             
             // Check for errors
-            if (statusData.status === 'error' || statusData.success === false) {
-                const errorMsg = statusData.error || 'Unknown error occurred';
+            if (actualStatus.status === 'error') {
+                const errorMsg = actualStatus.message || actualStatus.error || 'Unknown error occurred';
                 console.error(`❌ Request ${requestId} failed:`, errorMsg);
                 throw new Error(errorMsg);
             }
             
             // Track phase changes and progress for smarter polling
-            const currentPhase = statusData.phase || 'processing';
-            const currentProgress = statusData.progress || 0;
+            const currentPhase = actualStatus.phase || 'processing';
+            const currentProgress = actualStatus.progress || 0;
             
             if (currentPhase === lastPhase) {
                 consecutiveSamePhase++;
@@ -120,46 +123,8 @@ export async function pollForCompletion(requestId, initialInterval = 100, maxAtt
  * @returns {number} - Polling interval in milliseconds
  */
 function getOptimizedInterval(elapsedTime, attempt, consecutiveSamePhase, phaseProgress) {
-    const elapsedSeconds = elapsedTime / 1000;
-    
-    // Ultra-fast polling for first 5 seconds (most requests complete quickly)
-    if (elapsedSeconds < 5) {
-        return 100; // Ultra-fast for immediate completion detection
-    }
-    
-    // Fast polling for first 15 seconds
-    if (elapsedSeconds < 15) {
-        return 200; // Fast polling for quick completion detection
-    }
-    
-    // Smart polling based on phase progress
-    if (phaseProgress > 80) {
-        // Near completion - poll very frequently
-        return 150; // Speed up when close to done
-    }
-    
-    if (phaseProgress > 60) {
-        // Moderate progress - poll faster
-        return 250;
-    }
-    
-    // Phase 2: Moderate polling for next 45 seconds
-    if (elapsedSeconds < 60) {
-        return 400; // Balance between responsiveness and server load
-    }
-    
-    // Phase 3: Slower polling for next 60 seconds
-    if (elapsedSeconds < 120) {
-        return 800; // Reduce frequency for long-running requests
-    }
-    
-    // Phase 4: Progressive backoff after 2 minutes
-    if (elapsedSeconds < 180) {
-        return 1500; // Even slower for very long requests
-    }
-    
-    // Phase 5: Final phase before timeout
-    return 2500; // Minimal polling near timeout
+    // Constant 5-second polling interval as requested
+    return 5000;
 }
 
 /**

@@ -1005,3 +1005,62 @@ body.resizing-vertical .resize-bar-vertical {
     max-height: none; /* Remove max-height limitation on mobile */
   }
 }
+
+/* Submenu styles for download formats - Minimal CSS addition */
+.dropdown a {
+  position: relative;
+}
+
+.dropdown .submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 160px;
+  background-color: #444;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+}
+
+.dropdown a:hover .submenu,
+.dropdown a:focus-within .submenu {
+  display: block;
+}
+
+.dropdown .submenu a {
+  padding: 10px 16px;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown .submenu a:hover {
+  background-color: #555;
+}
+
+/* Style for the menu trigger link */
+.dropdown a[href="#"]:not(.submenu a) {
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .dropdown .submenu {
+    position: static;
+    display: block;
+    margin-left: 16px;
+    margin-top: 4px;
+    box-shadow: none;
+    background-color: #555;
+    font-size: 0.85em;
+  }
+
+  .dropdown .submenu a {
+    padding: 8px 16px 8px 32px;
+  }
+}

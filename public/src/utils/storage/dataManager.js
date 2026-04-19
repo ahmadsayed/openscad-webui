@@ -4,15 +4,17 @@ import { STORAGE_KEYS, STORAGE_PREFIXES } from './constants.js';
 import { updateHashIndex } from './utils.js';
 
 /**
- * Save code and STL data using hash as filename
+ * Save code and STL/OFF data using hash as filename
  * @param {string} hash - The hash to use as filename
  * @param {string} code - The OpenSCAD code
  * @param {Uint8Array} stlData - Optional STL binary data
+ * @param {Uint8Array} offData - Optional OFF binary data
  */
-export async function saveCodeWithHash(hash, code, stlData = null) {
+export async function saveCodeWithHash(hash, code, stlData = null, offData = null) {
     try {
         const codeKey = `${STORAGE_PREFIXES.CODE}${hash}`;
         const stlKey = `${STORAGE_PREFIXES.STL}${hash}`;
+        const offKey = `${STORAGE_PREFIXES.OFF}${hash}`;
         const metaKey = `${STORAGE_PREFIXES.META}${hash}`;
         
         // Store code
@@ -24,12 +26,12 @@ export async function saveCodeWithHash(hash, code, stlData = null) {
                 // Convert Uint8Array to base64 in chunks to avoid "too many arguments" error
                 let binaryString = '';
                 const chunkSize = 8192; // Process 8KB at a time
-                
+
                 for (let i = 0; i < stlData.length; i += chunkSize) {
                     const chunk = stlData.slice(i, i + chunkSize);
                     binaryString += String.fromCharCode(...chunk);
                 }
-                
+
                 const base64Stl = btoa(binaryString);
                 localStorage.setItem(stlKey, base64Stl);
                 console.log(`✅ Stored STL data (${stlData.length} bytes) with hash ${hash.substring(0, 8)}...`);
@@ -38,14 +40,37 @@ export async function saveCodeWithHash(hash, code, stlData = null) {
                 stlData = null; // Don't store STL in metadata
             }
         }
+
+        // Store OFF data if provided (convert to base64)
+        if (offData) {
+            try {
+                // Convert Uint8Array to base64 in chunks to avoid "too many arguments" error
+                let binaryString = '';
+                const chunkSize = 8192; // Process 8KB at a time
+
+                for (let i = 0; i < offData.length; i += chunkSize) {
+                    const chunk = offData.slice(i, i + chunkSize);
+                    binaryString += String.fromCharCode(...chunk);
+                }
+
+                const base64Off = btoa(binaryString);
+                localStorage.setItem(offKey, base64Off);
+                console.log(`✅ Stored OFF data (${offData.length} bytes) with hash ${hash.substring(0, 8)}...`);
+            } catch (offError) {
+                console.warn('Failed to process OFF data:', offError);
+                offData = null; // Don't store OFF in metadata
+            }
+        }
         
         // Store metadata
         const metadata = {
             hash,
             timestamp: Date.now(),
             hasStl: !!stlData,
+            hasOff: !!offData,
             codeLength: code.length,
-            stlSize: stlData ? stlData.length : 0
+            stlSize: stlData ? stlData.length : 0,
+            offSize: offData ? offData.length : 0
         };
         localStorage.setItem(metaKey, JSON.stringify(metadata));
         
@@ -60,25 +85,28 @@ export async function saveCodeWithHash(hash, code, stlData = null) {
 }
 
 /**
- * Load code and STL data by hash
+ * Load code and STL/OFF data by hash
  * @param {string} hash - The hash to load
- * @returns {Object|null} Object with code, stlData, and metadata
+ * @returns {Object|null} Object with code, stlData, offData, and metadata
  */
 export function loadCodeByHash(hash) {
     try {
         const codeKey = `${STORAGE_PREFIXES.CODE}${hash}`;
         const stlKey = `${STORAGE_PREFIXES.STL}${hash}`;
+        const offKey = `${STORAGE_PREFIXES.OFF}${hash}`;
         const metaKey = `${STORAGE_PREFIXES.META}${hash}`;
-        
+
         const code = localStorage.getItem(codeKey);
         const stlBase64 = localStorage.getItem(stlKey);
+        const offBase64 = localStorage.getItem(offKey);
         const metaJson = localStorage.getItem(metaKey);
-        
+
         if (!code || !metaJson) return null;
-        
+
         const metadata = JSON.parse(metaJson);
         let stlData = null;
-        
+        let offData = null;
+
         if (stlBase64) {
             // Convert base64 back to Uint8Array
             const binaryString = atob(stlBase64);
@@ -87,11 +115,21 @@ export function loadCodeByHash(hash) {
                 stlData[i] = binaryString.charCodeAt(i);
             }
         }
+
+        if (offBase64) {
+            // Convert base64 back to Uint8Array
+            const binaryString = atob(offBase64);
+            offData = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                offData[i] = binaryString.charCodeAt(i);
+            }
+        }
         
         return {
             hash,
             code,
             stlData,
+            offData,
             metadata
         };
     } catch (error) {

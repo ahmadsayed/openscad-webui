@@ -72,7 +72,14 @@ async function init() {
     const savedCode = loadCode('main') || getMostRecentCode();
     const defaultCode = savedCode || "cube(20, center=true);";
     codeEditor.setValue(defaultCode);
-    renderer.renderOpenSCAD(defaultCode);
+    
+    // Initial render with error handling
+    try {
+        await renderer.renderOpenSCAD(defaultCode);
+    } catch (error) {
+        console.error('❌ Initial render error:', error);
+        alert(`Initial rendering failed: ${error.message}\n\nPlease check your OpenSCAD code for syntax errors or invalid geometry.`);
+    }
 
     // Initialize the chat editor with code generation capability
     initChatEditor(async (message) => {
@@ -139,6 +146,8 @@ async function init() {
         });
     };
 
+    // OFF download removed - using STL only for better performance
+
     window.downloadSCAD = () => {
         const code = codeEditor.getValue();
         downloadSCAD(code);
@@ -192,7 +201,9 @@ async function manualRender(code) {
         await renderer.renderOpenSCAD(code);
         console.log('✅ Manual render complete');
     } catch (error) {
-        console.error('Render error:', error);
+        console.error('❌ Render error:', error);
+        // Display error to user
+        alert(`Rendering failed: ${error.message}\n\nPlease check your OpenSCAD code for syntax errors or invalid geometry.`);
     }
 }
 

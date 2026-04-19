@@ -2,86 +2,27 @@
 
 import OpenSCAD from "../openscad.js";
 
+// Cache for module.scad content
+let moduleScadContent = null;
 
-class OpenSCADWorker {
-    constructor() {
-        this.instance = null;
-    }
-
-    async render(openscadCode) {
+// Fetch module.scad content
+async function getModuleScadContent() {
+    if (moduleScadContent === null) {
         try {
-            // Send a progress update - use setTimeout to ensure Firefox doesn't hang
-            setTimeout(() => {
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'initializing', 
-                    message: 'Initializing OpenSCAD...' 
-                });
-            }, 0);
-            
-            this.instance = await OpenSCAD();
-
-            // Send a progress update
-            setTimeout(() => {
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'loading', 
-                    message: 'Loading modules...' 
-                });
-            }, 0);
-
-            // Load the module.scad file
-            let response = await fetch('../src/modules/module.scad');
-            let module = await response.text();
-            this.instance.FS.writeFile("/module.scad", module);
-
-            // Send a progress update
-            setTimeout(() => {
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'processing', 
-                    message: 'Processing OpenSCAD code...' 
-                });
-            }, 0);
-
-            // Write input and generate STL with automatic module inclusion
-            const codeWithModules = `include </module.scad>\n\n${openscadCode}`;
-            this.instance.FS.writeFile("/input.scad", codeWithModules);
-            this.instance.callMain(["/input.scad", 
-                "--enable=manifold",           // Enable manifold geometry engine (faster)
-                "--enable=fast-csg",          // Enable fast CSG operations
-                "--enable=lazy-union",        // Enable lazy union optimization               
-                "-o", "cube.stl",
-                 "--render"                   // Force render mode
-            ]
-            );
-
-            // Send a progress update
-            setTimeout(() => {
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'finalizing', 
-                    message: 'Finalizing model...' 
-                });
-            }, 0);
-
-            const output = this.instance.FS.readFile("/cube.stl");
-            return output.buffer;
+            console.log('[WORKER] Fetching module.scad...');
+            const response = await fetch('../src/modules/module.scad');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch module.scad: ${response.status}`);
+            }
+            moduleScadContent = await response.text();
+            console.log('[WORKER] module.scad fetched successfully, size:', moduleScadContent.length);
         } catch (error) {
-            // Send error progress update
-            setTimeout(() => {
-                self.postMessage({ 
-                    type: 'progress', 
-                    status: 'error', 
-                    message: 'Error: ' + error.message 
-                });
-            }, 0);
+            console.error('[WORKER] Failed to fetch module.scad:', error);
             throw error;
         }
     }
+    return moduleScadContent;
 }
-
-export const worker = new OpenSCADWorker();
 
 self.onmessage = async (e) => {
     const { id, command, data } = e.data;
@@ -89,81 +30,55 @@ self.onmessage = async (e) => {
     try {
         switch (command) {
             case 'render':
-                // Send initial progress update with setTimeout for Firefox compatibility
-                setTimeout(() => {
-                    self.postMessage({ 
-                        type: 'progress', 
-                        status: 'started', 
-                        message: 'Starting OpenSCAD rendering...' 
-                    });
-                }, 0);
+                console.log('[WORKER] Starting render...');
                 
-                const stlBuffer = await worker.render(data.openscadCode);
-                
-                // Send completion progress update
-                setTimeout(() => {
-                    self.postMessage({ 
-                        type: 'progress', 
-                        status: 'completed', 
-                        message: 'Rendering completed' 
-                    });
-                }, 0);
-                
-                // Use setTimeout to ensure Firefox doesn't hang on transferable objects
-                setTimeout(() => {
-                    self.postMessage({ id, result: stlBuffer }, [stlBuffer]);
-                }, 10);
+                // Initialize OpenSCAD
+                console.log('[WORKER] Initializing OpenSCAD...');
+                const instance = await OpenSCAD();
+                console.log('[WORKER] OpenSCAD initialized OK');
+
+                // Check if the code includes module.scad and provide it if needed
+                if (data.openscadCode.includes('include <module.scad>')) {
+                    console.log('[WORKER] Code includes module.scad, providing module file...');
+                    const moduleContent = await getModuleScadContent();
+                    instance.FS.writeFile("/module.scad", moduleContent);
+                    console.log('[WORKER] module.scad written to virtual filesystem');
+                }
+
+                // Write main model code
+                console.log('[WORKER] Writing code to file...');
+                instance.FS.writeFile("/model.scad", data.openscadCode);
+                console.log('[WORKER] Code written OK');
+
+                // Generate STL
+                console.log('[WORKER] Generating STL...');
+                instance.callMain(["/model.scad", "-o", "model.stl", "--render"]);
+                console.log('[WORKER] STL generated OK');
+
+                // Read STL file
+                console.log('[WORKER] Reading STL file...');
+                const stlOutput = instance.FS.readFile("/model.stl");
+                console.log('[WORKER] STL read OK, size:', stlOutput.byteLength);
+
+                // Return result
+                self.postMessage({ 
+                    id, 
+                    result: stlOutput.buffer 
+                }, [stlOutput.buffer]);
                 break;
                 
             case 'getSTL':
-                // Send progress update
-                setTimeout(() => {
-                    self.postMessage({ 
-                        type: 'progress', 
-                        status: 'exporting', 
-                        message: 'Exporting STL file...' 
-                    });
-                }, 0);
-                
-                if (!worker.instance) {
-                    throw new Error("OpenSCAD instance not initialized");
-                }
-                try {
-                    const output = worker.instance.FS.readFile("/cube.stl");
-                    
-                    // Send completion progress update
-                    setTimeout(() => {
-                        self.postMessage({ 
-                            type: 'progress', 
-                            status: 'completed', 
-                            message: 'Export completed' 
-                        });
-                    }, 0);
-                    
-                    // Use setTimeout to ensure Firefox doesn't hang on transferable objects
-                    setTimeout(() => {
-                        self.postMessage({ id, result: output.buffer }, [output.buffer]);
-                    }, 10);
-                } catch (error) {
-                    throw new Error("Error reading STL file: " + error.message);
-                }
+                // This won't work with fresh instance per render
+                self.postMessage({ id, error: "STL export not available in this mode" });
                 break;
                 
-            default:
-                throw new Error(`Unknown command: ${command}`);
+            case 'getOFF':
+                // Not supported in STL-only mode
+                self.postMessage({ id, error: "OFF export not available in this mode" });
+                break;
         }
     } catch (error) {
-        // Send error progress update
-        setTimeout(() => {
-            self.postMessage({ 
-                type: 'progress', 
-                status: 'error', 
-                message: 'Error: ' + error.message 
-            });
-        }, 0);
-        
-        setTimeout(() => {
-            self.postMessage({ id, error: error.message });
-        }, 10);
+        console.error('[WORKER] Error:', error);
+        self.postMessage({ id: e.data.id, error: error.message || error });
     }
 };

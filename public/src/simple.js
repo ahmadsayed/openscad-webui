@@ -108,6 +108,8 @@ async function init() {
         });
     };
 
+    // OFF download removed - using STL only for better performance
+
     window.downloadSCAD = () => {
         downloadSCAD(currentCode);
     };

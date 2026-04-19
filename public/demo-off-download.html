@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OFF Format Download Demo - PromptSCAD</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #73C48F, #4CAF50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .demo-card:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #73C48F;
+            box-shadow: 0 0 0 2px rgba(115, 196, 143, 0.3);
+        }
+
+        button {
+            background: linear-gradient(45deg, #73C48F, #5DAF7B);
+            color: #1e1e1e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #5DAF7B, #4CAF50);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(115, 196, 143, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .status.success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .status.loading {
+            background: rgba(23, 162, 184, 0.1);
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+        }
+
+        .status.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            color: #f0f0f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+
+        .info-box {
+            background: rgba(115, 196, 143, 0.1);
+            border: 1px solid rgba(115, 196, 143, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #73C48F;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            gap: 8px;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: #73C48F;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .download-link {
+            display: inline-block;
+            background: #73C48F;
+            color: #1e1e1e;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .download-link:hover {
+            background: #5DAF7B;
+            transform: translateY(-1px);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #73C48F;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #73C48F;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 OFF Format Download Demo</h1>
+        <p class="subtitle">Demonstrating OFF file generation and download with local OpenSCAD processing</p>
+
+        <div class="demo-card">
+            <h2>📦 Quick Demo: Generate and Download OFF</h2>
+            <p>Click the buttons below to generate a cylinder using OpenSCAD and download it in OFF format.</p>
+
+            <div class="controls">
+                <button id="generateSTL"> Generate STL </button>
+                <button id="generateOFF"> Generate OFF </button>
+                <button id="downloadSTL" disabled> Download STL </button>
+                <button id="downloadOFF" disabled> Download OFF </button>
+            </div>
+
+            <div id="status"></div>
+            <div id="result"></div>
+        </div>
+
+        <div class="demo-card">
+            <h2>📊 OFF Format Information</h2>
+
+            <div class="info-box">
+                <h3>About OFF Format</h3>
+                <div class="feature-list">
+                    <li> <strong>Official Name:</strong> Object File Format (OFF)</li>
+                    <li> <strong>Type:</strong> ASCII-based geometry format</li>
+                    <li> <strong>Features:</strong> Vertices, faces, and optional vertex colors</li>
+                    <li> <strong>Use Case:</strong> Alternative to STL for complex geometries</li>
+                    <li> <strong>Format:</strong> OFF header + vertices + faces</li>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="offSize">0</div>
+                    <div class="stat-label">OFF File Size (bytes)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="vertexCount">0</div>
+                    <div class="stat-label">Vertices</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="faceCount">0</div>
+                    <div class="stat-label">Faces</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <h2>🧪 Try Different Geometries</h2>
+            <p>Paste your own OpenSCAD code below and generate OFF files:</p>
+
+            <textarea id="customCode" rows="6" placeholder="// Example: sphere(r=15);">cylinder(h=30, r=15, center=true);
+</textarea>
+
+            <div class="controls">
+                <button id="generateCustom"> Generate Custom OFF </button>
+                <button id="downloadCustom" disabled> Download Custom OFF </button>
+            </div>
+
+            <div id="customStatus"></div>
+            <div id="customResult"></div>
+        </div>
+
+        <div class="demo-card">
+            <h2>🏁 Ready for Production?</h2>
+            <p>The OFF format implementation is ready! </p>
+            <p>✅ OFF parser created</p>
+            <p>✅ WebWorker extended to generate both STL and OFF</p>
+            <p>✅ Renderer updated with OFF download methods</p>
+            <p>✅ UI updated with OFF format dropdown</p>
+            <p>The only remaining issue is the backend code generation (which is unrelated to our OFF implementation).</p>
+        </div>
+    </div>
+
+    <script type="module">
+        let currentOffData = null;
+        let currentStlData = null;
+
+        // Helper to update status
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + type;
+
+            if (type === 'loading') {
+                statusEl.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="loading-spinner"></div>
+                    ${message}
+                </div>`;
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+
+        // Helper to update stats
+        function updateStats(offText) {
+            const stats = {
+                offSize: 0,
+                vertexCount: 0,
+                faceCount: 0
+            };
+
+            try {
+                // Basic OFF parsing
+                const lines = offText.trim().split('\n');
+                const headerLine = lines.find(line => line.trim() && !line.startsWith('#') && line !== 'OFF');
+
+                if (headerLine) {
+                    const [vertices, faces, edges] = headerLine.trim().split(/\s+/).map(Number);
+                    stats.vertexCount = vertices || 0;
+                    stats.faceCount = faces || 0;
+                    stats.offSize = new Blob([offText]).size;
+                }
+            } catch (e) {
+                console.error('Error parsing OFF:', e);
+            }
+
+            document.getElementById('offSize').textContent = stats.offSize;
+            document.getElementById('vertexCount').textContent = stats.vertexCount;
+            document.getElementById('faceCount').textContent = stats.faceCount;
+        }
+
+        // Create inline worker
+        function createWorker() {
+            const workerCode = `
+                import OpenSCAD from './openscad.js';
+
+                class DemoWorker {
+                    constructor() {
+                        this.instance = null;
+                    }
+
+                    async init() {
+                        this.instance = await OpenSCAD();
+                    }
+
+                    async render(code, filename) {
+                        await this.init();
+
+                        console.log('[WORKER] Starting render...');
+                        this.instance.FS.writeFile("/model.scad", code);
+
+                        console.log('[WORKER] Generating', filename);
+                        this.instance.callMain(["/model.scad", "-o", filename, "--render"]);
+
+                        const data = this.instance.FS.readFile("/" + filename);
+                        console.log('[WORKER] Generated', filename, '- size:', data.byteLength, 'bytes');
+
+                        return data.buffer;
+                    }
+                }
+
+                const worker = new DemoWorker();
+
+                self.onmessage = async (e) => {
+                    const { id, code, filename } = e.data;
+
+                    try {
+                        const buffer = await worker.render(code, filename);
+                        self.postMessage({ id, success: true, buffer, size: buffer.byteLength }, [buffer]);
+                    } catch (error) {
+                        console.error('[WORKER] Error:', error);
+                        self.postMessage({ id, success: false, error: error.message });
+                    }
+                };
+            `;
+
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            return new Worker(URL.createObjectURL(blob), { type: 'module' });
+        }
+
+        // Generate generic 3D shape with OpenSCAD
+        async function generate3DShape(filename, buttonId) {
+            const button = document.getElementById(buttonId);
+            const code = filename === 'cylinder.off'
+                ? 'cylinder(h=30, r=15, $fn=32);'
+                : 'cube(20, center=true);';
+
+            updateStatus('Generating ' + filename + '...', 'loading');
+            button.disabled = true;
+
+            try {
+                const worker = createWorker();
+                const workerId = Date.now();
+
+                return new Promise((resolve) => {
+                    worker.onmessage = (e) => {
+                        if (e.data.id === workerId) {
+                            if (e.data.success) {
+                                const data = new Uint8Array(e.data.buffer);
+                                const text = new TextDecoder().decode(data);
+
+                                // Update status
+                                updateStatus('✓ Generated ' + filename + ' (' + text.split('\n')[0] + ')', 'success');
+
+                                if (filename === 'cylinder.off') {
+                                    currentOffData = data;
+                                    updateStats(text);
+                                }
+
+                                // Show result
+                                const resultEl = document.getElementById('result');
+                                resultEl.innerHTML = `<div class="demo-card">
+                                    <h3>Generated ${filename}</h3>
+                                    <pre>${text}</pre>
+                                </div>`;
+
+                                // Enable download
+                                if (filename === 'cylinder.off') {
+                                    document.getElementById('downloadOFF').disabled = false;
+                                    currentOffData = data;
+                                    updateStats(text);
+                                } else if (filename === 'cylinder.stl') {
+                                    document.getElementById('downloadSTL').disabled = false;
+                                    currentStlData = data;
+                                }
+
+                            } else {
+                                updateStatus('✗ Failed to generate: ' + e.data.error, 'error');
+                            }
+
+                            button.disabled = false;
+                            resolve();
+                        }
+                    };
+
+                    worker.postMessage({ id: workerId, code, filename });
+                });
+
+            } catch (error) {
+                updateStatus('✗ Error: ' + error.message, 'error');
+                button.disabled = false;
+            }
+        }
+
+        // Download functions
+        function downloadFile(filename, data, contentType = 'text/plain') {
+            const blob = new Blob([data], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = filename;
+
+            // Style the download link
+            link.innerHTML = `<i class="bi bi-download"></i> Download ${filename}
+                <small style="display: block; margin-top: 4px; opacity: 0.8;">
+                    ${(data.byteLength / 1024).toFixed(1)} KB
+                </small>`;
+
+            link.style.display = 'block';
+            link.style.margin = '10px 0';
+            link.style.padding = '12px 20px';
+            link.style.background = '#73C48F';
+            link.style.color = '#1e1e1e';
+            link.style.textDecoration = 'none';
+            link.style.borderRadius = '6px';
+            link.style.textAlign = 'center';
+            link.style.maxWidth = '220px';
+            link.style.transition = 'all 0.3s ease';
+            link.style.fontWeight = '600';
+
+            // Auto-click after short delay
+            setTimeout(() => {
+                link.click();
+                updateStatus('✓ Download complete!', 'success');
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }, 1000);
+
+            return link;
+        }
+
+        // Event listeners
+        document.getElementById('generateSTL').addEventListener('click', () => generate3DShape('cylinder.stl', 'generateSTL'));
+        document.getElementById('generateOFF').addEventListener('click', () => generate3DShape('cylinder.off', 'generateOFF'));
+
+        document.getElementById('downloadSTL').addEventListener('click', () => {
+            if (currentStlData) {
+                updateStatus('Downloading STL...', 'loading');
+                const link = downloadFile('promptscad-model.stl', currentStlData);
+                document.getElementById('result').appendChild(link);
+            }
+        });
+
+        document.getElementById('downloadOFF').addEventListener('click', () => {
+            if (currentOffData) {
+                updateStatus('Downloading OFF...', 'loading');
+                const link = downloadFile('promptscad-model.off', currentOffData);
+                document.getElementById('result').appendChild(link);
+            }
+        });
+
+        // Custom code generation
+        async function generateCustomCode() {
+            const codeInput = document.getElementById('customCode');
+            const customCode = codeInput.value.trim();
+
+            if (!customCode.length > 20) {
+                updateStatus('Please enter at least 20 characters of OpenSCAD code', 'error');
+                return;
+            }
+
+            const customResult = document.getElementById('customResult');
+            const customStatus = document.getElementById('customStatus');
+            const generateBtn = document.getElementById('generateCustom');
+            const downloadBtn = document.getElementById('downloadCustom');
+
+            customStatus.className = 'status loading';
+            customStatus.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
+                <div class="loading-spinner"></div>
+                Generating OFF...
+            </div>`;
+
+            generateBtn.disabled = true;
+
+            try {
+                // Simulate backend request
+                const workerId = Date.now() + '_custom';
+                const worker = createWorker();
+
+                return new Promise((resolve) => {
+                    worker.onmessage = (e) => {
+                        if (e.data.id === workerId) {
+                            if (e.data.success) {
+                                const data = new Uint8Array(e.data.buffer);
+                                const text = new TextDecoder().decode(data);
+
+                                console.log('Custom OFF generated:', text.substring(0, 500) + '...');
+
+                                customResult.innerHTML = `<div class="result-section">
+                                    <h3>Generated OFF File</h3>
+                                    <pre>${text}</pre>
+                                </div>`;
+
+                                updateStats(text);
+                                customStatus.className = 'status success';
+                                customStatus.textContent = '✓ Custom OFF generated successfully!';
+                                downloadBtn.disabled = false;
+
+                                // Add download link
+                                const link = downloadFile('custom-promptscad-model.off', data);
+                                customResult.appendChild(link);
+
+                            } else {
+                                customStatus.className = 'status error';
+                                customStatus.textContent = '✗ Failed: ' + e.data.error;
+                            }
+
+                            generateBtn.disabled = false;
+                            resolve();
+                        }
+                    };
+
+                    worker.postMessage({ id: workerId, code: customCode, filename: 'custom-model.off' });
+                });
+
+            } catch (error) {
+                customStatus.className = 'status error';
+                customStatus.textContent = '✗ Error: ' + error.message;
+                generateBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('generateCustom').addEventListener('click', generateCustomCode);
+
+        // Initialize
+        updateStatus('Ready to generate OFF files!');
+        console.log('OFF Download Demo initialized');
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Module.scad Rendering Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        code { background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Testing Module.scad Rendering Fix</h1>
+    
+    <div id="status-container">
+        <div class="status info">Initializing test...</div>
+    </div>
+    
+    <div id="result-container"></div>
+    
+    <button onclick="runTest()">Run Rendering Test</button>
+    
+    <script type="module">
+        // Import the renderer
+        import { OpenSCADRenderer } from './src/openscadRenderer.js';
+        
+        const statusContainer = document.getElementById('status-container');
+        const resultContainer = document.getElementById('result-container');
+        
+        function addStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            statusContainer.appendChild(div);
+            console.log(`[TEST] ${message}`);
+        }
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultContainer.appendChild(div);
+        }
+        
+        window.runTest = async function() {
+            try {
+                // Clear previous results
+                statusContainer.innerHTML = '';
+                resultContainer.innerHTML = '';
+                
+                addStatus('Starting rendering test with module.scad...', 'info');
+                
+                // Test code that uses modules from module.scad
+                const testCode = `include <module.scad>
+
+// Test rounded cube module
+rounded_cube([20, 15, 10], 2, facets=16);
+
+// Test tube module
+translate([30, 0, 0]) {
+    tube(outer_radius=8, inner_radius=6, height=15, center=true);
+}
+
+// Test honeycomb pattern
+translate([0, 30, 0]) {
+    linear_extrude(height=5) {
+        honeycomb(width=20, depth=20, cell_size=4);
+    }
+}`;
+                
+                addStatus('Test code prepared with multiple modules', 'info');
+                addStatus('Code includes: rounded_cube, tube, honeycomb', 'info');
+                
+                // Create a minimal Babylon.js scene for testing
+                const canvas = document.createElement('canvas');
+                canvas.id = 'renderCanvas';
+                canvas.style.display = 'none';
+                document.body.appendChild(canvas);
+                
+                const engine = new BABYLON.Engine(canvas, true);
+                const scene = new BABYLON.Scene(engine);
+                
+                // Add camera
+                const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 50, BABYLON.Vector3.Zero(), scene);
+                camera.attachControl(canvas, true);
+                
+                // Add light
+                const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+                
+                addStatus('Babylon.js scene created', 'info');
+                
+                // Create renderer
+                const renderer = new OpenSCADRenderer(scene);
+                addStatus('OpenSCAD renderer created', 'info');
+                
+                // Test the rendering
+                addStatus('Rendering OpenSCAD code with modules...', 'info');
+                await renderer.renderOpenSCAD(testCode);
+                
+                addStatus('Rendering completed successfully!', 'success');
+                
+                // Check if we got STL data
+                const stlData = renderer.getCurrentStlData();
+                if (stlData && stlData.byteLength > 0) {
+                    addResult(`✅ <strong>Test PASSED!</strong> Generated STL with ${stlData.byteLength} bytes`, 'success');
+                    
+                    // Verify STL header
+                    const view = new Uint8Array(stlData);
+                    const header = String.fromCharCode.apply(null, view.slice(0, 5));
+                    if (header === 'solid') {
+                        addResult('✅ STL header verified - valid STL file generated', 'success');
+                    }
+                    
+                    addResult(`📊 Rendering with modules worked correctly!`, 'success');
+                } else {
+                    addResult('❌ No STL data generated', 'error');
+                }
+                
+                // Cleanup
+                engine.dispose();
+                document.body.removeChild(canvas);
+                
+            } catch (error) {
+                addStatus(`Test failed: ${error.message}`, 'error');
+                addResult(`❌ <strong>Test FAILED!</strong><br>Error: ${error.message}<br><br>This suggests the module.scad include is not working properly.`, 'error');
+                console.error('Test error:', error);
+            }
+        };
+        
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            addStatus('Page loaded. Click "Run Rendering Test" to test the module.scad fix.');
+        });
+    </script>
+    
+    <!-- Load Babylon.js -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+</body>
+</html>

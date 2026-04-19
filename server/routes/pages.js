@@ -24,4 +24,14 @@ router.get('/gallery.html', (req, res) => {
     res.render('gallery');
 });
 
+// Test route for module.scad fix
+router.get('/test-module-fix', (req, res) => {
+    res.sendFile(path.join(parentDir, 'test-worker-direct.html'));
+});
+
+// Verification page for module.scad fix
+router.get('/verify-fix', (req, res) => {
+    res.sendFile(path.join(parentDir, 'verify-fix.html'));
+});
+
 export default router;

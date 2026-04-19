@@ -69,9 +69,17 @@ export class OpenSCADRenderer {
             }
 
             if (error) {
+                console.error(`[RENDERER] Worker error for request ${id}:`, error);
                 request.reject(new Error(error));
             } else {
+                console.log(`[RENDERER] Worker message received for request ${id}:`, { type: request.type, hasResult: !!result });
                 if (request.type === 'render') {
+                    if (!result) {
+                        console.error(`[RENDERER] No render result received for request ${id}`);
+                        request.reject(new Error('No render data received from worker'));
+                        return;
+                    }
+                    console.log(`[RENDERER] Processing render result:`, { resultType: typeof result, isBufferArray: Array.isArray(result) });
                     this._handleRenderResult(result, request.code).then(request.resolve).catch(request.reject);
                 } else if (request.type === 'getSTL') {
                     try {
@@ -525,31 +533,50 @@ export class OpenSCADRenderer {
         });
     }
 
-    async _handleRenderResult(stlBuffer, code, fromCache = false) {
+    async _handleRenderResult(renderData, code, fromCache = false) {
+        console.log(`[RENDERER] _handleRenderResult called`);
+
+        // Check if renderData is undefined
+        if (!renderData) {
+            console.error('[RENDERER] ERROR: renderData is undefined!');
+            throw new Error('No render data received from worker');
+        }
+
         // Store STL data for future use
-        this.currentStlData = new Uint8Array(stlBuffer);
-        
-        // Save code and STL with hash if not from cache
+        this.currentStlData = new Uint8Array(renderData);
+        console.log(`📐 STL data stored: ${Math.round(this.currentStlData.length / 1024)}KB`);
+
+        // Save code with STL data if not from cache
         if (!fromCache && code && this.currentHash) {
-            await saveCodeWithHash(this.currentHash, code, this.currentStlData);
-            console.log(`💾 Cached model with hash: ${this.currentHash.substring(0, 8)}... (${Math.round(this.currentStlData.length / 1024)}KB)`);
-            
+            try {
+                await saveCodeWithHash(this.currentHash, code, this.currentStlData);
+                console.log(`💾 Cached model with hash: ${this.currentHash.substring(0, 8)}...`);
+            } catch (cacheError) {
+                console.warn('[RENDERER] Failed to cache model:', cacheError);
+            }
+
             // Cleanup old entries periodically
             if (Math.random() < 0.1) { // 10% chance
-                const deletedCount = cleanupOldEntries();
-                if (deletedCount > 0) {
-                    console.log(`🧹 Cleaned up ${deletedCount} old cached models`);
+                try {
+                    const deletedCount = cleanupOldEntries();
+                    if (deletedCount > 0) {
+                        console.log(`🧹 Cleaned up ${deletedCount} old cached models`);
+                    }
+                } catch (cleanupError) {
+                    console.warn('[RENDERER] Cleanup failed:', cleanupError);
                 }
             }
         }
-        
-        // Convert buffer to base64
-        const buffer = this._arrayBufferToBase64(stlBuffer);
-        
-        // Clear scene and load STL
+
+        // Clear scene
         this._clearScene();
+
+        // Load STL to scene
+        console.log(`[RENDERER] Loading STL to scene`);
+        const buffer = this._arrayBufferToBase64(renderData);
         await this._loadSTLToScene(buffer);
     }
+    
     /**
      * Download the generated STL file
      * @returns {Promise<void>}

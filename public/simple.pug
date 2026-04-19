@@ -46,9 +46,17 @@ html(lang="en")
                 i.bi.bi-save
                 | Save
                 span.shortcut Ctrl + S
-              a(href="#" onclick="downloadSTL(event)")
+              a(href="#")
                 i.bi.bi-download
-                | Download STL
+                | Download Model
+                i.bi.bi-chevron-right(style="margin-left: auto; float: right;")
+                .submenu
+                  a(href="#" onclick="downloadSTL(event)")
+                    i.bi.bi-box
+                    | STL Format
+                  a(href="#" onclick="downloadOFF(event)")
+                    i.bi.bi-file-code
+                    | OFF Format
               a(href="#" onclick="downloadSCAD(event)")
                 i.bi.bi-download
                 | Download SCAD
