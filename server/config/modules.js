@@ -30,9 +30,9 @@ export const ESSENTIAL_MODULES = {
 
   // Mechanical Components
   gear: {
-    signature: "gear(number_of_teeth, circular_pitch, pressure_angle=20, thickness=5)",
+    signature: "gear(number_of_teeth, circular_pitch=false, diametral_pitch=false, pressure_angle=20, clearance=0)",
     description: "Create a spur gear",
-    example: "gear(20, 200, 20, 5);",
+    example: "gear(20, circular_pitch=200);",
     category: "mechanical",
     priority: "High"
   },
@@ -69,39 +69,39 @@ export const ESSENTIAL_MODULES = {
   joint: {
     signature: "joint(type, size, tolerance=0.2)",
     description: "Create various joint types (pin, ball, universal)",
-    example: "joint('pin', 10, 0.2);",
+    example: 'joint("pin", 10, 0.2);',
     category: "structural",
     priority: "Medium"
   },
 
   // Fasteners & Hardware
   screw_holes: {
-    signature: "screw_holes(pattern, screw_size, depth, positions)",
-    description: "Create screw hole patterns",
-    example: "screw_holes('grid', 3, 5, [[0,0], [20,0], [0,20], [20,20]]);",
+    signature: "screw_holes(pattern, screw_size, depth, positions, chamfer=false)",
+    description: "Create screw hole patterns. (0,0,0) is the very bottom of the screw; the hole extends upward along +Z from z=0 to z=depth. Set chamfer=true to countersink the top. Use inside difference() with a base object.",
+    example: 'difference() { cube([20,20,10], center=true); translate([0, 0, -5]) screw_holes("single", 3, 10, [[0,0]], chamfer=true); }',
     category: "hardware",
     priority: "High"
   },
   nut_trap: {
     signature: "nut_trap(size, depth, type='hex')",
     description: "Create hex nut trap/trap for nuts",
-    example: "nut_trap(6, 3, 'hex');",
+    example: 'nut_trap(6, 3, "hex");',
     category: "hardware",
     priority: "Medium"
   },
 
   // Shapes & Patterns
   honeycomb: {
-    signature: "honeycomb(size, cell_size, thickness)",
-    description: "Create honeycomb pattern",
-    example: "honeycomb([50, 50], 5, 2);",
+    signature: "honeycomb(width, depth, cell_size=5)",
+    description: "Create 2D honeycomb pattern. Use linear_extrude(thickness) to make it 3D.",
+    example: "linear_extrude(2) honeycomb(50, 40, 5);",
     category: "patterns",
     priority: "Medium"
   },
   lattice: {
-    signature: "lattice(size, strut_width, pattern='grid')",
-    description: "Create lattice structure",
-    example: "lattice([30, 30, 20], 2, 'grid');",
+    signature: "lattice(size, cell_size=5, beam_width=1)",
+    description: "Create 3D lattice structure",
+    example: "lattice([30, 30, 20], 5, 1);",
     category: "patterns",
     priority: "Low"
   },
@@ -115,25 +115,25 @@ export const ESSENTIAL_MODULES = {
     priority: "Medium"
   },
   helix: {
-    signature: "helix(radius, pitch, turns, thickness=1)",
+    signature: "helix(radius, pitch, height, thickness=1, facets=32)",
     description: "Create helix/spring shape",
-    example: "helix(10, 5, 5, 1);",
+    example: "helix(10, 5, 30, 1);",
     category: "advanced",
     priority: "Low"
   },
 
   // Utility Functions
-  extrude_text: {
-    signature: "extrude_text(text, size, height, font='Arial')",
+  text_3d: {
+    signature: "text_3d(text, size=10, height=2, font='Liberation Sans', center=false)",
     description: "Create 3D text",
-    example: "extrude_text('Hello', 10, 2, 'Arial');",
+    example: 'text_3d("Hello", 10, 2);',
     category: "utility",
     priority: "Low"
   },
   array_pattern: {
-    signature: "array_pattern(object, spacing, count, direction='x')",
-    description: "Create array pattern of objects",
-    example: "array_pattern(cube(5), 10, 3, 'x');",
+    signature: "array_pattern(spacing, count, direction='x')",
+    description: "Create array pattern of objects (uses children())",
+    example: 'array_pattern(10, 3, "x") cube(5);',
     category: "utility",
     priority: "Medium"
   }

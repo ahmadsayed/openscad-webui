@@ -30,7 +30,6 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --chown=appuser:appgroup package.json ./
 COPY --chown=appuser:appgroup server ./server
-COPY --chown=appuser:appgroup src ./src
 COPY --chown=appuser:appgroup public ./public
 
 # Create requests directory with proper permissions

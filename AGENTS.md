@@ -50,6 +50,8 @@ PromptSCAD is a web-based AI-powered OpenSCAD code generator that converts natur
 │   ├── gallery.pug            # Model gallery view
 │   ├── openscad.wasm.js       # OpenSCAD WebAssembly runtime
 │   └── src/                   # Frontend JavaScript
+│       └── modules/           # OpenSCAD module implementations
+│           └── module.scad    # Source of truth for all OpenSCAD modules
 ├── requests/                   # Request storage (UUID.json files)
 ├── tests/                      # Jest test files
 ├── scripts/                    # Build and deployment scripts
@@ -126,9 +128,10 @@ make clean-all
 - Follow async generation pattern with polling for long operations
 
 ### OpenSCAD Integration
-- All OpenSCAD modules are defined in `server/config/modules.js` with categories and descriptions
+- **Source of truth**: `public/src/modules/module.scad` contains the actual OpenSCAD module implementations
+- **Prompt reference**: `server/config/modules.js` provides module metadata (categories, descriptions, signatures, examples) for the AI prompt — keep it in sync with `module.scad`
 - Module filtering logic is implemented in `server/services/openscad/modules.js`
-- When adding new modules, follow the existing JSON structure with category, name, and description fields
+- When adding new modules, update both `public/src/modules/module.scad` (the implementation) and `server/config/modules.js` (the prompt reference)
 
 ## Testing Instructions
 
@@ -252,7 +255,15 @@ All API endpoints return JSON responses with the structure:
 
 ## Module System
 
-The project includes 70+ pre-defined OpenSCAD modules organized by categories:
+The project includes pre-defined OpenSCAD modules organized by categories.
+
+### Source of Truth
+- **`public/src/modules/module.scad`** — The actual OpenSCAD code for all custom modules. This file is included in generated models and is what the WebAssembly runtime executes.
+
+### Prompt Reference
+- **`server/config/modules.js`** — Metadata catalogue (signatures, descriptions, examples, categories, priority) used to construct AI prompts. This helps the model know which modules are available and how to call them. Must be kept in sync with `module.scad`.
+
+### Categories
 - **Basic**: Rounded geometry (cubes, cylinders, pyramids)
 - **Advanced Geometry**: Complex shapes (torus, tube, prism, ellipsoid)
 - **Mechanical**: Gears, threads, fasteners

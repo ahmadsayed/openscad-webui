@@ -1,4 +1,5 @@
 // Rounded Cube (or Rectangular Prism)
+// Origin: (TODO)
 module rounded_cube(size, radius, facets=24) {
     r = radius;
     original_size = size - 2 * r * [1,1,1];
@@ -13,6 +14,7 @@ module rounded_cube(size, radius, facets=24) {
 }
 
 // Rounded Cylinder
+// Origin: (TODO)
 module rounded_cylinder(height, radius, rounding_radius, facets=24) {
     r = rounding_radius;
     original_h = height - 2 * r;
@@ -28,6 +30,7 @@ module rounded_cylinder(height, radius, rounding_radius, facets=24) {
 }
 
 // Rounded Pyramid
+// Origin: (TODO)
 module rounded_pyramid(base, height, radius, facets=24) {
     r = radius;
     original_base = [base[0] - 2 * r, base[1] - 2 * r];
@@ -44,6 +47,7 @@ module rounded_pyramid(base, height, radius, facets=24) {
 }
 
 // Rounded Cone
+// Origin: (TODO)
 module rounded_cone(base_radius, height, rounding_radius, facets=24) {
     r = rounding_radius;
     original_h = height - 2 * r;
@@ -80,6 +84,7 @@ module rounded_cone(base_radius, height, rounding_radius, facets=24) {
 function pitch_circular2diameter(number_of_teeth,circular_pitch) = number_of_teeth * circular_pitch / 180;
 function pitch_diametral2diameter(number_of_teeth,diametral_pitch) = number_of_teeth / diametral_pitch;
 
+// Origin: (TODO)
 module gear(number_of_teeth,
 		circular_pitch=false, diametral_pitch=false,
 		pressure_angle=20, clearance = 0,
@@ -155,6 +160,7 @@ module gear(number_of_teeth,
 }
 
 
+// Origin: (TODO)
 module involute_gear_tooth(
 					pitch_radius,
 					root_radius,
@@ -227,6 +233,7 @@ function polar_to_cartesian(polar) = [
 // Test Cases
 //===============
 
+// Origin: (TODO)
 module test_gears()
 {
 	gear(number_of_teeth=51,circular_pitch=200);
@@ -235,6 +242,7 @@ module test_gears()
 }
 
 
+// Origin: (TODO)
 module demo_3d_gears()
 {
 	// //double helical gear
@@ -254,6 +262,7 @@ module demo_3d_gears()
 
 }
 
+// Origin: (TODO)
 module test_involute_curve()
 {
 	for (i=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
@@ -266,6 +275,7 @@ module test_involute_curve()
 
 // 5. Honeycomb Pattern
 // ---------------------------------------------
+// Origin: (TODO)
 module honeycomb(width, depth, cell_size=5) {
   // Example: linear_extrude(5) honeycomb(width=50, depth=40, cell_size=8);
   for (x = [0:cell_size:width], y = [0:cell_size*1.5:depth]) {
@@ -276,6 +286,7 @@ module honeycomb(width, depth, cell_size=5) {
 
 // 6. Chamfered Cube
 // ---------------------------------------------
+// Origin: (TODO)
 module chamfered_cube(size, chamfer=1) {
     // Creates a cube with chamfered edges
     hull() {
@@ -292,6 +303,7 @@ module chamfered_cube(size, chamfer=1) {
 
 // 7. Hollow Cylinder (Tube)
 // ---------------------------------------------
+// Origin: (TODO)
 module tube(outer_radius, inner_radius, height, center=false) {
     difference() {
         cylinder(r=outer_radius, h=height, center=center);
@@ -301,6 +313,7 @@ module tube(outer_radius, inner_radius, height, center=false) {
 
 // 8. Torus
 // ---------------------------------------------
+// Origin: (TODO)
 module torus(major_radius, minor_radius, facets=32) {
     rotate_extrude($fn=facets)
         translate([major_radius, 0, 0])
@@ -309,6 +322,7 @@ module torus(major_radius, minor_radius, facets=32) {
 
 // 9. Prism (N-sided)
 // ---------------------------------------------
+// Origin: (TODO)
 module prism(sides, radius, height, center=false) {
     linear_extrude(height=height, center=center)
         circle(r=radius, $fn=sides);
@@ -316,6 +330,7 @@ module prism(sides, radius, height, center=false) {
 
 // 10. Slot (Rounded Rectangle)
 // ---------------------------------------------
+// Origin: (TODO)
 module slot(length, width, height, center=false) {
     r = width/2;
     linear_extrude(height=height, center=center) {
@@ -328,6 +343,7 @@ module slot(length, width, height, center=false) {
 
 // 11. Fillet (2D)
 // ---------------------------------------------
+// Origin: (TODO)
 module fillet_2d(radius, angle=90) {
     difference() {
         square([radius, radius]);
@@ -338,12 +354,14 @@ module fillet_2d(radius, angle=90) {
 
 // 12. Chamfer (2D)
 // ---------------------------------------------
+// Origin: (TODO)
 module chamfer_2d(size) {
     polygon(points=[[0,0], [size,0], [0,size]]);
 }
 
 // 13. Rounded Rectangle (2D)
 // ---------------------------------------------
+// Origin: (TODO)
 module rounded_rectangle(size, radius, center=false) {
     x = size[0];
     y = size[1];
@@ -361,6 +379,7 @@ module rounded_rectangle(size, radius, center=false) {
 
 // 14. Helix
 // ---------------------------------------------
+// Origin: (TODO)
 module helix(radius, pitch, height, thickness=1, facets=32) {
     turns = height / pitch;
     step = 360 / facets;
@@ -377,6 +396,7 @@ module helix(radius, pitch, height, thickness=1, facets=32) {
 
 // 15. Spring
 // ---------------------------------------------
+// Origin: (TODO)
 module spring(radius, wire_radius, pitch, height, facets=16) {
     turns = height / pitch;
     step = 360 / facets;
@@ -393,6 +413,7 @@ module spring(radius, wire_radius, pitch, height, facets=16) {
 
 // 16. Knurling Pattern
 // ---------------------------------------------
+// Origin: (TODO)
 module knurling(radius, height, pitch=2, depth=0.5, facets=64) {
     difference() {
         cylinder(r=radius, h=height, $fn=facets);
@@ -409,6 +430,7 @@ module knurling(radius, height, pitch=2, depth=0.5, facets=64) {
 
 // 17. Text Extrusion Helper
 // ---------------------------------------------
+// Origin: (TODO)
 module text_3d(text, size=10, height=2, font="Liberation Sans", center=false) {
     linear_extrude(height=height, center=center)
         text(text, size=size, font=font, halign="center", valign="center");
@@ -416,6 +438,7 @@ module text_3d(text, size=10, height=2, font="Liberation Sans", center=false) {
 
 // 18. Screw Thread (Simple)
 // ---------------------------------------------
+// Origin: (TODO)
 module simple_thread(radius, pitch, height, thread_depth=0.5, facets=32) {
     turns = height / pitch;
     
@@ -433,6 +456,7 @@ module simple_thread(radius, pitch, height, thread_depth=0.5, facets=32) {
 
 // 19. Bearing (Simple)
 // ---------------------------------------------
+// Origin: (TODO)
 module bearing(outer_radius, inner_radius, height, ball_radius=2, num_balls=8) {
     difference() {
         cylinder(r=outer_radius, h=height);
@@ -457,6 +481,7 @@ module bearing(outer_radius, inner_radius, height, ball_radius=2, num_balls=8) {
 
 // 20. Washer
 // ---------------------------------------------
+// Origin: (TODO)
 module washer(outer_radius, inner_radius, thickness) {
     difference() {
         cylinder(r=outer_radius, h=thickness);
@@ -466,6 +491,7 @@ module washer(outer_radius, inner_radius, thickness) {
 
 // 21. Countersunk Hole
 // ---------------------------------------------
+// Origin: (TODO)
 module countersunk_hole(hole_radius, head_radius, head_depth, total_depth) {
     union() {
         cylinder(r=hole_radius, h=total_depth);
@@ -476,6 +502,7 @@ module countersunk_hole(hole_radius, head_radius, head_depth, total_depth) {
 
 // 22. Dovetail Joint
 // ---------------------------------------------
+// Origin: (TODO)
 module dovetail_male(width, height, depth, angle=15) {
     linear_extrude(height=depth) {
         polygon(points=[
@@ -487,6 +514,7 @@ module dovetail_male(width, height, depth, angle=15) {
     }
 }
 
+// Origin: (TODO)
 module dovetail_female(width, height, depth, angle=15, clearance=0.1) {
     linear_extrude(height=depth+0.1) {
         polygon(points=[
@@ -500,6 +528,7 @@ module dovetail_female(width, height, depth, angle=15, clearance=0.1) {
 
 // 23. Parametric Bolt
 // ---------------------------------------------
+// Origin: (TODO)
 module bolt(head_radius, head_height, shaft_radius, shaft_length, thread_pitch=1) {
     // Head
     cylinder(r=head_radius, h=head_height);
@@ -511,6 +540,7 @@ module bolt(head_radius, head_height, shaft_radius, shaft_length, thread_pitch=1
 
 // 24. Parametric Nut
 // ---------------------------------------------
+// Origin: (TODO)
 module nut(outer_radius, inner_radius, height, sides=6, thread_pitch=1) {
     difference() {
         cylinder(r=outer_radius, h=height, $fn=sides);
@@ -520,6 +550,7 @@ module nut(outer_radius, inner_radius, height, sides=6, thread_pitch=1) {
 
 // 25. Flexible Hinge
 // ---------------------------------------------
+// Origin: (TODO)
 module flexible_hinge(length, width, thickness, gap=0.5, segments=10) {
     segment_length = length / segments;
     
@@ -537,6 +568,7 @@ module flexible_hinge(length, width, thickness, gap=0.5, segments=10) {
 
 // 26. Lattice Structure
 // ---------------------------------------------
+// Origin: (TODO)
 module lattice(size, cell_size=5, beam_width=1) {
     for (x = [0:cell_size:size[0]]) {
         translate([x, 0, 0])
@@ -554,6 +586,7 @@ module lattice(size, cell_size=5, beam_width=1) {
 
 // 27. Voronoi Pattern (Simple)
 // ---------------------------------------------
+// Origin: (TODO)
 module voronoi_cell(points, bounds) {
     // Simple implementation - creates polygonal cells
     // This is a simplified version; full Voronoi requires more complex algorithms
@@ -578,6 +611,7 @@ module voronoi_cell(points, bounds) {
 
 // 28. Spiral
 // ---------------------------------------------
+// Origin: (TODO)
 module spiral(inner_radius, outer_radius, height, turns=5, facets=64) {
     step = 360 / facets;
     radius_step = (outer_radius - inner_radius) / (turns * 360 / step);
@@ -595,6 +629,7 @@ module spiral(inner_radius, outer_radius, height, turns=5, facets=64) {
 
 // 29. Parametric Gear Rack
 // ---------------------------------------------
+// Origin: (TODO)
 module gear_rack(length, tooth_count, tooth_height=2, tooth_width=3) {
     tooth_spacing = length / tooth_count;
     
@@ -614,6 +649,7 @@ module gear_rack(length, tooth_count, tooth_height=2, tooth_width=3) {
 
 // 30. Living Hinge
 // ---------------------------------------------
+// Origin: (TODO)
 module living_hinge(length, width, thickness=0.8, cut_width=0.4, cut_spacing=1.2) {
     difference() {
         cube([length, width, thickness]);
@@ -643,6 +679,7 @@ sharp_corners = 0;
 
 // basic block with cutout in top to be stackable, optional holes in bottom
 // start with this and begin 'carving'
+// Origin: (TODO)
 module grid_block(num_x=1, num_y=1, num_z=2, magnet_diameter=6.5, screw_depth=6, center=false, hole_overhang_remedy=false, half_pitch=false, box_corner_attachments_only = false) {
   corner_radius = 3.75;
   outer_size = gridfinity_pitch - gridfinity_clearance;  // typically 41.5
@@ -706,6 +743,7 @@ module grid_block(num_x=1, num_y=1, num_z=2, magnet_diameter=6.5, screw_depth=6,
 }
 
 
+// Origin: (TODO)
 module pad_grid(num_x, num_y, half_pitch=false) {
   // if num_x (or num_y) is less than 1 (or less than 0.5 if half_pitch is enabled) then round over the far side
   cut_far_x = (num_x < 1 && !half_pitch) || (num_x < 0.5);
@@ -744,6 +782,7 @@ module pad_grid(num_x, num_y, half_pitch=false) {
 }
 
 
+// Origin: (TODO)
 module pad_halfsize() {
   render()  // render here to keep tree from blowing up
   for (xi=[0:1]) for (yi=[0:1]) translate([xi*gridfinity_pitch/2, yi*gridfinity_pitch/2, 0])
@@ -757,11 +796,13 @@ module pad_halfsize() {
 
 // like a cylinder but produces a square solid instead of a round one
 // specified 'diameter' is the side length of the square, not the diagonal diameter
+// Origin: (TODO)
 module cylsq(d, h) {
   translate([-d/2, -d/2, 0]) cube([d, d, h]);
 }
 
 // like a tapered cylinder with two diameters, but square instead of round
+// Origin: (TODO)
 module cylsq2(d1, d2, h) {
   linear_extrude(height=h, scale=d2/d1)
   square([d1, d1], center=true);
@@ -769,6 +810,7 @@ module cylsq2(d1, d2, h) {
 
 // unit pad slightly oversize at the top to be trimmed or joined with other feet or the rest of the model
 // also useful as cutouts for stacking
+// Origin: (TODO)
 module pad_oversize(num_x=1, num_y=1, margins=0) {
   pad_corner_position = gridfinity_pitch/2 - 4; // must be 17 to be compatible
   bevel1_top = 0.8;     // z of top of bottom-most bevel (bottom of bevel is at z=0)
@@ -815,6 +857,7 @@ module pad_oversize(num_x=1, num_y=1, margins=0) {
 }
 
 // similar to cornercopy, can only copy to box corners
+// Origin: (TODO)
 module gridcopycorners(num_x, num_y, r, onlyBoxCorners = false) {
   for (xi=[1:num_x]) for (yi=[1:num_y]) 
     for (xx=[-1, 1]) for (yy=[-1, 1]) 
@@ -828,6 +871,7 @@ module gridcopycorners(num_x, num_y, r, onlyBoxCorners = false) {
 }
 
 // similar to quadtranslate but expands to extremities of a block
+// Origin: (TODO)
 module cornercopy(r, num_x=1, num_y=1) {
   for (xx=[-r, gridfinity_pitch*(num_x-1)+r]) for (yy=[-r, gridfinity_pitch*(num_y-1)+r]) 
     translate([xx, yy, 0]) children();
@@ -835,6 +879,7 @@ module cornercopy(r, num_x=1, num_y=1) {
 
 
 // make repeated copies of something(s) at the gridfinity spacing of 42mm
+// Origin: (TODO)
 module gridcopy(num_x, num_y) {
   for (xi=[1:num_x]) for (yi=[1:num_y]) translate([gridfinity_pitch*(xi-1), gridfinity_pitch*(yi-1), 0]) children();
 }
@@ -843,6 +888,7 @@ module gridcopy(num_x, num_y) {
 
 
 // Create a lid for Gridfinity system - use: base_lid(num_x, num_y);
+// Origin: (TODO)
 module base_lid(num_x, num_y) {
   magnet_od = 6.5;
   magnet_position = min(gridfinity_pitch/2-8, gridfinity_pitch/2-4-magnet_od/2);
@@ -863,6 +909,7 @@ module base_lid(num_x, num_y) {
 
 
 // Create a weighted baseplate with magnet and screw holes - use: weighted_baseplate(num_x, num_y);
+// Origin: (TODO)
 module weighted_baseplate(num_x, num_y) {
   magnet_od = 6.5;
   magnet_position = min(gridfinity_pitch/2-8, gridfinity_pitch/2-4-magnet_od/2);
@@ -894,6 +941,7 @@ module weighted_baseplate(num_x, num_y) {
 
 
 // Create a plain frame for Gridfinity system - use: frame_plain(num_x, num_y, extra_down=0, trim=0);
+// Origin: (TODO)
 module frame_plain(num_x, num_y, extra_down=0, trim=0) {
   ht = extra_down > 0 ? 4.4 : 5;
   corner_radius = 3.75;
@@ -904,4 +952,132 @@ module frame_plain(num_x, num_y, extra_down=0, trim=0) {
     translate([0, 0, trim ? 0 : -0.01]) 
     render() gridcopy(num_x, num_y) pad_oversize(margins=1);
   }
+}
+
+// ============================================================
+// Missing modules implemented to match server/config/modules.js
+// ============================================================
+
+// 46. Screw Holes
+// ---------------------------------------------
+// Origin: (0,0,0) is the very bottom of the screw hole.
+//          The hole extends upward along +Z from z=0 to z=depth.
+// pattern:   not used internally (reserved for future grid patterns)
+// screw_size: diameter of the screw shaft
+// depth:      total depth of the hole
+// positions:  list of [x, y] coordinates (placed at z=0)
+// chamfer:    if true, adds a countersink at the top for the screw head
+module screw_holes(pattern, screw_size, depth, positions, chamfer=false) {
+    head_diameter = screw_size * 2;
+    head_depth    = screw_size * 0.8;
+
+    for (pos = positions) {
+        translate([pos[0], pos[1], 0]) {
+            // Main shaft hole — starts at z=0, goes up to z=depth
+            cylinder(d=screw_size, h=depth);
+
+            // Countersink chamfer at the top (z=depth is the surface)
+            if (chamfer) {
+                translate([0, 0, depth - head_depth])
+                    cylinder(d1=screw_size, d2=head_diameter, h=head_depth);
+            }
+        }
+    }
+}
+
+// 47. Threaded Rod
+// ---------------------------------------------
+// Origin: (TODO)
+module threaded_rod(length, diameter, pitch) {
+    simple_thread(diameter/2, pitch, length);
+}
+
+// 48. Bearing Housing
+// ---------------------------------------------
+// Origin: (TODO)
+module bearing_housing(outer_diameter, inner_diameter, depth, flange_thickness=3) {
+    difference() {
+        union() {
+            cylinder(d=outer_diameter, h=depth);
+            cylinder(d=outer_diameter+6, h=flange_thickness);
+        }
+        translate([0, 0, -0.05])
+            cylinder(d=inner_diameter, h=depth+0.1);
+    }
+}
+
+// 49. L-Bracket
+// ---------------------------------------------
+// Origin: (TODO)
+module bracket(width, height, thickness, hole_diameter=0) {
+    difference() {
+        union() {
+            cube([width, thickness, height]);
+            cube([thickness, height, height]);
+        }
+        if (hole_diameter > 0) {
+            translate([width/2, thickness+0.05, height/2]) rotate([90, 0, 0])
+                cylinder(d=hole_diameter, h=thickness+0.1);
+            translate([-0.05, height/2, height/2]) rotate([0, 90, 0])
+                cylinder(d=hole_diameter, h=thickness+0.1);
+        }
+    }
+}
+
+// 50. Simple Hinge
+// ---------------------------------------------
+// Origin: (TODO)
+module hinge(length, width, pin_diameter, leaf_thickness=2) {
+    difference() {
+        union() {
+            cube([length/2, width, leaf_thickness]);
+            translate([length/2, 0, 0]) cube([length/2, width, leaf_thickness]);
+            translate([length/2, width/2, 0]) cylinder(d=pin_diameter+4, h=leaf_thickness);
+        }
+        translate([length/2, width/2, -0.05]) cylinder(d=pin_diameter, h=leaf_thickness+0.1);
+    }
+}
+
+// 51. Joint (pin, ball, universal)
+// ---------------------------------------------
+// Origin: (TODO)
+module joint(type, size, tolerance=0.2) {
+    effective_size = size - tolerance;
+    if (type == "pin") {
+        cylinder(d=effective_size, h=effective_size*2);
+    } else if (type == "ball") {
+        sphere(d=effective_size);
+        translate([0, 0, -effective_size/2]) cylinder(d=effective_size/2, h=effective_size);
+    } else if (type == "universal") {
+        cube([effective_size, effective_size/3, effective_size/3], center=true);
+        rotate([90, 0, 0]) cube([effective_size/3, effective_size/3, effective_size], center=true);
+    }
+}
+
+// 52. Nut Trap
+// ---------------------------------------------
+// Origin: (TODO)
+module nut_trap(size, depth, type="hex") {
+    if (type == "hex") {
+        cylinder(d=size*2/sqrt(3), h=depth, $fn=6);
+    } else {
+        cylinder(d=size, h=depth);
+    }
+}
+
+// 53. Array Pattern
+// OpenSCAD cannot pass objects as parameters, so this module uses children().
+// Usage: array_pattern(10, 3, "x") cube(5);
+// ---------------------------------------------
+// Origin: (TODO)
+module array_pattern(spacing, count, direction="x") {
+    for (i = [0:count-1]) {
+        if (direction == "x" || direction == "X") {
+            translate([i*spacing, 0, 0]) children();
+        } else if (direction == "y" || direction == "Y") {
+            translate([0, i*spacing, 0]) children();
+        } else if (direction == "z" || direction == "Z") {
+            translate([0, 0, i*spacing]) children();
+        }
+    }
 }
