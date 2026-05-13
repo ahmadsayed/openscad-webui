@@ -49,5 +49,5 @@ export function validateEnvVars(requiredVars) {
  * Check if ads should be disabled
  */
 export function shouldDisableAds() {
-    return process.env.NODE_ENV === 'test' || process.env.AD_ENV === 'quiet' || process.env.AD_ENV === 'no-ads';
+    return true;
 }

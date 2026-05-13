@@ -16,9 +16,10 @@ html(lang="en")
     meta(name="geo.region" content="US")
     meta(name="geo.placename" content="Global")
 
-    script.
-      window.ezstandalone = window.ezstandalone || {};
-      ezstandalone.cmd = ezstandalone.cmd || [];
+    if hasAds
+      script.
+        window.ezstandalone = window.ezstandalone || {};
+        ezstandalone.cmd = ezstandalone.cmd || [];
     
     // Structured Data
     script(type="application/ld+json").
